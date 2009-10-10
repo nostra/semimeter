@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="semimeter"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         metadata-complete="true"
+         version="2.5">
+    <display-name>semimeter</display-name>
+    <description>Cache channel presenter</description>
+
+    <context-param>
+        <param-name>org.mortbay.jetty.servlet.SessionURL</param-name>
+        <param-value>none</param-value>
+   </context-param>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>
+            classpath:semimeter-servlet.xml
+            classpath:semimeter-context.xml
+            classpath:jdbc/SemiMeterJdbc.xml
+
+        </param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>semimeter</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:semimeter-servlet.xml</param-value>
+        </init-param>
+        <load-on-startup>99</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <description>Servlet which serves a blank gif, counting the number of accesses with respect to the URI</description>
+        <servlet-name>blankCounter</servlet-name>
+        <servlet-class>org.semispace.semimeter.servlet.BlankCounterServlet</servlet-class>
+        <load-on-startup>98</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>semimeter</servlet-name>
+        <url-pattern>/showfeed/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>blankCounter</servlet-name>
+        <url-pattern>/c/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>semimeter</servlet-name>
+        <url-pattern>*.html</url-pattern>
+    </servlet-mapping>
+
+    <resource-ref>
+        <description>semimeter Datasource</description>
+        <res-ref-name>jdbc/DSSemiMeter</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+
+    <!-- Welcome file lists -->
+    <welcome-file-list>
+      <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>
