@@ -29,11 +29,16 @@ import java.util.Collection;
  */
 public class CounterHolder {
     private Map<String, Item> items = new HashMap<String, Item>();
+    public static final int RESOLUTION_MS = 1000;
+
     public void count( String path ) {
         Item item = items.get(path);
         if ( item == null ) {
             item = new Item();
-            item.setWhen(System.currentTimeMillis());
+            long when = System.currentTimeMillis();
+            // We have a resolution of a second, so there is no need to retain the fraction
+            when -= (when % RESOLUTION_MS);
+            item.setWhen(when);
             item.setPath(path);
             items.put(path, item);
         }

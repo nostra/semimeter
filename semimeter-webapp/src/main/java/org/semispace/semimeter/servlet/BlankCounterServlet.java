@@ -24,6 +24,7 @@ import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiExpirationEvent;
 import org.semispace.semimeter.space.EnsuringResetDuringIdle;
 import org.semispace.semimeter.space.ZeroAbleBlankCounter;
+import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,7 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         }
         long now = System.currentTimeMillis();
         // Math abs is in order to handle clock skew
-        if ( Math.abs(now - lastReset) > 1000 ) {
+        if ( Math.abs(now - lastReset) > CounterHolder.RESOLUTION_MS ) {
             lastReset = now;
             EnsuringResetDuringIdle erdi = new EnsuringResetDuringIdle();
             space.takeIfExists(erdi);
