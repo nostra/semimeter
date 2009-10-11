@@ -101,7 +101,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
         // The data type integer in the database is a long in the java world.
         jdbcTemplate.getJdbcOperations().execute("create table meter(id integer PRIMARY KEY, updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
         try {
-            jdbcTemplate.getJdbcOperations().execute("create index meter_ix on stalegroup( updated)");
+            jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on stalegroup( updated )");
+            jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on stalegroup( path )");
         } catch ( Exception e ) {
             log.error("Did not manage to create index on updated field. Ignoring this, as this probably occured in a " +
                     "junit test, and not in the live system. Masked exception: "+e);
@@ -169,5 +170,23 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
             registration.getLease().cancel();
             registration = null;
         }
+    }
+
+    public Long sumItems(long startAt, long endAt, String path) {
+        Long result = Long.valueOf(-1);
+        rwl.readLock().lock();
+        try {
+            final String sql = "select sum(count) from meter " +
+                    "WHERE " +
+                    "updated>? AND updated<=?  AND path like ?";
+            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            Long sum = Long.valueOf(jdbcTemplate.queryForLong(sql,
+                    new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path}));
+            result = sum;
+        } finally {
+            rwl.readLock().unlock();
+        }
+
+        return result;
     }
 }

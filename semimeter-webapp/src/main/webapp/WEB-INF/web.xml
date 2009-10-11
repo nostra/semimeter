@@ -35,7 +35,6 @@
             classpath:semimeter-servlet.xml
             classpath:semimeter-context.xml
             classpath:jdbc/SemiMeterJdbc.xml
-
         </param-value>
     </context-param>
 
@@ -62,7 +61,7 @@
 
     <servlet-mapping>
         <servlet-name>semimeter</servlet-name>
-        <url-pattern>/showfeed/*</url-pattern>
+        <url-pattern>/show/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
