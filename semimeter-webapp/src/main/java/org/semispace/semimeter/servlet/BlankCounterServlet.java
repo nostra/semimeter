@@ -16,14 +16,14 @@
 
 package org.semispace.semimeter.servlet;
 
-import org.semispace.SemiSpace;
-import org.semispace.SemiSpaceInterface;
 import org.semispace.SemiEventListener;
 import org.semispace.SemiEventRegistration;
+import org.semispace.SemiSpace;
+import org.semispace.SemiSpaceInterface;
 import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiExpirationEvent;
-import org.semispace.semimeter.space.ZeroAbleBlankCounter;
 import org.semispace.semimeter.space.EnsuringResetDuringIdle;
+import org.semispace.semimeter.space.ZeroAbleBlankCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,9 +83,22 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
             counter.reset();
         }
         counter.count(path);
+        // Trying to avoid any kind of browser or site caching, add no cache headers as mad man.
+        // Adapted from:
+        // http://stackoverflow.com/questions/511144/how-to-instruct-web-browsers-not-to-cache-pages
+        response.addHeader("Cache-Control", "no-cache"); //HTTP 1.1
+        response.addHeader("Cache-Control", "private"); // HTTP 1.1
+        response.addHeader("Cache-Control", "no-store"); // HTTP 1.1
+        response.addHeader("Cache-Control", "must-revalidate"); // HTTP 1.1
+        response.addHeader("Cache-Control", "max-stale=0"); // HTTP 1.1
+        response.addHeader("Cache-Control", "post-check=0"); // HTTP 1.1
+        response.addHeader("Cache-Control", "pre-check=0"); // HTTP 1.1
+        response.addHeader("Pragma", "no-cache"); // HTTP 1.0
+        response.addHeader("Expires", "Wed, 09 Jun 1999 00:00:00 GMT"); // HTTP 1.0
         response.setContentType("image/gif");
         response.getOutputStream().write(blankImage);
     }
+
 
     private byte[] readBlankImage() {
         InputStream is = getClass().getResourceAsStream("/image/blank.gif");
