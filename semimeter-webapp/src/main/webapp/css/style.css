@@ -37,19 +37,20 @@ img.left {
 	margin-right: 15px
 }
 
+ul {
+    list-style-type:circle;
+    list-style-position:inside;
+}
+
+
 td.places {
 	width: 40%
 }
 
 
-
-
 .listing h3 {
 	font-style: italic;
 }
-
-
-
 
 
 /* ***********     General elements *********** */
