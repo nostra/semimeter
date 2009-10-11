@@ -99,7 +99,7 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
 
     private byte[] readBlankImage() {
         InputStream is = getClass().getResourceAsStream("/image/blank.gif");
-        byte[] bytes = new byte[128]; // I know the image has a size of 64B
+        byte[] bytes = new byte[128]; // I know the image has a size of 79B
         // Read in the bytes
         int offset = 0;
         try {
