@@ -62,10 +62,7 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     }
 
     /**
-     * If pathInfo ends with .gif, it is trimmed. Otherwise, the path is retained in its enterity
-     * @param request
-     * @param response
-     * @throws IOException
+     * If pathInfo ends with .gif, it is trimmed. Otherwise, the path is retained in its enterity.
      */
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // I know that semimeter/c/xx/yy.gif will resolve to /xx/yy.gif with PathInfo

@@ -42,17 +42,21 @@ The following links are example of URLs that can be used in a img src expression
 </ul>
 <br/>
 <h1>Display aggregated data:</h1>
-    WORK IN PROGRESS: Notice that the number will reflect the aggregated number, based upon sets and sub sets.
+    Notice that the number will reflect the aggregated number, based upon sets and sub sets.
     <ul>
         <li><a href="show/semimeter/?resolution=total">show/semimeter/?resolution=total - totals under semimeter tree</a></li>
         <li><a href="show/semimeter/a?resolution=total">show/semimeter/a?resolution=total - totals under semimeter/a </a></li>
         <li><a href="show/semimeter/a/b/?resolution=total">show/semimeter/a/b/?resolution=total - sum under sub tree</a></li>
         <li><a href="show/semimeter/a/b/?resolution=total">show/semimeter/a/b/?resolution=day - sum under sub tree with resolution last 24 hours</a></li>
+        <li><a href="show/%25/a/?resolution=total">show/%25/a/?resolution=total sum up <i>all</i> trees which contain <i>/a/</i> as partial contents.</a></li>
+        <li><a href="change/semimeter?resolution=day">change/semimeter?resolution=day - sum up the difference between current 24 hours, and the previous 24 hours</a></li>
     </ul>
     The resolution can be <b>second</b>, <b>minute</b>, <b>hour</b>, <b>day</b>, <b>week</b>, <b>month</b>, or
     <b>total</b>. The last is <i>all</i> available data. It is also the default value, which is also used
     if the resolution parameter is wrongly stated. Notice that the time is skewed with 30 seconds, as we do not
     try to provide real real-time data, but something practically close.
+    <br/><br/>
+    Notice that querying for change when having resolution <i>total</i> does not really make sense.
 </div>
 <br />
 <!-- Include own statistics as example -->

@@ -179,7 +179,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
             final String sql = "select sum(count) from meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ?";
-            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
             Long sum = Long.valueOf(jdbcTemplate.queryForLong(sql,
                     new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path}));
             result = sum;

@@ -47,9 +47,46 @@ public class CounterController {
         if ( path == null ) {
             path = "";
         }
+        // Sanity checking some parameters. Should not really matter. Notice that % is allowed
+        if ( path.indexOf("'") != -1 || path.indexOf("`") != -1 || path.indexOf("|") != -1 ||
+                path.indexOf(";") != -1 || path.indexOf("\\") != -1 || path.indexOf("&") != -1 ||
+                path.indexOf("(") != -1 || path.indexOf(")") != -1 || path.indexOf("$") != -1
+                ) {
+            log.error("Disallowed character found and no value will be returned. Path: "+path);
+            return "showcount";
 
+        }
+
+        // It is slightly tricky to get spring to map separate general paths, so this must be done manually
+        if ( "/change".equals( req.getServletPath()) ) {
+            return displayChange( path, model, resolution );
+        } else {
+            // Default to show
+            return displayCurrent( path, model, resolution );
+        }
+    }
+
+    private String displayCurrent(String path, Model model, String resolution) {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = endAt;
+        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+
+        model.addAttribute("numberOfItems", semiMeterDao.sumItems( startAt, endAt, path+"%" ));
+        return "showcount";
+    }
+
+    private String displayChange(String path, Model model, String resolution) {
+        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
+        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        long previousPeriod = calculateStartTimeFromResolution(resolution, startAt);
+        long result = semiMeterDao.sumItems(startAt, endAt, path + "%").longValue() - semiMeterDao.sumItems(previousPeriod, startAt, path + "%").longValue();
+
+        model.addAttribute("numberOfItems", Long.valueOf( result ));
+
+        return "showcount";
+    }
+
+    private long calculateStartTimeFromResolution(String resolution, long endAt) {
+        long startAt;
         if ( resolution.equalsIgnoreCase("second")) {
             startAt = endAt - 1000;
         } else if ( resolution.equalsIgnoreCase("minute")) {
@@ -67,9 +104,7 @@ public class CounterController {
             // Defaulting to total - beginning at time 0
             startAt = 0;
         }
-
-        model.addAttribute("numberOfItems", semiMeterDao.sumItems( startAt, endAt, path+"%" ));
-        return "showcount";
+        return startAt;
     }
 
     @RequestMapping("/index.html")
