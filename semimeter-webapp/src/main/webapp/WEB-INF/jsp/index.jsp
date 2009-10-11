@@ -28,7 +28,7 @@
 </head>
 <body>
 <div class="boxtop">
-    SemiMeter retains statistics generated from calls on blank gif. <br/><br/>This page also calls this gif, in order
+    <h1>SemiMeter retains statistics generated from calls on blank gif. </h1><br/>This page also calls this gif, in order
     to provide an example.
 </div>
 <div class="boxbottom">

@@ -40,6 +40,18 @@ public class CounterController {
      */
     private static final long DEFAULT_SKEW_IN_MS = 30000;
 
+
+    @RequestMapping("/index.html")
+    public String entryPage() {
+        return "index";
+    }
+
+
+    @RequestMapping("/graph.html")
+    public String graphPage() {
+        return "graph";
+    }
+
     @RequestMapping("/**")
     public String entry( HttpServletRequest req, Model model, @RequestParam String resolution ) {
         // PathInfo is the string behind "show", so "show/x" is "/x"
@@ -100,15 +112,12 @@ public class CounterController {
         } else if ( resolution.equalsIgnoreCase("month")) {
             // Using 30 day month
             startAt = endAt - 60000*60*24*7*30l;
-        } else {
+        } else if ( resolution.equalsIgnoreCase("total")) {
             // Defaulting to total - beginning at time 0
             startAt = 0;
+        } else {
+            throw new RuntimeException("Did not understand resolution "+resolution);
         }
         return startAt;
-    }
-
-    @RequestMapping("/index.html")
-    public String entryPage() {
-        return "index";
     }
 }
