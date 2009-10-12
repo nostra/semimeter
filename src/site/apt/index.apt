@@ -18,20 +18,20 @@ Database setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 +---------------
-mysql --user=root --password=semimeter123
-create database semimeter;
+mysql --user=root --password=something
+create database semimeter character set utf8; 
 # Add user
-grant all privileges on semimeter.* to semimeter identified by 'semimeter123';
+~~grant all privileges on semimeter.* to semimeter identified by 'semimeter123';
 grant all privileges on semimeter.* to semimeter@'localhost' identified by 'semimeter123' ;
 FLUSH PRIVILEGES;
 +---------------
 
 ~~~~~~~~~~~~~~
-JNDI source
+~~JNDI source
 ~~~~~~~~~~~~~~
- The jndi source is configured in web.xml (and referred to in jdbc.properties,
- read by SemiMeterJdbc), and is named:
+~~The jndi source is configured in web.xml (and referred to in jdbc.properties,
+~~ read by SemiMeterJdbc), and is named:
 
-+----------
- jdbc/SemiMeterJdbc
-+----------
+~~+----------
+~~ jdbc/SemiMeterJdbc
+~~+----------
