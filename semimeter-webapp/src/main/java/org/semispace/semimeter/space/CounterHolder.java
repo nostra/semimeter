@@ -36,8 +36,6 @@ public class CounterHolder {
         if ( item == null ) {
             item = new Item();
             long when = System.currentTimeMillis();
-            // We have a resolution of a second, so there is no need to retain the fraction
-            when -= (when % RESOLUTION_MS);
             item.setWhen(when);
             item.setPath(path);
             items.put(path, item);

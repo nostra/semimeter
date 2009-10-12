@@ -70,6 +70,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
         return result;
     }
 
+    /*
     public Long maxId() {
         long result = 0;
         rwl.readLock().lock();
@@ -81,7 +82,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
             rwl.readLock().unlock();
         }
         return result;
-    }
+    }*/
 
     /**
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
@@ -99,7 +100,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
         }
         log.info("Creating table stalegroup");
         // The data type integer in the database is a long in the java world.
-        jdbcTemplate.getJdbcOperations().execute("create table meter(id integer PRIMARY KEY, updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
+        jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
         try {
             jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on stalegroup( updated )");
             jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on stalegroup( path )");
@@ -141,15 +142,15 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
         rwl.writeLock().lock();
         try {
             // First figure out whether the entry already is present
-            Long same = Long.valueOf(jdbcTemplate.queryForLong("select max(id) from meter " +
+            Long same = Long.valueOf(jdbcTemplate.queryForLong("select count(*) from meter " +
                     "WHERE " +
                     "updated=? AND path=?",
                     new Object[]{item.getWhen(), item.getPath()}));
             if ( same == null || same.longValue() == 0 ) {
                 // Insert element
                 try {
-                    jdbcTemplate.update("insert into meter(id, updated, count, path) values (?, ?, 0, ?)",
-                        new Object[] {maxId()+1, item.getWhen(), item.getPath()});
+                    jdbcTemplate.update("insert into meter(updated, count, path) values (?, 0, ?)",
+                        new Object[] { item.getWhen(), item.getPath()});
                 } catch ( Exception e ) {
                     log.error("Got exception inserting element. Non-fatal, but we will probably loose the count of "+item+". Masked exception "+e);
                 }
