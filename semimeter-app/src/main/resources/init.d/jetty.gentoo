@@ -9,7 +9,7 @@ depend() {
 # export JETTY_HOME=/usr/local/skattelisten/app
 # export JETTY_RUN=${JETTY_HOME}
 # export TMP=${JETTY_HOME}/${TMP}
-# export JAVA_OPTIONS="-server -Xms128m -Xmx256m -XX:PermSize=128m -XX:MaxPermSize=256m -XX:NewSize=64m -XX:MaxNewSize=128m"
+# export JAVA_OPTIONS="-server -Xms128m -Xmx256m"
 # export JETTY_USER="semsimeter"
 # export JAVA_HOME=`java-config -o`
 
