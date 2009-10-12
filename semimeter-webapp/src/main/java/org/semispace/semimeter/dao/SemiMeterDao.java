@@ -39,7 +39,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.Collection;
 
 @Service("semimeterDao")
-public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEventListener {
+public class SemiMeterDao implements InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDao.class);
 
     private SimpleJdbcTemplate jdbcTemplate;
@@ -92,7 +92,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
             log.error("Did not expect SemiSpace registration to exist already. Not registering again");
         } else {
             // Listen for events a year
-            registration = space.notify(new CounterHolder(), this, SemiSpace.ONE_DAY*3650);
+            registration = space.notify(new CounterHolder(), new Space2Dao( space, this), SemiSpace.ONE_DAY*3650);
         }
 
         if ( size() >= 0 ) {
@@ -110,24 +110,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean, SemiEvent
         }
     }
 
-    @Override
-    public void notify(SemiEvent theEvent) {
-        if ( theEvent instanceof SemiAvailabilityEvent ) {
-            retrieveAndTreatItemData();
-        }
-    }
-
-    private void retrieveAndTreatItemData() {
-        CounterHolder ch;
-        do {
-            ch = space.takeIfExists(new CounterHolder());
-            if ( ch != null ) {
-                performInsertion( ch.retrieveItems());
-            }
-        } while ( ch != null);
-    }
-
-    private void performInsertion(Collection<Item> items) {
+    protected void performInsertion(Collection<Item> items) {
         for ( Item item : items ) {
             insert( item );
         }
