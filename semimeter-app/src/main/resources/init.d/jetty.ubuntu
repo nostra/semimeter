@@ -1,0 +1,60 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          jetty
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: Start semimeter
+# Description:       Start semimeter jetty app
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+
+# Puppet template settings
+
+JAVA_MEMSIZE="-Xms64m -Xmx256m"
+
+
+# Configuration
+export JETTY_HOME=/usr/local/semimeter
+export JETTY_RUN=/var/jetty/semimeter
+export JETTY_LOGS=/var/log/app/semimeter
+export TMP=/var/jetty/semimeter
+export JAVA_OPTIONS="-Duser.language=nb -Duser.region=NO -Dfile.encoding=UTF-8 -server -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails -Xloggc:$JETTY_LOGS/gc.log $JAVA_MEMSIZE -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=9213 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+export JETTY_USER="semimeter"
+
+# app specifics
+# export JAVA_OPTIONS="$JAVA_OPTIONS -Dfoo=addsomethinghereifyouwantto"
+
+case "$1" in
+  start)
+ 	echo -n "Starting $JETTY_USER: "
+
+	(cd $JETTY_LOGS; for i in `seq  20 -1 1`; do [ -f startup.log.$i ] && mv startup.log.$i startup.log.$(($i+1)); done; mv startup.log startup.log.1)
+        ${JETTY_HOME}/bin/jetty.sh start >>$JETTY_LOGS/startup.log 2>&1 && success || failure
+     ;;
+  stop)
+ 	echo -n "Stopping $JETTY_USER: "
+
+        ${JETTY_HOME}/bin/jetty.sh stop >>$JETTY_LOGS/startup.log 2>&1 && success || failure
+     ;;
+  restart)
+	$0 stop
+	sleep 1
+	$0 start
+     ;;
+  status)
+        status -p $JETTY_RUN/jetty.pid $JETTY_USER
+     ;;
+  *)
+        ${JETTY_HOME}/bin/jetty.sh $* 
+        echo "use start|stop|restart|status for day to day operation"
+
+     exit 1
+esac
+echo
+exit 0

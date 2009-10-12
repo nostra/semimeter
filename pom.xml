@@ -43,6 +43,12 @@
                 <version>1.0.0</version>
             </dependency>
             <dependency>
+                <groupId>org.semispace</groupId>
+                <artifactId>semimeter-webapp</artifactId>
+                <version>${version}</version>
+                <type>war</type>
+            </dependency>
+            <dependency>
                 <groupId>xom</groupId>
                 <artifactId>xom</artifactId>
                 <version>1.1d2</version>
@@ -247,27 +253,31 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>5.1.10</version>
             </dependency>
-
-          <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-            <version>${jetty.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>start</artifactId>
-            <version>${jetty.version}</version>
-          </dependency>
-          <dependency>
-              <groupId>org.mortbay.jetty</groupId>
-              <artifactId>jsp-2.1-jetty</artifactId>
-              <version>${jetty.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-naming</artifactId>
-            <version>${jetty.version}</version>
-          </dependency>
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>start</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jsp-2.1-jetty</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-naming</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-plus</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>
@@ -333,6 +343,43 @@
 
     <modules>
         <module>semimeter-webapp</module>
+        <module>semimeter-app</module>
     </modules>
+
+    <scm>
+    	<url>http://www.semispace.org/svn/semimeter/trunk/</url>
+        <connection>scm:svn:http://www.semispace.org/svn/semimeter/trunk/</connection>
+        <developerConnection>scm:svn:svn+ssh://semispace.org/opt/spacerepo/semimeter/trunk</developerConnection>
+    </scm>
+
+    <profiles>
+        <profile>
+            <id>cruisecontrol</id>
+            <properties>
+                <site-url>file:///var/www/snapshot</site-url>
+            </properties>
+        </profile>
+        <profile>
+            <id>releaseDeploy</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <site-url>scp://semispace.org:/var/www/www.semispace.org/htdocs/semimeter-${version}/</site-url>
+            </properties>
+        </profile>
+    </profiles>
+
+    <distributionManagement>
+        <repository>
+            <id>semispace.repo</id>
+            <name>Repository at semispace.org</name>
+            <url>scp://semispace.org:/var/www/www.semispace.org/htdocs/maven2</url>
+        </repository>
+        <site>
+            <id>website</id>
+            <url>${site-url}</url>
+        </site>
+    </distributionManagement>
 
 </project>

@@ -29,7 +29,6 @@
     <version>0.1-SNAPSHOT</version>
     <name>semimeter-webapp</name>
 
-
 	<!--
 		DEPENDENCIES
 	-->
@@ -137,7 +136,7 @@
                     <contextPath>/semimeter</contextPath>
                     <connectors>
                         <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-                            <port>8080</port>
+                            <port>9013</port>
                         </connector>
                     </connectors>
                     <systemProperties>
