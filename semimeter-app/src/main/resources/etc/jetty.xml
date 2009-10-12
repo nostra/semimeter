@@ -229,6 +229,7 @@
     <!-- =========================================================== -->
     <Ref id="RequestLog">
       <Set name="requestLog">
+<!-- Turning off request log
         <New id="RequestLogImpl" class="org.mortbay.jetty.NCSARequestLog">
           <Set name="filename"><SystemProperty name="jetty.logs" default="./logs"/>/yyyy_mm_dd.request.log</Set>
           <Set name="filenameDateFormat">yyyy_MM_dd</Set>
@@ -238,6 +239,7 @@
           <Set name="logCookies">false</Set>
           <Set name="LogTimeZone">GMT+1</Set>
         </New>
+-->
       </Set>
     </Ref>
 
