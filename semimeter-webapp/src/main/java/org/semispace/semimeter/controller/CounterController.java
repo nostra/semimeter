@@ -16,6 +16,9 @@
 
 package org.semispace.semimeter.controller;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
+import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +52,29 @@ public class CounterController {
 
     @RequestMapping("/graph.html")
     public String graphPage() {
-        return "graph";
+        return "bargraph";
+    }
+
+    @RequestMapping("/json.html")
+    public String showData( Model model ) {
+        JsonResults[] jrs = new JsonResults[3];
+        for ( int i=0 ; i < jrs.length ; i++ ) {
+            jrs[i] = new JsonResults();
+            jrs[i].setKey("ba"+i);
+            int v = (i+2)*100*4;
+            jrs[i].setValue(""+ v);
+        }
+        // TODO No real data returned as of yet.
+
+        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
+        xStream.setMode(XStream.NO_REFERENCES);
+        xStream.alias("Result", JsonResults.class);
+        // Easiest way of getting rid of the -array suffix.
+        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
+
+        model.addAttribute("numberOfItems", str);
+
+        return "showcount";
     }
 
     @RequestMapping("/**")
