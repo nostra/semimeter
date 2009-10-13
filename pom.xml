@@ -32,6 +32,19 @@
         <jetty.version>6.1.21</jetty.version>
     </properties>
 
+
+    <developers>
+        <developer>
+            <id>en</id>
+            <name>Erlend Nossum</name>
+            <email>semispace@semispace.org</email>
+        </developer>
+        <developer>
+            <id>jakob</id>
+            <name>Jakob Vad Nielsen</name>
+        </developer>
+    </developers>
+
 	<!--
 		DEPENDENCIES
 	-->
