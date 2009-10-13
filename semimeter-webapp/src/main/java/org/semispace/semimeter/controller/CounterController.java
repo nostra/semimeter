@@ -50,12 +50,20 @@ public class CounterController {
     }
 
 
-    @RequestMapping("/graph.html")
-    public String graphPage() {
+    @RequestMapping("**/graph.html")
+    public String graphPage(HttpServletRequest request) {
+        log.info("--------------- *-PathTranslated: "+request.getPathTranslated()+
+                "\nContextPath: "+request.getContextPath()+
+                "\nPathInfo: "+request.getPathInfo()+
+                "\nRequestURI: "+request.getRequestURI()+
+                "\nServletPath(): "+request.getServletPath()+
+                "\nRequestURL(): "+request.getRequestURL()
+        );
+        //Seems like ServletPath() is the way to go.
         return "bargraph";
     }
 
-    @RequestMapping("/json.html")
+    @RequestMapping("**/json.html")
     public String showData( Model model ) {
         JsonResults[] jrs = new JsonResults[3];
         for ( int i=0 ; i < jrs.length ; i++ ) {
