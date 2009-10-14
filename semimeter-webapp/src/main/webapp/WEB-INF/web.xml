@@ -22,7 +22,7 @@
          metadata-complete="true"
          version="2.5">
     <display-name>semimeter</display-name>
-    <description>Cache channel presenter</description>
+    <description>Register references to blank gif</description>
 
     <context-param>
         <param-name>org.mortbay.jetty.servlet.SessionURL</param-name>
