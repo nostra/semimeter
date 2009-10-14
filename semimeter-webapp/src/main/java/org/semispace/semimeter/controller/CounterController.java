@@ -50,9 +50,17 @@ public class CounterController {
     }
 
 
+    /**
+     * Queries on graph strongly correlates to queries on json.html, URI-wise
+     */
     @RequestMapping("**/graph.html")
-    public String graphPage(HttpServletRequest request) {
-        log.info("--------------- *-PathTranslated: "+request.getPathTranslated()+
+    public String graphPage() {
+        return "bargraph";
+    }
+
+    @RequestMapping("**/json.html")
+    public String showData( Model model, HttpServletRequest request ) {
+        log.debug("--------------- *-PathTranslated: "+request.getPathTranslated()+
                 "\nContextPath: "+request.getContextPath()+
                 "\nPathInfo: "+request.getPathInfo()+
                 "\nRequestURI: "+request.getRequestURI()+
@@ -60,11 +68,9 @@ public class CounterController {
                 "\nRequestURL(): "+request.getRequestURL()
         );
         //Seems like ServletPath() is the way to go.
-        return "bargraph";
-    }
+        // http://localhost:9013/semimeter/semimeter/a/json.html
+        // ServletPath(): /semimeter/a/json.html
 
-    @RequestMapping("**/json.html")
-    public String showData( Model model ) {
         JsonResults[] jrs = new JsonResults[3];
         for ( int i=0 ; i < jrs.length ; i++ ) {
             jrs[i] = new JsonResults();
