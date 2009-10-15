@@ -75,8 +75,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     public boolean isAlive() {
         rwl.readLock().lock();
         try {
-            int result = this.jdbcTemplate.queryForInt("select 1 from meter");
-            if ( result > 0 ) {
+            int result = this.jdbcTemplate.queryForInt("select count(*) from meter where updated < 1");
+            if ( result >= 0 ) {
                 return true;
             }
         } catch (DataAccessException e) {
