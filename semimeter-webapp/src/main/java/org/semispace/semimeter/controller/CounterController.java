@@ -54,24 +54,32 @@ public class CounterController {
      * Queries on graph strongly correlates to queries on json.html, URI-wise
      */
     @RequestMapping("**/graph.html")
-    public String graphPage() {
+    public String graphPage( Model model, @RequestParam String resolution ) {
+        model.addAttribute("resolution", resolution);
         return "bargraph";
     }
 
     @RequestMapping("**/json.html")
-    public String showData( Model model, HttpServletRequest request ) {
-        log.debug("--------------- *-PathTranslated: "+request.getPathTranslated()+
+    public String showData( Model model, HttpServletRequest request, @RequestParam String resolution ) {
+        /*log.debug("--------------- *-PathTranslated: "+request.getPathTranslated()+
                 "\nContextPath: "+request.getContextPath()+
                 "\nPathInfo: "+request.getPathInfo()+
                 "\nRequestURI: "+request.getRequestURI()+
                 "\nServletPath(): "+request.getServletPath()+
                 "\nRequestURL(): "+request.getRequestURL()
-        );
+        );*/
         //Seems like ServletPath() is the way to go.
         // http://localhost:9013/semimeter/semimeter/a/json.html
         // ServletPath(): /semimeter/a/json.html
 
-        JsonResults[] jrs = new JsonResults[3];
+        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
+        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+
+        String path = request.getServletPath();
+        path = path.substring(0, Math.max(0, path.length() - 10)); // Trim /json.html
+        JsonResults[] jrs = semiMeterDao.performParameterizedQuery(startAt, endAt, path);
+
+        /*JsonResults[] jrs = new JsonResults[3];
         for ( int i=0 ; i < jrs.length ; i++ ) {
             jrs[i] = new JsonResults();
             jrs[i].setKey("ba"+i);
@@ -79,6 +87,7 @@ public class CounterController {
             jrs[i].setValue(""+ v);
         }
         // TODO No real data returned as of yet.
+        */
 
         XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
         xStream.setMode(XStream.NO_REFERENCES);

@@ -16,14 +16,12 @@
 
 package org.semispace.semimeter.dao;
 
-import org.semispace.SemiEventListener;
-import org.semispace.SemiSpace;
 import org.semispace.SemiEventRegistration;
+import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
-import org.semispace.event.SemiAvailabilityEvent;
-import org.semispace.event.SemiEvent;
-import org.semispace.semimeter.space.CounterHolder;
 import org.semispace.semimeter.bean.Item;
+import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -34,9 +32,13 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.Collection;
 
 @Service("semimeterDao")
 public class SemiMeterDao implements InitializingBean, DisposableBean {
@@ -69,20 +71,6 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
 
         return result;
     }
-
-    /*
-    public Long maxId() {
-        long result = 0;
-        rwl.readLock().lock();
-        try {
-            result = jdbcTemplate.queryForLong("select max(id) from meter");
-        } catch (DataAccessException e) {
-            log.warn("Table probably not yet created. Got (intentionally masked) "+e.getMessage());
-        } finally {
-            rwl.readLock().unlock();
-        }
-        return result;
-    }*/
 
     /**
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
@@ -163,7 +151,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             final String sql = "select sum(count) from meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ?";
-            //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
             Long sum = Long.valueOf(jdbcTemplate.queryForLong(sql,
                     new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path}));
             result = sum;
@@ -172,5 +160,56 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         }
 
         return result;
+    }
+
+    public JsonResults[] performParameterizedQuery(long startAt, long endAt, String path) {
+        if ( path.indexOf("$") == -1 || path.indexOf("$") != path.lastIndexOf("$") ) {
+            throw new RuntimeException("Expecting one and only one $");
+        }
+        List<JsonResults> jrs = new ArrayList<JsonResults>();
+        rwl.readLock().lock();
+        try {
+            String prefix = path.substring(0, path.indexOf("$"));
+            String postfix = path.substring(path.indexOf("$")+1);
+            List<String> variants = createStringListOfVariants(startAt, endAt, path);
+            log.trace("Got variants: {}", variants);
+            for ( String s : variants.toArray(new String[0]) ) {
+                Long sum = sumItems(startAt, endAt, prefix+s+postfix);
+                JsonResults jr = new JsonResults();
+                jr.setKey(s);
+                jr.setValue(sum.toString());
+                jrs.add(jr);
+            }
+        } finally {
+            rwl.readLock().unlock();
+        }
+
+        return jrs.toArray(new JsonResults[0]);
+    }
+
+    private List<String> createStringListOfVariants(long startAt, long endAt, String path) {
+        List <String> list = new ArrayList<String>();
+        rwl.readLock().lock();
+        try {
+            String prefix = path.substring(0, path.indexOf("$"));
+            String postfix = path.substring(path.indexOf("$")+1);
+            String sql = "SELECT distinct path AS path FROM meter WHERE path like ? " +
+                    "AND path like ? AND updated>? AND updated<=? ORDER BY path";
+            List<Map<String,Object>> result = jdbcTemplate.queryForList(sql ,
+                    new Object[]{prefix+"%",
+                            "%"+postfix+"%",
+                            Long.valueOf( startAt ), Long.valueOf( endAt ) });
+
+            //log.debug("Got "+result.size()+" results when doing "+sql+" with regards to ("+prefix+","+postfix+", "+startAt+","+endAt+")");
+            for ( Map<String, Object> m : result ) {
+                String s = (String) m.get("path");
+                s = s.substring(prefix.length(), s.length() - postfix.length());
+                list.add( s );
+            }
+        } finally {
+            rwl.readLock().unlock();
+        }
+
+        return list;
     }
 }
