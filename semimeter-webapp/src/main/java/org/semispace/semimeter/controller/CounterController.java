@@ -54,8 +54,20 @@ public class CounterController {
      * Queries on graph strongly correlates to queries on json.html, URI-wise
      */
     @RequestMapping("**/graph.html")
-    public String graphPage( Model model, @RequestParam String resolution ) {
+    public String graphPage( Model model,HttpServletRequest request, @RequestParam String resolution ) {
+        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
+        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+
+        JsonResults[] jrs = createJsonResults(request.getServletPath(), endAt, startAt, "/graph.html");
+        long max = 0;
+        for ( JsonResults jr :jrs ) {
+            max = Math.max( max, Long.valueOf(jr.getValue()).longValue());
+        }
+        max *= 1.2;
+
         model.addAttribute("resolution", resolution);
+        model.addAttribute("xAxisSize", Long.valueOf(max));
+
         return "bargraph";
     }
 
@@ -75,19 +87,7 @@ public class CounterController {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
 
-        String path = request.getServletPath();
-        path = path.substring(0, Math.max(0, path.length() - 10)); // Trim /json.html
-        JsonResults[] jrs = semiMeterDao.performParameterizedQuery(startAt, endAt, path);
-
-        /*JsonResults[] jrs = new JsonResults[3];
-        for ( int i=0 ; i < jrs.length ; i++ ) {
-            jrs[i] = new JsonResults();
-            jrs[i].setKey("ba"+i);
-            int v = (i+2)*100*4;
-            jrs[i].setValue(""+ v);
-        }
-        // TODO No real data returned as of yet.
-        */
+        JsonResults[] jrs = createJsonResults(request.getServletPath(), endAt, startAt, "/json.html");
 
         XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
         xStream.setMode(XStream.NO_REFERENCES);
@@ -98,6 +98,16 @@ public class CounterController {
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
+    }
+
+    /**
+     * TODO Perform query via semispace
+     */    
+    private JsonResults[] createJsonResults(String spath, long endAt, long startAt, String toTrim ) {
+        String path = spath;
+        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html
+        JsonResults[] jrs = semiMeterDao.performParameterizedQuery(startAt, endAt, path);
+        return jrs;
     }
 
     @RequestMapping("/**")

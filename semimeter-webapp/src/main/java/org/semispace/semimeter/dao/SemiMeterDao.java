@@ -72,6 +72,21 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         return result;
     }
 
+    public boolean isAlive() {
+        rwl.readLock().lock();
+        try {
+            int result = this.jdbcTemplate.queryForInt("select 1 from meter");
+            if ( result > 0 ) {
+                return true;
+            }
+        } catch (DataAccessException e) {
+            log.warn("Table probably not yet created. Got (intentionally masked) "+e.getMessage());
+        } finally {
+            rwl.readLock().unlock();
+        }
+        return false;
+    }
+
     /**
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
      */
@@ -151,7 +166,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             final String sql = "select sum(count) from meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ?";
-            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
             Long sum = Long.valueOf(jdbcTemplate.queryForLong(sql,
                     new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path}));
             result = sum;

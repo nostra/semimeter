@@ -80,7 +80,7 @@
 
     var myAxis = new YAHOO.widget.NumericAxis();
     myAxis.minimum = 0;
-    myAxis.maximum = 900;
+    myAxis.maximum = <c:out value="${xAxisSize}" default="10" escapeXml="false" />;
 
     var mychart = new YAHOO.widget.StackedBarChart("chart", jsonData,
     {
