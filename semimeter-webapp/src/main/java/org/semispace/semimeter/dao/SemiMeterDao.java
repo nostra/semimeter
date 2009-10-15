@@ -127,8 +127,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private void insert(Item item) {
         rwl.writeLock().lock();
         try {
-            // First figure out whether the entry already is present
-            Long same = Long.valueOf(jdbcTemplate.queryForLong("select count(*) from meter " +
+            // First figure out whether the entry already is present - querying on trivial field
+            Long same = Long.valueOf(jdbcTemplate.queryForLong("select updated from meter " +
                     "WHERE " +
                     "updated=? AND path=?",
                     new Object[]{item.getWhen(), item.getPath()}));
