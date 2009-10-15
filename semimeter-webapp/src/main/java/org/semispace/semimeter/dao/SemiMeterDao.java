@@ -28,12 +28,12 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -127,11 +127,16 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private void insert(Item item) {
         rwl.writeLock().lock();
         try {
-            // First figure out whether the entry already is present - querying on trivial field
-            Long same = Long.valueOf(jdbcTemplate.queryForLong("select updated from meter " +
-                    "WHERE " +
-                    "updated=? AND path=?",
-                    new Object[]{item.getWhen(), item.getPath()}));
+            Long same = null;
+            try {
+                // First figure out whether the entry already is present - querying on trivial field
+                same = Long.valueOf(jdbcTemplate.queryForLong("select updated from meter " +
+                        "WHERE " +
+                        "updated=? AND path=?",
+                        new Object[]{item.getWhen(), item.getPath()}));
+            } catch ( EmptyResultDataAccessException erdae ) {
+                // Expected and OK
+            }
             if ( same == null || same.longValue() == 0 ) {
                 // Insert element
                 try {

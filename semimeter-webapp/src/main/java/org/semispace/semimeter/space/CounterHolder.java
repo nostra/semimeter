@@ -29,7 +29,7 @@ import java.util.Collection;
  */
 public class CounterHolder {
     private Map<String, Item> items = new HashMap<String, Item>();
-    public static final int RESOLUTION_MS = 1000;
+    public static final String RESOLUTION_MS_SYSTEM_VARIABLE = "semimeter.frequency.ms";
 
     public void count( String path ) {
         Item item = items.get(path);

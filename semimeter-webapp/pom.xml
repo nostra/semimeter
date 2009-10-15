@@ -152,6 +152,10 @@
                             <name>log4j.configuration</name>
                             <value>file:./src/main/resources/log4j.properties</value>
                         </systemProperty>
+                        <systemProperty>
+                            <name>semimeter.frequency.ms</name>
+                            <value>1000</value>
+                        </systemProperty>
                       <systemProperty>
                         <name>file.encoding</name>
                         <value>UTF-8</value>

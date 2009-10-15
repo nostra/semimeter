@@ -46,6 +46,7 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     private long lastReset = System.currentTimeMillis();
     private ZeroAbleBlankCounter counter;
     private SemiEventRegistration registration;
+    private long resolution_ms;
 
     public void init() {
         log.debug("Initializing");
@@ -53,6 +54,14 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         space = SemiSpace.retrieveSpace();
         counter = new ZeroAbleBlankCounter(space);
         registration = space.notify(new EnsuringResetDuringIdle(), this, SemiSpace.ONE_DAY*3650);
+        String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
+        if ( res != null ) {
+            resolution_ms = Long.valueOf(res);
+        } else {
+            resolution_ms = 1000;
+            log.error("Missing system property "+CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE+" please add it to the java vm as a -D parameter. Using default of "+resolution_ms);
+        }
+        log.info("Using {} as least update interval.", resolution_ms);
     }
 
 
@@ -73,7 +82,7 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         }
         long now = System.currentTimeMillis();
         // Math abs is in order to handle clock skew
-        if ( Math.abs(now - lastReset) > CounterHolder.RESOLUTION_MS ) {
+        if ( Math.abs(now - lastReset) > resolution_ms ) {
             lastReset = now;
             EnsuringResetDuringIdle erdi = new EnsuringResetDuringIdle();
             space.takeIfExists(erdi);

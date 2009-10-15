@@ -20,6 +20,7 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.dao.SemiMeterDao;
+import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,14 @@ public class CounterController {
 
         model.addAttribute("resolution", resolution);
         model.addAttribute("xAxisSize", Long.valueOf(max));
+        String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
+        if ( res == null ) {
+            model.addAttribute("updateInterval", 10000);
+        } else {
+            model.addAttribute("updateInterval", 2*Long.valueOf(res));
+        }
+
+
 
         return "bargraph";
     }

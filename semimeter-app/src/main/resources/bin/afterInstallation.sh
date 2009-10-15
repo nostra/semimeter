@@ -57,5 +57,5 @@ echo "export TMP=\$JETTY_HOME/tmp"
 echo "export JETTY_RUN=\$TMP"
 echo "export JETTY_LOG=\$JETTY_HOME/logs"
 echo "echo mkdir -p \$TMP \$JETTY_LOG"
-echo 'export JAVA_OPTIONS="-Djava.awt.headless=true -Xmx256m -Xms64m"'
+echo 'export JAVA_OPTIONS="-Djava.awt.headless=true -Xmx256m -Xms64m -Dsemimeter.frequency.ms=3000"'
 echo "./jetty.sh start # In order to background the process."

@@ -59,6 +59,22 @@ The following links are example of URLs that can be used in a img src expression
     Notice that querying for change when having resolution <i>total</i> does not really make sense.
 </div>
 <br />
+
+<div class="box">
+<h1>Displaying graph based in JSON query</h1>
+    As an example, a graph tool from yahoo has been included. It reads JSON data. The
+    data use is geared towards returning an array.
+    <br/><br/>
+    Examples:s
+<ul>
+    <li><a href="" /></li>
+    <li><a href="" /></li>
+    <li><a href="" /></li>
+    <li><a href="" /></li>
+</ul>            
+</div>
+<br />
+
 <!-- Include own statistics as example -->
 <img src="c/semimeter/index.gif" alt="" />
 </body>
