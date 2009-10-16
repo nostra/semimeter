@@ -1,6 +1,9 @@
 @import "reset.css";
 @import "boxed.css";
 
+html {
+    margin-top: 10px;
+}
 body {
     font-family: Arial, Verdana, Helvetica, sans-serif;
     font-size: 14px;
