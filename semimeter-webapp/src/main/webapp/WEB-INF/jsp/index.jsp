@@ -35,20 +35,20 @@
 <h1>Registration of data</h1>
 The following links are example of URLs that can be used in a img src expression.
 <ul>
-    <li><a href="c/semimeter/a.gif">c/semimeter/a.gif</a></li>
-    <li><a href="c/semimeter/a/b.gif">c/semimeter/a/b.gif</a></li>
-    <li><a href="c/semimeter/a/b/c.gif">c/semimeter/a/b/c.gif</a></li>
-    <li><a href="c/semimeter/a/b/c/d.gif">c/semimeter/a/b/c/d.gif</a></li>
+    <li><a href="c/semimeter/pub1/person.gif">c/semimeter/pub1/person.gif</a></li>
+    <li><a href="c/semimeter/pub1/search.gif">c/semimeter/pub1/search.gif</a></li>
+    <li><a href="c/semimeter/pub2/search.gif">c/semimeter/pub2/search.gif</a></li>
+    <li><a href="c/semimeter/pub2/person.gif">c/semimeter/pub2/person.gif</a></li>
 </ul>
 <br/>
 <h1>Display aggregated data:</h1>
     Notice that the number will reflect the aggregated number, based upon sets and sub sets.
     <ul>
         <li><a href="show/semimeter/?resolution=total">show/semimeter/?resolution=total - totals under semimeter tree</a></li>
-        <li><a href="show/semimeter/a?resolution=total">show/semimeter/a?resolution=total - totals under semimeter/a </a></li>
-        <li><a href="show/semimeter/a/b/?resolution=total">show/semimeter/a/b/?resolution=total - sum under sub tree</a></li>
-        <li><a href="show/semimeter/a/b/?resolution=total">show/semimeter/a/b/?resolution=day - sum under sub tree with resolution last 24 hours</a></li>
-        <li><a href="show/%25/a/?resolution=total">show/%25/a/?resolution=total sum up <i>all</i> trees which contain <i>/a/</i> as partial contents.</a></li>
+        <li><a href="show/semimeter/pub1?resolution=total">show/semimeter/pub1?resolution=total - totals under semimeter/pub1 </a></li>
+        <li><a href="show/semimeter/pub1/search?resolution=total">show/semimeter/pub1/search?resolution=total - totals under semimeter/pub1/search</a></li>
+        <li><a href="show/semimeter/pub1/?resolution=day">show/semimeter/pub1/?resolution=day - sum under sub tree with resolution last 24 hours</a></li>
+        <li><a href="show/%25/search?resolution=total">show/%25/search?resolution=total sum up <i>all</i> trees which contain <i>/search</i> as partial contents.</a></li>
         <li><a href="change/semimeter?resolution=day">change/semimeter?resolution=day - sum up the difference between current 24 hours, and the previous 24 hours</a></li>
     </ul>
     The resolution can be <b>second</b>, <b>minute</b>, <b>hour</b>, <b>day</b>, <b>week</b>, <b>month</b>, or
@@ -65,13 +65,17 @@ The following links are example of URLs that can be used in a img src expression
     As an example, a graph tool from yahoo has been included. It reads JSON data. The
     data use is geared towards returning an array.
     <br/><br/>
-    Examples:s
+    JSON examples:
 <ul>
-    <li><a href="" /></li>
-    <li><a href="" /></li>
-    <li><a href="" /></li>
-    <li><a href="" /></li>
-</ul>            
+    <li><a href="semimeter/$/search/json.html?resolution=hour">semimeter/$/search/json.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
+    <li><a href="semimeter/$/json.html?resolution=hour">semimeter/$/json.html?resolution=hour - everything that starts with semimeter</a></li>
+</ul>
+    <br/><br/>
+    Usage of JSON in yahoo graph:
+<ul>
+    <li><a href="semimeter/$/search/graph.html?resolution=hour">semimeter/$/search/graph.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
+    <li><a href="semimeter/$/graph.html?resolution=hour">semimeter/$/graph.html?resolution=hour - everything that starts with semimeter</a></li>
+</ul>
 </div>
 <br />
 
