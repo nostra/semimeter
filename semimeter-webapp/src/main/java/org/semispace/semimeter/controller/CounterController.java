@@ -64,18 +64,27 @@ public class CounterController {
         for ( JsonResults jr :jrs ) {
             max = Math.max( max, Long.valueOf(jr.getValue()).longValue());
         }
-        max *= 1.2;
+        max++;
+        max *= 1.25;
 
         model.addAttribute("resolution", resolution);
         model.addAttribute("xAxisSize", Long.valueOf(max));
-        String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
-        if ( res == null ) {
-            model.addAttribute("updateInterval", 10000);
+
+        long updtFreq;
+        if ( resolution.equalsIgnoreCase("second")) {
+            updtFreq = 2000;
+        } else if ( resolution.equalsIgnoreCase("minute")) {
+            updtFreq = 30000;
         } else {
-            model.addAttribute("updateInterval", 2*Long.valueOf(res));
+            // Default to every minute
+            updtFreq = 60000;
+        }
+        String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
+        if ( res != null ) {
+            updtFreq = Math.max( updtFreq, 2*Long.valueOf(res));
         }
 
-
+        model.addAttribute("updateInterval", updtFreq);
 
         return "bargraph";
     }

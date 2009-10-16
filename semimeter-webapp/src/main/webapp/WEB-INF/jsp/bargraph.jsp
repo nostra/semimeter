@@ -87,7 +87,7 @@
         series: seriesDef,
         yField: "key",
         xAxis: myAxis,
-        polling: 2000,
+        polling: ${updateInterval},
         style:
         {
             border: {color: 0x999999, size: 12},
