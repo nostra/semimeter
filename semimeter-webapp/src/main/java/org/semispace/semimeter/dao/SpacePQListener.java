@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 public class SpacePQListener extends AbstractSpace2Dao {
     private final Logger log = LoggerFactory.getLogger(SpacePQListener.class);
     /**
-     * Default query life 10 minutes
+     * Max query life 50 sec
      */
-    private static final long QUERY_RESULT_LIFE_MS = 600000;
+    private static final long MAX_RESULT_LIFE_MS = 50000;
 
     public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao) {
         super(space, meterDao);
@@ -42,9 +42,17 @@ public class SpacePQListener extends AbstractSpace2Dao {
             pq = getSpace().takeIfExists(new ParameterizedQuery());
             if ( pq != null ) {
                 log.debug("Found PQ with key "+pq.getKey());
-                JsonResults[] result = getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
-                ParameterizedQueryResult pqr = new ParameterizedQueryResult(pq.getKey(), result);
-                getSpace().write(pqr, QUERY_RESULT_LIFE_MS);
+                if ( getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
+                    log.debug("Query already performed - not doing it again.");
+                } else {
+                    JsonResults[] result = getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
+                    ParameterizedQueryResult pqr = new ParameterizedQueryResult(pq.getKey(), result);
+                    long life = (pq.getEndAt() - pq.getStartAt() / 2);
+                    if ( life > MAX_RESULT_LIFE_MS) {
+                        life = MAX_RESULT_LIFE_MS;
+                    }
+                    getSpace().write(pqr, MAX_RESULT_LIFE_MS);
+                }
             } else {
                 log.debug("No PQ found.");
             }

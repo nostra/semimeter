@@ -46,7 +46,7 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
     @Override
     public void notify(SemiEvent theEvent) {
         if ( theEvent instanceof SemiAvailabilityEvent) {
-            log.debug("Got availability in "+toString()+" with id "+theEvent.getId());
+            //log.debug("Got availability in "+toString()+" with id "+theEvent.getId());
             activate();
         }
     }

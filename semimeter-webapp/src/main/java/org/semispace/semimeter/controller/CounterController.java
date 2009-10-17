@@ -154,13 +154,23 @@ public class CounterController {
     }
 
     /**
-     * TODO Perform query via semispace
+     *
      */
     private JsonResults[] createJsonResults(String path, long endAt, long startAt, String resolution) {
         ParameterizedQuery pq = new ParameterizedQuery(resolution, startAt, endAt, path);
-        // TODO Check cached result
-        space.write(pq, QUERY_LIFE_TIME_MS);
-        ParameterizedQueryResult pqr = space.read(new ParameterizedQueryResult(pq.getKey(), null), QUERY_RESULT_TIMEOUT_MS);
+        ParameterizedQueryResult toFind = new ParameterizedQueryResult(pq.getKey(), null);
+        ParameterizedQueryResult pqr = space.readIfExists(toFind);
+        if ( pqr == null ) {
+            log.debug("No previous result for {}", pq.getKey());
+            if ( space.readIfExists(pq) == null ) {
+                space.write(pq, QUERY_LIFE_TIME_MS);
+            } else {
+                log.debug("Query for {} has already been placed", pq.getKey());
+            }
+            pqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
+        } else {
+            log.trace("Using existing result for {}", pq.getKey());
+        }
         JsonResults[] jrs = null;
         if ( pqr != null ) {
             jrs = pqr.getResults();
