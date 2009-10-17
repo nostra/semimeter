@@ -19,16 +19,18 @@ package org.semispace.semimeter.bean;
 /**
  */
 public class ParameterizedQuery {
+    private String resolution;
     private Long startAt;
     private Long endAt;
     private String path;
     private String key;
 
-    public ParameterizedQuery(Long startAt, Long endAt, String path) {
+    public ParameterizedQuery(String resolution, long startAt, long endAt, String path) {
+        this.resolution = resolution;
         this.startAt = startAt;
         this.endAt = endAt;
         this.path = path;
-        this.key = path+"_"+startAt+"_"+endAt;
+        this.key = path+"_"+resolution;
     }
 
     public ParameterizedQuery() {

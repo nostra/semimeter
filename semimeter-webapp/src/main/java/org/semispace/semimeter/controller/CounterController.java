@@ -68,7 +68,7 @@ public class CounterController {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
 
-        JsonResults[] jrs = createJsonResults(request.getServletPath(), endAt, startAt, "/graph.html");
+        JsonResults[] jrs = createJsonResults(trimPath("/graph.html", request.getServletPath()), endAt, startAt, resolution );
         long max = 0;
         for ( JsonResults jr :jrs ) {
             max = Math.max( max, Long.valueOf(jr.getValue()).longValue());
@@ -114,7 +114,7 @@ public class CounterController {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
 
-        JsonResults[] jrs = createJsonResults(request.getServletPath(), endAt, startAt, "/json.html");
+        JsonResults[] jrs = createJsonResults(trimPath("/json.html", request.getServletPath()), endAt, startAt, resolution );
 
         XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
         xStream.setMode(XStream.NO_REFERENCES);
@@ -156,10 +156,8 @@ public class CounterController {
     /**
      * TODO Perform query via semispace
      */
-    private JsonResults[] createJsonResults(String spath, long endAt, long startAt, String toTrim ) {
-        String path = spath;
-        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html
-        ParameterizedQuery pq = new ParameterizedQuery(startAt, endAt, path);
+    private JsonResults[] createJsonResults(String path, long endAt, long startAt, String resolution) {
+        ParameterizedQuery pq = new ParameterizedQuery(resolution, startAt, endAt, path);
         // TODO Check cached result
         space.write(pq, QUERY_LIFE_TIME_MS);
         ParameterizedQueryResult pqr = space.read(new ParameterizedQueryResult(pq.getKey(), null), QUERY_RESULT_TIMEOUT_MS);
@@ -168,6 +166,11 @@ public class CounterController {
             jrs = pqr.getResults();
         }
         return jrs;
+    }
+
+    private String trimPath(String toTrim, String path) {
+        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html - for instance
+        return path;
     }
 
 
@@ -190,7 +193,7 @@ public class CounterController {
         return "showcount";
     }
 
-    private long calculateStartTimeFromResolution(String resolution, long endAt) {
+    public static long calculateStartTimeFromResolution(String resolution, long endAt) {
         long startAt;
         if ( resolution.equalsIgnoreCase("second")) {
             startAt = endAt - 1000;
