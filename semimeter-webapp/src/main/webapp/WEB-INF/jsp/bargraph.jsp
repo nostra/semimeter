@@ -22,18 +22,7 @@
     <title>Live search statistics</title>
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <link href="<c:url value="/css/style.css"/>" rel="stylesheet" type="text/css" title="SemiMeter">
-    <script type="text/javascript" src="http://yui.yahooapis.com/combo?2.8.0r4/build/utilities/utilities.js&2.8.0r4/build/datasource/datasource-min.js&2.8.0r4/build/autocomplete/autocomplete-min.js&2.8.0r4/build/json/json-min.js&2.8.0r4/build/swf/swf-min.js&2.8.0r4/build/charts/charts-min.js&2.8.0r4/build/cookie/cookie-min.js&2.8.0r4/build/datemath/datemath-min.js&2.8.0r4/build/element-delegate/element-delegate-min.js&2.8.0r4/build/selector/selector-min.js&2.8.0r4/build/event-delegate/event-delegate-min.js&2.8.0r4/build/event-mouseenter/event-mouseenter-min.js&2.8.0r4/build/event-simulate/event-simulate-min.js&2.8.0r4/build/history/history-min.js&2.8.0r4/build/imageloader/imageloader-min.js&2.8.0r4/build/resize/resize-min.js&2.8.0r4/build/layout/layout-min.js&2.8.0r4/build/swfstore/swfstore-min.js&2.8.0r4/build/storage/storage-min.js&2.8.0r4/build/stylesheet/stylesheet-min.js"></script>
-
-
-    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" />
-    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/datatable/assets/skins/sam/datatable.css" />
-    <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script>
-
-    <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/dragdrop/dragdrop-min.js"></script>
-    <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/element/element-min.js"></script>
-    <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/datasource/datasource-min.js"></script>
-    <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/datatable/datatable-min.js"></script>
-
+    <script type="text/javascript" src="<c:url value="/js/yuibar.js" />"></script>
     <style type="text/css">
         #chart {
             width: 100%;
