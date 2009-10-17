@@ -57,8 +57,8 @@
 
     <div id="data">
         <div id="chart"></div>
-        <!--<div id="numbers"></div>-->
     </div>
+    
     <div id="disclaimer">
         The graph is automatically updated every <fmt:formatNumber value="${updateInterval / 1000}" pattern="####"/> second.
     </div>

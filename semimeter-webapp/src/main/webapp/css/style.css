@@ -76,16 +76,11 @@ h2 {
 #main {
     background-color: #fff;
     padding: 10px;
+    padding-left: 15px;
 }
 
 #data {
     
-}
-
-#numbers {
-    float: right;
-    width: 20%;
-
 }
 
 #disclaimer {
