@@ -28,8 +28,7 @@
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
      http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd">
 
-    <context:component-scan base-package="jdbc" />
-
+    <import resource="jdbc/SemiMeterJdbc.xml" />
 
 </beans>
 

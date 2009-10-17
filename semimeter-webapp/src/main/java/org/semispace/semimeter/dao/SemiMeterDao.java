@@ -21,6 +21,7 @@ import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDao.class);
 
     private SimpleJdbcTemplate jdbcTemplate;
-    private SemiEventRegistration registration;
+    private SemiEventRegistration chRegistration;
+    private SemiEventRegistration pqRegistration;
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space = SemiSpace.retrieveSpace();
     private static final int MAX_PATH_LENGTH = 2048;
@@ -91,11 +93,13 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
      */
     public void afterPropertiesSet() {
-        if ( registration != null ) {
-            log.error("Did not expect SemiSpace registration to exist already. Not registering again");
+        log.debug("Registering listeners.");
+        if ( chRegistration != null || pqRegistration != null) {
+            log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
         } else {
             // Listen for events a year
-            registration = space.notify(new CounterHolder(), new Space2Dao( space, this), SemiSpace.ONE_DAY*3650);
+            chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this), SemiSpace.ONE_DAY*3650);
+            pqRegistration = space.notify(new ParameterizedQuery(), new SpacePQListener( space, this), SemiSpace.ONE_DAY*3650);
         }
 
         if ( size() >= 0 ) {
@@ -158,9 +162,13 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
 
     @Override
     public void destroy() throws Exception {
-        if ( registration != null ) {
-            registration.getLease().cancel();
-            registration = null;
+        if ( chRegistration != null ) {
+            chRegistration.getLease().cancel();
+            chRegistration = null;
+        }
+        if ( pqRegistration!= null ) {
+            pqRegistration.getLease().cancel();
+            pqRegistration = null;
         }
     }
 

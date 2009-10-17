@@ -19,8 +19,12 @@ package org.semispace.semimeter.controller;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
 import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.ParameterizedQuery;
+import org.semispace.semimeter.bean.ParameterizedQueryResult;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.semispace.semimeter.space.CounterHolder;
+import org.semispace.SemiSpace;
+import org.semispace.SemiSpaceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +41,17 @@ public class CounterController {
 
     @Autowired
     private SemiMeterDao semiMeterDao;
+
+    private SemiSpaceInterface space = SemiSpace.retrieveSpace();
+
     /**
      * Default query skew is 30 seconds. This is in order to let the database have
      * time to insert pending data.
      * TODO Consider adjusting the value.
      */
     private static final long DEFAULT_SKEW_IN_MS = 30000;
+    private static final long QUERY_LIFE_TIME_MS = 5000;
+    private static final long QUERY_RESULT_TIMEOUT_MS = 6000;
 
 
     @RequestMapping("/index.html")
@@ -118,16 +127,6 @@ public class CounterController {
         return "showcount";
     }
 
-    /**
-     * TODO Perform query via semispace
-     */    
-    private JsonResults[] createJsonResults(String spath, long endAt, long startAt, String toTrim ) {
-        String path = spath;
-        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html
-        JsonResults[] jrs = semiMeterDao.performParameterizedQuery(startAt, endAt, path);
-        return jrs;
-    }
-
     @RequestMapping("/**")
     public String entry( HttpServletRequest req, Model model, @RequestParam String resolution ) {
         // PathInfo is the string behind "show", so "show/x" is "/x"
@@ -153,6 +152,24 @@ public class CounterController {
             return displayCurrent( path, model, resolution );
         }
     }
+
+    /**
+     * TODO Perform query via semispace
+     */
+    private JsonResults[] createJsonResults(String spath, long endAt, long startAt, String toTrim ) {
+        String path = spath;
+        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html
+        ParameterizedQuery pq = new ParameterizedQuery(startAt, endAt, path);
+        // TODO Check cached result
+        space.write(pq, QUERY_LIFE_TIME_MS);
+        ParameterizedQueryResult pqr = space.read(new ParameterizedQueryResult(pq.getKey(), null), QUERY_RESULT_TIMEOUT_MS);
+        JsonResults[] jrs = null;
+        if ( pqr != null ) {
+            jrs = pqr.getResults();
+        }
+        return jrs;
+    }
+
 
     private String displayCurrent(String path, Model model, String resolution) {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
