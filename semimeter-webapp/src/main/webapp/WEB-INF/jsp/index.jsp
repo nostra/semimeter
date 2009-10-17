@@ -23,16 +23,22 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-     <link href="css/style.css" rel="stylesheet" type="text/css" title="SemiMeter">
+    <link href="css/style.css" rel="stylesheet" type="text/css" title="SemiMeter">
     <title>SemiMeter</title>
 </head>
 <body>
-<div class="boxtop">
-    <h1>SemiMeter retains statistics generated from calls on blank gif. </h1><br/>This page also calls this gif, in order
-    to provide an example.
+
+<div id="header">
+    <div id="header-top">
+        <a href="<c:url value="/"/>"><img src="<c:url value="/gfx/logo.png"/>" width="150" height="30" alt="logo" /></a>
+    </div>
+    <div id="header-bottom">
+        SemiMeter retains statistics generated from calls on blank gif. 
+    </div>
 </div>
-<div class="boxbottom">
-<h1>Registration of data</h1>
+<div id="main">
+
+<h2>Registration of data</h2>
 The following links are example of URLs that can be used in a img src expression.
 <ul>
     <li><a href="c/semimeter/pub1/person.gif">c/semimeter/pub1/person.gif</a></li>
@@ -40,8 +46,8 @@ The following links are example of URLs that can be used in a img src expression
     <li><a href="c/semimeter/pub2/search.gif">c/semimeter/pub2/search.gif</a></li>
     <li><a href="c/semimeter/pub2/person.gif">c/semimeter/pub2/person.gif</a></li>
 </ul>
-<br/>
-<h1>Display aggregated data:</h1>
+
+<h2>Display aggregated data:</h2>
     Notice that the number will reflect the aggregated number, based upon sets and sub sets.
     <ul>
         <li><a href="show/semimeter/?resolution=total">show/semimeter/?resolution=total - totals under semimeter tree</a></li>
@@ -51,33 +57,35 @@ The following links are example of URLs that can be used in a img src expression
         <li><a href="show/%25/search?resolution=total">show/%25/search?resolution=total sum up <i>all</i> trees which contain <i>/search</i> as partial contents.</a></li>
         <li><a href="change/semimeter?resolution=day">change/semimeter?resolution=day - sum up the difference between current 24 hours, and the previous 24 hours</a></li>
     </ul>
-    The resolution can be <b>second</b>, <b>minute</b>, <b>hour</b>, <b>day</b>, <b>week</b>, <b>month</b>, or
+
+    <p>The resolution can be <b>second</b>, <b>minute</b>, <b>hour</b>, <b>day</b>, <b>week</b>, <b>month</b>, or
     <b>total</b>. The last is <i>all</i> available data. It is also the default value, which is also used
     if the resolution parameter is wrongly stated. Notice that the time is skewed with 30 seconds, as we do not
-    try to provide real real-time data, but something practically close.
-    <br/><br/>
-    Notice that querying for change when having resolution <i>total</i> does not really make sense.
-</div>
-<br />
+    try to provide real real-time data, but something practically close.</p>
 
-<div class="box">
-<h1>Displaying graph based in JSON query</h1>
-    As an example, a graph tool from yahoo has been included. It reads JSON data. The
-    data use is geared towards returning an array.
-    <br/><br/>
-    JSON examples:
-<ul>
-    <li><a href="semimeter/$/search/json.html?resolution=hour">semimeter/$/search/json.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
-    <li><a href="semimeter/$/json.html?resolution=hour">semimeter/$/json.html?resolution=hour - everything that starts with semimeter</a></li>
-</ul>
-    <br/><br/>
-    Usage of JSON in yahoo graph:
-<ul>
-    <li><a href="semimeter/$/search/graph.html?resolution=hour">semimeter/$/search/graph.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
-    <li><a href="semimeter/$/graph.html?resolution=hour">semimeter/$/graph.html?resolution=hour - everything that starts with semimeter</a></li>
-</ul>
-</div>
-<br />
+    <p>Notice that querying for change when having resolution <i>total</i> does not really make sense.</p>
+
+    <h2>Displaying graph based in JSON query</h2>
+    <p>As an example, a graph tool from yahoo has been included. It reads JSON data. The
+    data use is geared towards returning an array.</p>
+
+
+    <h3>JSON examples:</h3>
+    <ul>
+        <li><a href="semimeter/$/search/json.html?resolution=hour">semimeter/$/search/json.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
+        <li><a href="semimeter/$/json.html?resolution=hour">semimeter/$/json.html?resolution=hour - everything that starts with semimeter</a></li>
+    </ul>
+
+    <h3>Usage of JSON in yahoo graph:</h3>
+    <ul>
+        <li><a href="semimeter/$/search/graph.html?resolution=hour">semimeter/$/search/graph.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
+        <li><a href="semimeter/$/graph.html?resolution=hour">semimeter/$/graph.html?resolution=hour - everything that starts with semimeter</a></li>
+    </ul>
+
+    <hr/>
+    <p>
+        This page also calls this gif, in order to provide an example.
+    </p>
 
 <!-- Include own statistics as example -->
 <img src="c/semimeter/index.gif" alt="" />
