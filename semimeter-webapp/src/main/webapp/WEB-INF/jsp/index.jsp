@@ -76,11 +76,20 @@ The following links are example of URLs that can be used in a img src expression
         <li><a href="semimeter/$/json.html?resolution=hour">semimeter/$/json.html?resolution=hour - everything that starts with semimeter</a></li>
     </ul>
 
-    <h3>Usage of JSON in yahoo graph:</h3>
+    <h3>Using JSON in yahoo graph:</h3>
     <ul>
         <li><a href="semimeter/$/search/graph.html?resolution=hour">semimeter/$/search/graph.html?resolution=hour - fill in the blank between <i>semimeter</i> and <i>search</i>, and display count</a></li>
         <li><a href="semimeter/$/graph.html?resolution=hour">semimeter/$/graph.html?resolution=hour - everything that starts with semimeter</a></li>
     </ul>
+
+
+    <h3>Querying for array:</h3>
+    If you want to create a graph of the elements on a scale, the array query can be used.
+    <ul>
+        <li><a href="semimeter/pub1/search/array.html?resolution=day&amp;numberOfSamples=24">semimeter/pub1/search/array.html?resolution=day&amp;numberOfSamples=10 - Create an array with a length of 24 with basis in the last day, and display the number of samples in the relative slots. As the number of samples is 24, you get a number for each hour.</a></li>
+        <li><a href="semimeter/array.html?resolution=minute&amp;numberOfSamples=60">semimeter/array.html?resolution=minute&amp;numberOfSamples=60 - Query for an array with data from the last minute. As the number of samples is specified to be 60, you get values for each second.</a></li>
+    </ul>
+
 
     <hr/>
     <p>
@@ -89,5 +98,6 @@ The following links are example of URLs that can be used in a img src expression
 
 <!-- Include own statistics as example -->
 <img src="c/semimeter/index.gif" alt="" />
+</div>
 </body>
 </html>

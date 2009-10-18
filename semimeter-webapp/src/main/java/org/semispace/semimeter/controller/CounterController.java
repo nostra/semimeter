@@ -127,6 +127,31 @@ public class CounterController {
         return "showcount";
     }
 
+    /**
+     * TODO Consider changing the into a space query
+     */
+    @RequestMapping("**/array.html")
+    public String showArray( Model model, HttpServletRequest request, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
+        if ( numberOfSamples.intValue() < 0 ) {
+            throw new RuntimeException("numberOfSamples must be larger than 0.");
+        }
+        String path = trimPath("/array.html", request.getServletPath());
+        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
+        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        JsonResults[] jrs = semiMeterDao.createTimeArray( path+"%", endAt, startAt, numberOfSamples );
+        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
+        xStream.setMode(XStream.NO_REFERENCES);
+        xStream.alias("Result", JsonResults.class);
+        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
+
+        model.addAttribute("numberOfItems", str);
+
+        return "showcount";
+    }
+
+    /**
+     * Really a mapping of /show/ and /change/
+     */
     @RequestMapping("/**")
     public String entry( HttpServletRequest req, Model model, @RequestParam String resolution ) {
         // PathInfo is the string behind "show", so "show/x" is "/x"
@@ -174,6 +199,8 @@ public class CounterController {
         JsonResults[] jrs = null;
         if ( pqr != null ) {
             jrs = pqr.getResults();
+        } else {
+            log.debug("Query timed out: {}", pq.getKey());
         }
         return jrs;
     }
