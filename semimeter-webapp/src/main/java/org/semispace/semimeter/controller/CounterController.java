@@ -132,7 +132,7 @@ public class CounterController {
      */
     @RequestMapping("**/array.html")
     public String showArray( Model model, HttpServletRequest request, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
-        if ( numberOfSamples.intValue() < 0 ) {
+        if ( numberOfSamples.intValue() < 1 ) {
             throw new RuntimeException("numberOfSamples must be larger than 0.");
         }
         String path = trimPath("/array.html", request.getServletPath());
