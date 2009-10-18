@@ -65,9 +65,11 @@ public class CounterController {
      */
     @RequestMapping("**/graph.html")
     public String graphPage( Model model,HttpServletRequest request, @RequestParam String resolution ) {
+        if ( !isSane( request.getServletPath())) {
+            throw new RuntimeException("Disallowed character found in query.");
+        }
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
-
         JsonResults[] jrs = createJsonResults(trimPath("/graph.html", request.getServletPath()), endAt, startAt, resolution );
         long max = 0;
         for ( JsonResults jr :jrs ) {
@@ -110,6 +112,9 @@ public class CounterController {
         //Seems like ServletPath() is the way to go.
         // http://localhost:9013/semimeter/semimeter/a/json.html
         // ServletPath(): /semimeter/a/json.html
+        if ( !isSane( request.getServletPath())) {
+            throw new RuntimeException("Disallowed character found in query.");
+        }
 
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
@@ -135,6 +140,9 @@ public class CounterController {
         if ( numberOfSamples.intValue() < 1 ) {
             throw new RuntimeException("numberOfSamples must be larger than 0.");
         }
+        if ( !isSane( request.getServletPath())) {
+            throw new RuntimeException("Disallowed character found in query.");
+        }
         String path = trimPath("/array.html", request.getServletPath());
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
@@ -159,14 +167,9 @@ public class CounterController {
         if ( path == null ) {
             path = "";
         }
-        // Sanity checking some parameters. Should not really matter. Notice that % is allowed
-        if ( path.indexOf("'") != -1 || path.indexOf("`") != -1 || path.indexOf("|") != -1 ||
-                path.indexOf(";") != -1 || path.indexOf("\\") != -1 || path.indexOf("&") != -1 ||
-                path.indexOf("(") != -1 || path.indexOf(")") != -1 || path.indexOf("$") != -1
-                ) {
-            log.error("Disallowed character found and no value will be returned. Path: "+path);
+        // Sanity checking some parameters. Should not really matter. Notice that % and $ is allowed
+        if ( !isSane( path )) {
             return "showcount";
-
         }
 
         // It is slightly tricky to get spring to map separate general paths, so this must be done manually
@@ -176,6 +179,16 @@ public class CounterController {
             // Default to show
             return displayCurrent( path, model, resolution );
         }
+    }
+
+    private boolean isSane(String path) {
+        if ( path.indexOf("'") != -1 || path.indexOf("`") != -1 || path.indexOf("|") != -1 ||
+                path.indexOf(";") != -1 || path.indexOf("\\") != -1 || path.indexOf("&") != -1 ||
+                path.indexOf("(") != -1 || path.indexOf(")") != -1 ) {
+            log.error("Disallowed character found and false will be returned. Path: "+path);
+            return false;
+        }
+        return true;
     }
 
     /**
