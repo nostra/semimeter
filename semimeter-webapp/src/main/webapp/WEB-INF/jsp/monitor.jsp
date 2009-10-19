@@ -36,7 +36,7 @@
             $.getJSON("<c:url value="/show${path}?resolution=${counterresolution}"/>",
                     function(data1) {
                         $.each(data1.Results, function(i, item1) {
-                            if (item1.value != $("#theNumber").html()) {
+                            if (fNum(item1.value) != $("#theNumber").html()) {
                                 $("#theNumber").fadeOut(500, function() {
                                     doUpdateStatistics(item1.value);
                                 });
