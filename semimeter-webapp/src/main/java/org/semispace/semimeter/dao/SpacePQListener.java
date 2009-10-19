@@ -38,10 +38,10 @@ public class SpacePQListener extends AbstractSpace2Dao {
     public void retrieveAndTreatData() {
         ParameterizedQuery pq;
         do {
-            log.debug("Taking PQ");
+            //log.debug("Taking PQ");
             pq = getSpace().takeIfExists(new ParameterizedQuery());
             if ( pq != null ) {
-                log.debug("Found PQ with key "+pq.getKey());
+                //log.debug("Found PQ with key "+pq.getKey());
                 if ( getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
                     log.debug("Query already performed - not doing it again.");
                 } else {
@@ -53,8 +53,6 @@ public class SpacePQListener extends AbstractSpace2Dao {
                     }
                     getSpace().write(pqr, MAX_RESULT_LIFE_MS);
                 }
-            } else {
-                log.debug("No PQ found.");
             }
         } while ( pq != null);
 

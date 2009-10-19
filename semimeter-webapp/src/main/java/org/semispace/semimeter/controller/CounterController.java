@@ -45,11 +45,11 @@ public class CounterController {
     private SemiSpaceInterface space = SemiSpace.retrieveSpace();
 
     /**
-     * Default query skew is 30 seconds. This is in order to let the database have
+     * Default query skew is 20 seconds. This is in order to let the database have
      * time to insert pending data.
      * TODO Consider adjusting the value.
      */
-    private static final long DEFAULT_SKEW_IN_MS = 30000;
+    private static final long DEFAULT_SKEW_IN_MS = 20000;
     private static final long QUERY_LIFE_TIME_MS = 5000;
     private static final long QUERY_RESULT_TIMEOUT_MS = 6000;
 
@@ -121,11 +121,7 @@ public class CounterController {
 
         JsonResults[] jrs = createJsonResults(trimPath("/json.html", request.getServletPath()), endAt, startAt, resolution );
 
-        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
-        xStream.setMode(XStream.NO_REFERENCES);
-        xStream.alias("Result", JsonResults.class);
-        // Easiest way of getting rid of the -array suffix.
-        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
+        String str = createJsonStringFromArray(jrs);
 
         model.addAttribute("numberOfItems", str);
 
@@ -147,14 +143,19 @@ public class CounterController {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
         JsonResults[] jrs = semiMeterDao.createTimeArray( path+"%", endAt, startAt, numberOfSamples );
-        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
-        xStream.setMode(XStream.NO_REFERENCES);
-        xStream.alias("Result", JsonResults.class);
-        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
+        String str = createJsonStringFromArray(jrs);
 
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
+    }
+
+    private String createJsonStringFromArray(JsonResults[] jrs) {
+        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
+        xStream.setMode(XStream.NO_REFERENCES);
+        xStream.alias("Result", JsonResults.class);
+        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
+        return str;
     }
 
     /**
@@ -167,9 +168,9 @@ public class CounterController {
         if ( path == null ) {
             path = "";
         }
-        // Sanity checking some parameters. Should not really matter. Notice that % and $ is allowed
+
         if ( !isSane( path )) {
-            return "showcount";
+            throw new RuntimeException("Disallowed character found in query.");
         }
 
         // It is slightly tricky to get spring to map separate general paths, so this must be done manually
@@ -181,6 +182,10 @@ public class CounterController {
         }
     }
 
+    /**
+     * Sanity checking some parameters. Should not really matter. Notice that % and $ is allowed
+     * TODO Throw exception here instead
+     */
     private boolean isSane(String path) {
         if ( path.indexOf("'") != -1 || path.indexOf("`") != -1 || path.indexOf("|") != -1 ||
                 path.indexOf(";") != -1 || path.indexOf("\\") != -1 || path.indexOf("&") != -1 ||
@@ -227,8 +232,15 @@ public class CounterController {
     private String displayCurrent(String path, Model model, String resolution) {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        long result = semiMeterDao.sumItems( startAt, endAt, path+"%" );
+        JsonResults[] jrs = new JsonResults[1];
+        jrs[0] = new JsonResults();
+        jrs[0].setKey("show");
+        jrs[0].setValue(""+result);
+        String str = createJsonStringFromArray(jrs);
 
-        model.addAttribute("numberOfItems", semiMeterDao.sumItems( startAt, endAt, path+"%" ));
+        model.addAttribute("numberOfItems", str);
+
         return "showcount";
     }
 
@@ -238,7 +250,13 @@ public class CounterController {
         long previousPeriod = calculateStartTimeFromResolution(resolution, startAt);
         long result = semiMeterDao.sumItems(startAt, endAt, path + "%").longValue() - semiMeterDao.sumItems(previousPeriod, startAt, path + "%").longValue();
 
-        model.addAttribute("numberOfItems", Long.valueOf( result ));
+        JsonResults[] jrs = new JsonResults[1];
+        jrs[0] = new JsonResults();
+        jrs[0].setKey("change");
+        jrs[0].setValue(""+result);
+        String str = createJsonStringFromArray(jrs);
+
+        model.addAttribute("numberOfItems", str);
 
         return "showcount";
     }
