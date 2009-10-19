@@ -68,7 +68,9 @@
                         var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str +
                                        "&chxr=0,0," + max + "&chxt=y&chxl=";
 
-                        $("#chartBarImg").attr("src", chartUrl);
+                        if ($("#chartBarImg").attr("src") != chartUrl) {
+                            $("#chartBarImg").attr("src", chartUrl);
+                        }
                         return true;
                     });
         }
