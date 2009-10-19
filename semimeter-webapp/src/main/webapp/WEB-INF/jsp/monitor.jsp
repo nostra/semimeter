@@ -36,11 +36,21 @@
             $.getJSON("<c:url value="/show${path}?resolution=${counterresolution}"/>",
                     function(data1) {
                         $.each(data1.Results, function(i, item1) {
-                            $("#theNumber").text(fNum(item1.value));
+                            if (item1.value != $("#theNumber").html()) {
+                                $("#theNumber").fadeOut(500, function() {
+                                    doUpdateStatistics(item1.value);
+                                });
+                            }
                             if (i == 1) return true;
                         });
                     });
         }
+
+        function doUpdateStatistics(s) {
+            $("#theNumber").text(fNum(s));
+            $("#theNumber").fadeIn(500);
+        }
+
 
         function updateGraph() {
             $.getJSON("<c:url value="${path}/array.html?resolution=${graphresolution}&numberOfSamples=${graphsamples}"/>",
