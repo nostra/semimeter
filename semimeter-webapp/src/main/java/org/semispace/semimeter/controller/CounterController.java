@@ -18,13 +18,13 @@ package org.semispace.semimeter.controller;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
+import org.semispace.SemiSpace;
+import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.semispace.semimeter.space.CounterHolder;
-import org.semispace.SemiSpace;
-import org.semispace.SemiSpaceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +98,25 @@ public class CounterController {
         model.addAttribute("updateInterval", updtFreq);
 
         return "bargraph";
+    }
+
+    @RequestMapping("**/monitor.html")
+    public String monitorPage( Model model,HttpServletRequest request, @RequestParam(required = false) String graphresolution, @RequestParam(required = false) String counterresolution) {
+        if ( !isSane( request.getServletPath())) {
+            throw new RuntimeException("Disallowed character found in query.");
+        }
+        if (graphresolution == null) {
+            graphresolution = "month";
+        }
+        if (counterresolution == null) {
+            counterresolution = "total";
+        }
+        model.addAttribute("graphresolution", graphresolution);
+        model.addAttribute("counterresolution", graphresolution);
+        model.addAttribute("path", trimPath("/monitor.html", request.getServletPath()));
+        model.addAttribute("graphsamples", calculateNumberOfSamples(graphresolution));
+
+        return "monitor";
     }
 
     @RequestMapping("**/json.html")
@@ -259,6 +278,30 @@ public class CounterController {
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
+    }
+
+    public static long calculateNumberOfSamples(String resolution) {
+        long numberOfSamples;
+        if ( resolution.equalsIgnoreCase("second")) {
+            numberOfSamples = 60;
+        } else if ( resolution.equalsIgnoreCase("minute")) {
+            numberOfSamples = 60;
+        } else if ( resolution.equalsIgnoreCase("hour")) {
+            numberOfSamples = 60;
+        } else if ( resolution.equalsIgnoreCase("day")) {
+            numberOfSamples = 24;
+        } else if ( resolution.equalsIgnoreCase("week")) {
+            numberOfSamples = 7;
+        } else if ( resolution.equalsIgnoreCase("month")) {
+            // Using 30 day month
+            numberOfSamples = 30;
+        } else if ( resolution.equalsIgnoreCase("total")) {
+            // Defaulting to total - beginning at time 0
+            numberOfSamples = 0;
+        } else {
+            throw new RuntimeException("Did not understand resolution "+resolution);
+        }
+        return numberOfSamples;
     }
 
     public static long calculateStartTimeFromResolution(String resolution, long endAt) {

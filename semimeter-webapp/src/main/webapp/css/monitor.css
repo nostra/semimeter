@@ -1,0 +1,77 @@
+@import "reset.css";
+
+body {
+    font-family: "Helvetica", "Arial", sans-serif;
+}
+
+#mainContent {
+    height: 100%;
+}
+
+#disclaimer {
+    padding: 10px;
+    height: 130px;
+    border-left: 4px solid #ececec;
+    border-right: 4px solid #ececec;
+    background-color: #ececec;
+    display: none;
+}
+
+#disclaimerButton {
+    position: absolute;
+    top: 0px;
+    right: 20px;
+}
+
+#disclaimer h1 {
+    margin-bottom: 10px;
+}
+
+#disclaimer p {
+    margin-bottom: 10px;
+}
+
+#infoBar {
+    border-top: 4px solid #ececec;
+    text-align: center;
+    padding-top: 12px;
+    height: 32px;
+    font-size: 16px;
+    background-color: #fff;
+
+}
+
+#numberBar {
+    background-color: #ececec;
+    height: 200px;
+}
+
+#numberBarMain {
+    height: 180px;
+}
+
+#theNumber {
+    font-size: 72px;
+    font-weight: bold;
+    text-align: center;
+    padding-top: 50px;
+}
+
+#numberBarTopShadow {
+    height: 10px;
+    background-image: url("../gfx/grey_bck.png");
+}
+
+#numberBarBottomShadow {
+    height: 10px;
+    background-image: url("../gfx/grey_bck_2.png");
+}
+
+#chartBar {
+    padding-top: 10px;
+    height: 150px;
+    text-align: center;
+    clear: both;
+}
+
+
