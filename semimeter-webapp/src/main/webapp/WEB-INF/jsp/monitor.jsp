@@ -24,9 +24,6 @@
     <title>SemiMeter Monitor - ${path}</title>
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 
-    <!-- Using refresh until graph problems are solved-->
-    <META HTTP-EQUIV="refresh" content="60">
-
     <link href="<c:url value="/css/monitor.css"/>" rel="stylesheet" type="text/css" title="SemiMeter">
     <script type="text/javascript" src="<c:url value="/js/jquery-1.3.2.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/js/jquery.timers-1.2.js"/>"></script>
@@ -37,35 +34,41 @@
 
         function updateStatistics() {
             $.getJSON("<c:url value="/show${path}?resolution=${counterresolution}"/>",
-                    function(data) {
-                        $.each(data.Results, function(i, item) {
-                            $("#theNumber").text(fNum(item.value));
-                            if (i == 1) return false;
+                    function(data1) {
+                        $.each(data1.Results, function(i, item1) {
+                            $("#theNumber").text(fNum(item1.value));
+                            if (i == 1) return true;
                         });
                     });
+        }
 
+        function updateGraph() {
             $.getJSON("<c:url value="${path}/array.html?resolution=${graphresolution}&numberOfSamples=${graphsamples}"/>",
-                               function(data) {
-                                   var str = "";
-                                   var max = 0;
-                                   $.each(data.Results, function(i, item) {
-                                       str += item.value + ",";
-                                       if (item.value > max) {
-                                           max = item.value;
-                                       }
-                                   });
-                                   str = str.substr(0, str.length - 1);
-                                   var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str + "&chxr=0,0," + max + "&chxt=y&chxl=";
+                    function(data) {
+                        var str = "";
+                        var max = 0;
+                        $.each(data.Results, function(i, item) {
+                            str += item.value + ",";
+                            if (item.value > max) {
+                                max = item.value;
+                            }
+                        });
+                        str = str.substr(0, str.length - 1);
+                        var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str +
+                                       "&chxr=0,0," + max + "&chxt=y&chxl=";
 
-                                   $("<img/>").attr("src", chartUrl).replaceAll("#chart");
-                               });
-
-
+                        $("#chartBarImg").attr("src", chartUrl);
+                        return true;
+                    });
         }
 
         $(document).ready(function() {
             $(document).everyTime(6000, function(i) {
                 updateStatistics();
+            });
+
+            $(document).everyTime(6000, function(i) {
+                updateGraph();
             });
 
             $("#disclaimerButton").click(function() {
@@ -74,6 +77,7 @@
             });
 
             updateStatistics();
+            updateGraph();
         });
 
     </script>
@@ -100,8 +104,7 @@
     </div>
 
     <div id="chartBar">
-        <div id="chart"></div>
-        <div id="charttext"></div>
+        <div id="chart"><img id="chartBarImg" src="<c:url value="/gfx/blank.gif"/>" alt="" /></div>
     </div>
 </div>
 
