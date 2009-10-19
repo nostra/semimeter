@@ -111,8 +111,9 @@ public class CounterController {
         if (counterresolution == null) {
             counterresolution = "total";
         }
+        calculateNumberOfSamples(counterresolution); // Just in order to get an exception if value is wrong
         model.addAttribute("graphresolution", graphresolution);
-        model.addAttribute("counterresolution", graphresolution);
+        model.addAttribute("counterresolution", counterresolution);
         model.addAttribute("path", trimPath("/monitor.html", request.getServletPath()));
         model.addAttribute("graphsamples", calculateNumberOfSamples(graphresolution));
 

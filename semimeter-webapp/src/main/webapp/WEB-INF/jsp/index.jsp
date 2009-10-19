@@ -90,6 +90,14 @@ The following links are example of URLs that can be used in a img src expression
         <li><a href="semimeter/array.html?resolution=minute&amp;numberOfSamples=60">semimeter/array.html?resolution=minute&amp;numberOfSamples=60 - Query for an array with data from the last minute. As the number of samples is specified to be 60, you get values for each second.</a></li>
     </ul>
 
+    <h3>Data presentation on page:</h3>
+    <ul>
+        <li><a href="semimeter/pub1/monitor.html">semimeter/pub1/monitor.html - monitor subtree of semimeter/pub1.</a></li>
+        <li><a href="monitor.html">monitor.html - display a grand total.</a></li>
+        <li><a href="monitor.html?graphresolution=hour">monitor.html?graphresolution=hour - display total last hour.</a></li>
+        <li><a href="monitor.html?counterresolution=minute">monitor.html ?counterresolution=minute- display a grand total in graph, whilst using minutes as resolution in counter.</a></li>
+        <li><a href="monitor.html?graphresolution=month&amp;counterresolution=total">monitor.html?graphresolution=month&amp;counterresolution=total - display monthly data in graph, whilst showing total in counter.</a></li>
+    </ul>
 
     <hr/>
     <p>
