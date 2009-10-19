@@ -33,17 +33,26 @@
     <script type="text/javascript">
 
         function updateStatistics() {
-            $.getJSON("<c:url value="/show${path}?resolution=${counterresolution}"/>",
-                    function(data1) {
-                        $.each(data1.Results, function(i, item1) {
-                            if (fNum(item1.value) != $("#theNumber").html()) {
-                                $("#theNumber").fadeOut(500, function() {
-                                    doUpdateStatistics(item1.value);
-                                });
-                            }
-                            if (i == 1) return true;
-                        });
-                    });
+            $.ajax({
+               type: "GET",
+               url: "<c:url value="/show${path}?resolution=${counterresolution}"/>",
+               dataType: "json",
+               cache: false,
+               success: function(data1){
+                   $.each(data1.Results, function(i, item1) {
+                       if (fNum(item1.value) != $("#theNumber").html()) {
+                           $("#theNumber").fadeOut(500, function() {
+                               doUpdateStatistics(item1.value);
+                           });
+                       }
+                       if (i == 1) return true;
+                   });
+               },
+               error: function(XMLHttpRequest, textStatus, errorThrown) {
+                   // Keep old number if possible 
+                   //$("#theNumber").text("please wait...");
+               }
+             });
         }
 
         function doUpdateStatistics(s) {
@@ -53,17 +62,23 @@
 
 
         function updateGraph() {
-            $.getJSON("<c:url value="${path}/array.html?resolution=${graphresolution}&numberOfSamples=${graphsamples}"/>",
-                    function(data) {
-                        var str = "";
-                        var max = 0;
+            $.ajax({
+                type: "GET",
+                url: "<c:url value="${path}/array.html?resolution=${graphresolution}&numberOfSamples=${graphsamples}"/>",
+                dataType: "json",
+                cache: false,
+                success: function(data) {
+                    var str = "";
+                    var max = 0;
 
-                        $.each(data.Results, function(i, item) {
-                            str += item.value + ",";
-                            if (parseInt(item.value) > max) {
-                                max = parseInt(item.value);
-                            }
-                        });
+                    $.each(data.Results, function(i, item) {
+                        str += item.value + ",";
+                        if (parseInt(item.value) > max) {
+                            max = parseInt(item.value);
+                        }
+                    });
+
+                    if (str != "") {
                         str = str.substr(0, str.length - 1);
                         var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str +
                                        "&chxr=0,0," + max + "&chxt=y&chxl=";
@@ -71,8 +86,13 @@
                         if ($("#chartBarImg").attr("src") != chartUrl) {
                             $("#chartBarImg").attr("src", chartUrl);
                         }
-                        return true;
-                    });
+                    }
+                    return true;
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    // Keep old image if any
+                }
+            });
         }
 
         $(document).ready(function() {
