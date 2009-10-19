@@ -42,21 +42,26 @@
                     });
 
             $.getJSON("<c:url value="${path}/array.html?resolution=${graphresolution}&numberOfSamples=${graphsamples}"/>",
-                    function(data) {
-                        var str = "";
-                        $.each(data.Results, function(i, item) {
-                            str += item.value + ",";
-                        });
-                        str = str.substr(0, str.length - 1);
-                        var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str + "&chxt=y";
+                               function(data) {
+                                   var str = "";
+                                   var max = 0;
+                                   $.each(data.Results, function(i, item) {
+                                       str += item.value + ",";
+                                       if (item.value > max) {
+                                           max = item.value;
+                                       }
+                                   });
+                                   str = str.substr(0, str.length - 1);
+                                   var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str + "&chxr=0,0," + max + "&chxt=y&chxl=";
 
-                        $("<img/>").attr("src", chartUrl).replaceAll("#chart");
-                    });
+                                   $("<img/>").attr("src", chartUrl).replaceAll("#chart");
+                               });
+
 
         }
 
         $(document).ready(function() {
-            $(document).everyTime(60000, function(i) {
+            $(document).everyTime(6000, function(i) {
                 updateStatistics();
             });
 
@@ -77,7 +82,7 @@
     <div id="disclaimer">
         <h1>SemiMeter monitor</h1>
 
-        <p>The information on this page is updated every 60 second.</p>
+        <p>The information on this page is updated every 6 second.</p>
 
     </div>
     <div id="infoBar">
