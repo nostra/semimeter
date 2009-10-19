@@ -22,6 +22,8 @@ import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.ArrayQuery;
 import org.semispace.semimeter.bean.ArrayQueryResult;
+import org.semispace.semimeter.bean.DisplayIntent;
+import org.semispace.semimeter.bean.DisplayResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
@@ -274,15 +276,31 @@ public class CounterController {
     private String displayCurrent(String path, Model model, String resolution) {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
-        // TODO Cache with semispace
-        long result = semiMeterDao.sumItems( startAt, endAt, path+"%" );
-        JsonResults[] jrs = new JsonResults[1];
-        jrs[0] = new JsonResults();
-        jrs[0].setKey("show");
-        jrs[0].setValue(""+result);
-        String str = createJsonStringFromArray(jrs);
+        
+        DisplayIntent di = new DisplayIntent(path+"_"+resolution);
+        DisplayResult dr = space.readIfExists(new DisplayResult(di.getPath()));
+        if ( dr == null && space.readIfExists(di) == null ) {
+            space.write(di, QUERY_LIFE_TIME_MS);
 
-        model.addAttribute("numberOfItems", str);
+            Long result = semiMeterDao.sumItems( startAt, endAt, path+"%" );
+            JsonResults[] jrs = new JsonResults[1];
+            jrs[0] = new JsonResults();
+            jrs[0].setKey("show");
+            jrs[0].setValue(""+result);
+            String str = createJsonStringFromArray(jrs);
+
+            dr = new DisplayResult(di.getPath());
+            dr.setResult( str );
+            space.write(dr, QUERY_RESULT_TIMEOUT_MS);
+            space.takeIfExists( di );
+        }
+        if ( dr == null ) {
+            // DisplayIntent was present
+            dr = space.read(dr, QUERY_LIFE_TIME_MS);
+        }
+        if ( dr != null ) {
+            model.addAttribute("numberOfItems", dr.getResult());
+        }
 
         return "showcount";
     }
