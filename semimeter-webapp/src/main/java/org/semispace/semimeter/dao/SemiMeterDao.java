@@ -30,7 +30,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -125,43 +124,50 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     }
 
     protected void performInsertion(Collection<Item> items) {
+        List<Object[]> insertArgs = new ArrayList<Object[]>();
+        List<Object[]> updateArgs = new ArrayList<Object[]>();
+
         for ( Item item : items ) {
-            insert( item );
+            // Original just called insert
+            insertArgs.add( new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
+            updateArgs.add( new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
+        }
+        rwl.writeLock().lock();
+        try {
+            try {
+                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                        insertArgs);
+            } catch ( Exception e ) {
+                log.warn("Unlikely event occured - failure whilst inserting priming elements", e);
+            }
+            jdbcTemplate.batchUpdate("update meter SET count=count+? WHERE path like ? and updated=?",
+                updateArgs );        
+        } catch ( Exception e ) {
+            log.error("Could not insert or update", e);
+        } finally {
+            rwl.writeLock().unlock();
         }
     }
 
     /**
      * Insertion is performed like this: Try to insert item with count of zero if does not already
      * exist. Then update the count to the correct value. The candidate key for the element is
-     * (when + path).
+     * (when + path). This method is now legacy 
      */
     private void insert(Item item) {
         rwl.writeLock().lock();
         try {
-            Long same = null;
             try {
-                // First figure out whether the entry already is present - querying on trivial field
-                same = Long.valueOf(jdbcTemplate.queryForLong("select updated from meter " +
-                        "WHERE " +
-                        "updated=? AND path=?",
-                        new Object[]{item.getWhen(), item.getPath()}));
-            } catch ( EmptyResultDataAccessException erdae ) {
-                // Expected and OK
+                jdbcTemplate.update("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                    new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
+            } catch ( Exception e ) {
+                log.warn("Unlikely event occured - failure whilst inserting priming element", e);
             }
-            if ( same == null || same.longValue() == 0 ) {
-                // Insert element
-                try {
-                    jdbcTemplate.update("insert into meter(updated, count, path) values (?, 0, ?)",
-                        new Object[] { item.getWhen(), item.getPath()});
-                } catch ( Exception e ) {
-                    log.error("Got exception inserting element. Non-fatal, but we will probably loose the count of "+item+". Masked exception "+e);
-                }
-            }
-
             jdbcTemplate.update(
                     "update meter SET count=count+? WHERE path like ? and updated=?",
                     new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
-
+        } catch ( Exception e ) {
+            log.error("Could not insert or update", e);
         } finally {
             rwl.writeLock().unlock();
         }
