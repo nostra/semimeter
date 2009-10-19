@@ -47,10 +47,11 @@
                     function(data) {
                         var str = "";
                         var max = 0;
+
                         $.each(data.Results, function(i, item) {
                             str += item.value + ",";
-                            if (item.value > max) {
-                                max = item.value;
+                            if (parseInt(item.value) > max) {
+                                max = parseInt(item.value);
                             }
                         });
                         str = str.substr(0, str.length - 1);
