@@ -21,10 +21,10 @@ import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.ArrayQuery;
+import org.semispace.semimeter.bean.ArrayQueryResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
-import org.semispace.semimeter.bean.ArrayQueryResult;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 public class CounterController {
@@ -154,14 +155,13 @@ public class CounterController {
      *
      */
     @RequestMapping("**/array.html")
-    public String showArray( Model model, HttpServletRequest request, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
+    public String showArray( Model model, HttpServletRequest request, HttpServletResponse response, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
         if ( numberOfSamples.intValue() < 1 ) {
             throw new RuntimeException("numberOfSamples must be larger than 0.");
         }
         if ( !isSane( request.getServletPath())) {
             throw new RuntimeException("Disallowed character found in query.");
         }
-
         String path = trimPath("/array.html", request.getServletPath());
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
@@ -169,7 +169,7 @@ public class CounterController {
         ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
         ArrayQueryResult aqr = space.readIfExists(toFind);
         if ( aqr == null ) {
-            log.debug("No previous result for {}", aq.getKey());
+            //log.debug("No previous result for {}", aq.getKey());
             if ( space.readIfExists(aq) == null ) {
                 space.write(aq, QUERY_LIFE_TIME_MS);
             } else {
@@ -246,7 +246,7 @@ public class CounterController {
         ParameterizedQueryResult toFind = new ParameterizedQueryResult(pq.getKey(), null);
         ParameterizedQueryResult pqr = space.readIfExists(toFind);
         if ( pqr == null ) {
-            log.debug("No previous result for {}", pq.getKey());
+            //log.debug("No previous result for {}", pq.getKey());
             if ( space.readIfExists(pq) == null ) {
                 space.write(pq, QUERY_LIFE_TIME_MS);
             } else {

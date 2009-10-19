@@ -262,7 +262,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             final String sql = "SELECT updated, count FROM meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ? ORDER BY updated";
-            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
             list = jdbcTemplate.queryForList(sql,
                     new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path});
         } finally {

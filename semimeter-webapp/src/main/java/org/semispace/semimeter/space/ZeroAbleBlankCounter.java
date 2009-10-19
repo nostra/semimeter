@@ -16,7 +16,6 @@
 
 package org.semispace.semimeter.space;
 
-import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,8 @@ public class ZeroAbleBlankCounter {
 
         if ( old.size() > 0 ) {
             // Insert lock into space to be counted by separate process.
-            space.write(old, SemiSpace.ONE_DAY);
+            // Timeout 10 minutes - if not registered by then, just forget about them.
+            space.write(old, 10*60*1000);
         } else {
             log.debug("No data was contained in counter holder.");
         }

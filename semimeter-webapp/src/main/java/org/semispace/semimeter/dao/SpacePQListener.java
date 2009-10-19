@@ -65,9 +65,6 @@ public class SpacePQListener extends AbstractSpace2Dao {
                     log.debug("Array query already performed - not doing it again.");
                 } else {
                     JsonResults[] result = getMeterDao().createTimeArray( aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
-                    if ( result != null && result.length > 0 ) {
-                        log.debug(result[result.length-1].getKey()+" "+result[result.length-1].getValue());
-                    }
                     ArrayQueryResult aqr = new ArrayQueryResult(aq.getKey(), result);
                     long life = (aq.getEndAt() - aq.getStartAt() / 2);
                     if ( life > MAX_RESULT_LIFE_MS) {

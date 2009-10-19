@@ -24,6 +24,9 @@
     <title>SemiMeter Monitor - ${path}</title>
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 
+    <!-- Using refresh until graph problems are solved-->
+    <META HTTP-EQUIV="refresh" content="60">
+
     <link href="<c:url value="/css/monitor.css"/>" rel="stylesheet" type="text/css" title="SemiMeter">
     <script type="text/javascript" src="<c:url value="/js/jquery-1.3.2.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/js/jquery.timers-1.2.js"/>"></script>
