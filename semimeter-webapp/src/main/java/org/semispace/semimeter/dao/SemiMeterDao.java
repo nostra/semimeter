@@ -138,12 +138,12 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 jdbcTemplate.batchUpdate("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
                         insertArgs);
             } catch ( Exception e ) {
-                log.warn("Unlikely event occured - failure whilst inserting priming elements", e);
+                log.warn("Unlikely event occured - failure whilst inserting priming elements. This is not overly critical. Masked exception: "+e);
             }
             jdbcTemplate.batchUpdate("update meter SET count=count+? WHERE path like ? and updated=?",
                 updateArgs );        
         } catch ( Exception e ) {
-            log.error("Could not insert or update", e);
+            log.error("Could not update elements", e);
         } finally {
             rwl.writeLock().unlock();
         }
