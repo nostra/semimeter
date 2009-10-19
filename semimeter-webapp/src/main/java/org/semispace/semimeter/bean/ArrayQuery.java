@@ -17,21 +17,24 @@
 package org.semispace.semimeter.bean;
 
 /**
+ * 
  */
-public class ParameterizedQuery {
+public class ArrayQuery {
     private Long startAt;
     private Long endAt;
     private String path;
+    private Integer numberOfSamples;
     private String key;
 
-    public ParameterizedQuery(String resolution, long startAt, long endAt, String path) {
+    public ArrayQuery(String resolution, long startAt, long endAt, String path, Integer numberOfSamples) {
         this.startAt = startAt;
         this.endAt = endAt;
         this.path = path;
-        this.key = path+"_"+resolution;
+        this.numberOfSamples = numberOfSamples;
+        this.key = path+"_"+resolution+"_"+numberOfSamples;
     }
 
-    public ParameterizedQuery() {
+    public ArrayQuery() {
         // Intentionally empty
     }
 
@@ -51,4 +54,7 @@ public class ParameterizedQuery {
         return key;
     }
 
+    public Integer getNumberOfSamples() {
+        return numberOfSamples;
+    }
 }

@@ -20,9 +20,11 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
+import org.semispace.semimeter.bean.ArrayQuery;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.bean.ArrayQueryResult;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
@@ -149,7 +151,7 @@ public class CounterController {
     }
 
     /**
-     * TODO Consider changing the into a space query
+     *
      */
     @RequestMapping("**/array.html")
     public String showArray( Model model, HttpServletRequest request, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
@@ -159,12 +161,33 @@ public class CounterController {
         if ( !isSane( request.getServletPath())) {
             throw new RuntimeException("Disallowed character found in query.");
         }
+
         String path = trimPath("/array.html", request.getServletPath());
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
-        JsonResults[] jrs = semiMeterDao.createTimeArray( path+"%", endAt, startAt, numberOfSamples );
-        String str = createJsonStringFromArray(jrs);
+        ArrayQuery aq = new ArrayQuery(resolution, startAt, endAt, path+"%", numberOfSamples);
+        ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
+        ArrayQueryResult aqr = space.readIfExists(toFind);
+        if ( aqr == null ) {
+            log.debug("No previous result for {}", aq.getKey());
+            if ( space.readIfExists(aq) == null ) {
+                space.write(aq, QUERY_LIFE_TIME_MS);
+            } else {
+                log.debug("Query for {} has already been placed", aq.getKey());
+            }
+            aqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
+        } else {
+            log.trace("Using existing result for {}", aq.getKey());
+        }
+        JsonResults[] jrs = null;
+        if ( aqr != null ) {
+            jrs = aqr.getResults();
+        } else {
+            log.debug("Query timed out: {}", aq.getKey());
+        }
+ //JsonResults[] sanity = semiMeterDao.createTimeArray( path+"%", endAt, startAt, numberOfSamples );
 
+        String str = createJsonStringFromArray(jrs);
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
@@ -252,6 +275,7 @@ public class CounterController {
     private String displayCurrent(String path, Model model, String resolution) {
         long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
         long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        // TODO Cache with semispace
         long result = semiMeterDao.sumItems( startAt, endAt, path+"%" );
         JsonResults[] jrs = new JsonResults[1];
         jrs[0] = new JsonResults();
@@ -284,7 +308,7 @@ public class CounterController {
     public static long calculateNumberOfSamples(String resolution) {
         long numberOfSamples;
         if ( resolution.equalsIgnoreCase("second")) {
-            numberOfSamples = 60;
+            numberOfSamples = 60; // A resolution of seconds does not make sense.
         } else if ( resolution.equalsIgnoreCase("minute")) {
             numberOfSamples = 60;
         } else if ( resolution.equalsIgnoreCase("hour")) {
@@ -298,7 +322,7 @@ public class CounterController {
             numberOfSamples = 30;
         } else if ( resolution.equalsIgnoreCase("total")) {
             // Defaulting to total - beginning at time 0
-            numberOfSamples = 0;
+            numberOfSamples = 10;
         } else {
             throw new RuntimeException("Did not understand resolution "+resolution);
         }

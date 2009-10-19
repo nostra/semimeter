@@ -17,8 +17,10 @@
 package org.semispace.semimeter.dao;
 
 import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.ParameterizedQuery;
+import org.semispace.semimeter.bean.ArrayQuery;
+import org.semispace.semimeter.bean.ArrayQueryResult;
 import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +28,9 @@ import org.slf4j.LoggerFactory;
 public class SpacePQListener extends AbstractSpace2Dao {
     private final Logger log = LoggerFactory.getLogger(SpacePQListener.class);
     /**
-     * Max query life 50 sec
+     * Max query life 30 sec
      */
-    private static final long MAX_RESULT_LIFE_MS = 50000;
+    private static final long MAX_RESULT_LIFE_MS = 30000;
 
     public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao) {
         super(space, meterDao);
@@ -37,13 +39,14 @@ public class SpacePQListener extends AbstractSpace2Dao {
     @Override
     public void retrieveAndTreatData() {
         ParameterizedQuery pq;
+        ArrayQuery aq;
         do {
             //log.debug("Taking PQ");
             pq = getSpace().takeIfExists(new ParameterizedQuery());
             if ( pq != null ) {
                 //log.debug("Found PQ with key "+pq.getKey());
                 if ( getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
-                    log.debug("Query already performed - not doing it again.");
+                    log.debug("PQ-Query already performed - not doing it again.");
                 } else {
                     JsonResults[] result = getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
                     ParameterizedQueryResult pqr = new ParameterizedQueryResult(pq.getKey(), result);
@@ -54,7 +57,27 @@ public class SpacePQListener extends AbstractSpace2Dao {
                     getSpace().write(pqr, MAX_RESULT_LIFE_MS);
                 }
             }
-        } while ( pq != null);
+
+            aq = getSpace().takeIfExists(new ArrayQuery());
+            if ( aq != null ) {
+                //log.debug("Found AQ with key "+aq.getKey());
+                if ( getSpace().readIfExists(new ArrayQueryResult(aq.getKey(), null)) != null) {
+                    log.debug("Array query already performed - not doing it again.");
+                } else {
+                    JsonResults[] result = getMeterDao().createTimeArray( aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
+                    if ( result != null && result.length > 0 ) {
+                        log.debug(result[result.length-1].getKey()+" "+result[result.length-1].getValue());
+                    }
+                    ArrayQueryResult aqr = new ArrayQueryResult(aq.getKey(), result);
+                    long life = (aq.getEndAt() - aq.getStartAt() / 2);
+                    if ( life > MAX_RESULT_LIFE_MS) {
+                        life = MAX_RESULT_LIFE_MS;
+                    }
+                    getSpace().write(aqr, MAX_RESULT_LIFE_MS);
+                }
+            }
+
+        } while ( pq != null || aq != null);
 
     }
 }

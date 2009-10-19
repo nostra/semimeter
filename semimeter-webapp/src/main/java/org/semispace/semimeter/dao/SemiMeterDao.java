@@ -19,6 +19,7 @@ package org.semispace.semimeter.dao;
 import org.semispace.SemiEventRegistration;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
+import org.semispace.semimeter.bean.ArrayQuery;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
@@ -49,6 +50,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private SimpleJdbcTemplate jdbcTemplate;
     private SemiEventRegistration chRegistration;
     private SemiEventRegistration pqRegistration;
+    private SemiEventRegistration aqRegistration;
+    
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space = SemiSpace.retrieveSpace();
     private static final int MAX_PATH_LENGTH = 2048;
@@ -98,9 +101,12 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         if ( chRegistration != null || pqRegistration != null) {
             log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
         } else {
+            SpacePQListener spacePqListener = new SpacePQListener( space, this);
             // Listen for events a year
             chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this), SemiSpace.ONE_DAY*3650);
-            pqRegistration = space.notify(new ParameterizedQuery(), new SpacePQListener( space, this), SemiSpace.ONE_DAY*3650);
+            pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
+            aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
+
         }
 
         if ( size() >= 0 ) {
@@ -170,6 +176,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         if ( pqRegistration!= null ) {
             pqRegistration.getLease().cancel();
             pqRegistration = null;
+        }
+        if ( aqRegistration!= null ) {
+            aqRegistration.getLease().cancel();
+            aqRegistration = null;
         }
     }
 
@@ -252,7 +262,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             final String sql = "SELECT updated, count FROM meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ? ORDER BY updated";
-            //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
+            log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
             list = jdbcTemplate.queryForList(sql,
                     new Object[]{Long.valueOf( startAt ), Long.valueOf( endAt ), path});
         } finally {

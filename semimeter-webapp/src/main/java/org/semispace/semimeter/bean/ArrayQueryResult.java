@@ -17,38 +17,22 @@
 package org.semispace.semimeter.bean;
 
 /**
+ *
  */
-public class ParameterizedQuery {
-    private Long startAt;
-    private Long endAt;
-    private String path;
-    private String key;
+public class ArrayQueryResult {
+    private final String key;
+    private final JsonResults[] results;
 
-    public ParameterizedQuery(String resolution, long startAt, long endAt, String path) {
-        this.startAt = startAt;
-        this.endAt = endAt;
-        this.path = path;
-        this.key = path+"_"+resolution;
-    }
-
-    public ParameterizedQuery() {
-        // Intentionally empty
-    }
-
-    public Long getStartAt() {
-        return startAt;
-    }
-
-    public Long getEndAt() {
-        return endAt;
-    }
-
-    public String getPath() {
-        return path;
+    public ArrayQueryResult(String key, JsonResults[] results) {
+        this.key = key;
+        this.results = results;
     }
 
     public String getKey() {
         return key;
     }
 
+    public JsonResults[] getResults() {
+        return results;
+    }
 }
