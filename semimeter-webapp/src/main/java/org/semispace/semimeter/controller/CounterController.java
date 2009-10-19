@@ -183,9 +183,8 @@ public class CounterController {
         if ( aqr != null ) {
             jrs = aqr.getResults();
         } else {
-            log.debug("Query timed out: {}", aq.getKey());
+            log.debug("ArrayQuery timed out: {}", aq.getKey());
         }
- //JsonResults[] sanity = semiMeterDao.createTimeArray( path+"%", endAt, startAt, numberOfSamples );
 
         String str = createJsonStringFromArray(jrs);
         model.addAttribute("numberOfItems", str);
