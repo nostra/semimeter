@@ -108,22 +108,38 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
 
         }
 
-        if ( size() >= 0 ) {
-            return;
+        if ( size() < 0 ) {
+            log.info("Creating table meter");
+            // The data type integer in the database is a long in the java world.
+            try {
+                jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
+            } catch ( Exception e ) {
+                log.error("Did not manage to create table meter?!",e);
+            }
+            try {
+                // Need an initial default value
+                jdbcTemplate.getJdbcOperations().execute("insert into meter(updated, count, path) values (1, 0, '__disregarded needed default__')");
+            } catch ( Exception e ) {
+                log.error("Could not create default?!",e);
+            }
         }
-        log.info("Creating table stalegroup");
-        // The data type integer in the database is a long in the java world.
-        jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
         try {
-            jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on stalegroup( updated )");
-            jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on stalegroup( path )");
+            log.debug("Creating indexes (even if they already exist)");
+            // Create indexes
+            jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on meter( updated )");
+            jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on meter( path )");
         } catch ( Exception e ) {
-            log.error("Did not manage to create index on updated field. Ignoring this, as this probably occured in a " +
-                    "junit test, and not in the live system. Masked exception: "+e);
+            log.error("Did not manage to create index on updated field. This is probably as it already exists. " +
+                    "Ignoring this, as we ALWAYS try to create indexes after restart. Masked exception: "+e);
+        }
+        if ( size() > 1 ) {
+            // We don't need default any more if we have data
+            jdbcTemplate.getJdbcOperations().execute("DELETE FROM meter where updated=1 and path like '__disregarded needed default__'");
         }
     }
 
     protected void performInsertion(Collection<Item> items) {
+        //log.debug("Performing batch insertion of "+items.size()+" items.");
         List<Object[]> insertArgs = new ArrayList<Object[]>();
         List<Object[]> updateArgs = new ArrayList<Object[]>();
 
@@ -135,6 +151,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         rwl.writeLock().lock();
         try {
             try {
+                //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
                 jdbcTemplate.batchUpdate("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
                         insertArgs);
             } catch ( Exception e ) {
