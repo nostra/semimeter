@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -291,6 +292,15 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         } finally {
             rwl.readLock().unlock();
         }
+        // Need to add the start and stop in order to get the array correctly bounded.
+        Map<String, Object> fake = new HashMap<String, Object>();
+        fake.put( "updated", ""+startAt);
+        fake.put( "count", "0");
+        list.add(0, fake);
+        fake = new HashMap();
+        fake.put( "updated", ""+endAt);
+        fake.put( "count", "0");
+        list.add(fake);        
         List<JsonResults> result = flatten( list, numberOfSamples.intValue() );
 
         return result.toArray( new JsonResults[0]);
