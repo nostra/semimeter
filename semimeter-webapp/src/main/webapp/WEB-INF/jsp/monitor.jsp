@@ -81,7 +81,7 @@
                     if (str != "") {
                         str = str.substr(0, str.length - 1);
                         var chartUrl = "http://chart.apis.google.com/chart?cht=lc&chs=668x135&chd=t:" + str +
-                                       "&chxr=0,0," + max + "&chxt=y&chxl=";
+                                       "&chxr=0,0," + max + "&chds=0," + max + "&chxt=y&chxl=";
 
                         if ($("#chartBarImg").attr("src") != chartUrl) {
                             $("#chartBarImg").attr("src", chartUrl);
