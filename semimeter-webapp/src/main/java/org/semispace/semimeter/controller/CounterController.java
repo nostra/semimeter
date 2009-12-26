@@ -68,7 +68,7 @@ public class CounterController {
     /**
      * Queries on graph strongly correlates to queries on json.html, URI-wise
      */
-    @RequestMapping("**/graph.html")
+    @RequestMapping("/**/graph.html")
     public String graphPage( Model model,HttpServletRequest request, @RequestParam String resolution ) {
         if ( !isSane( request.getServletPath())) {
             throw new RuntimeException("Disallowed character found in query.");
@@ -87,9 +87,9 @@ public class CounterController {
         model.addAttribute("xAxisSize", Long.valueOf(max));
 
         long updtFreq;
-        if ( resolution.equalsIgnoreCase("second")) {
+        if ("second".equalsIgnoreCase(resolution)) {
             updtFreq = 2000;
-        } else if ( resolution.equalsIgnoreCase("minute")) {
+        } else if ("minute".equalsIgnoreCase(resolution)) {
             updtFreq = 30000;
         } else {
             // Default to every minute
@@ -105,7 +105,7 @@ public class CounterController {
         return "bargraph";
     }
 
-    @RequestMapping("**/monitor.html")
+    @RequestMapping("/**/monitor.html")
     public String monitorPage( Model model,HttpServletRequest request, @RequestParam(required = false) String graphresolution, @RequestParam(required = false) String counterresolution) {
         if ( !isSane( request.getServletPath())) {
             throw new RuntimeException("Disallowed character found in query.");
@@ -125,7 +125,7 @@ public class CounterController {
         return "monitor";
     }
 
-    @RequestMapping("**/json.html")
+    @RequestMapping("/**/json.html")
     public String showData( Model model, HttpServletRequest request, @RequestParam String resolution ) {
         /*log.debug("--------------- *-PathTranslated: "+request.getPathTranslated()+
                 "\nContextPath: "+request.getContextPath()+
@@ -156,7 +156,7 @@ public class CounterController {
     /**
      *
      */
-    @RequestMapping("**/array.html")
+    @RequestMapping("/**/array.html")
     public String showArray( Model model, HttpServletRequest request, HttpServletResponse response, @RequestParam String resolution, @RequestParam Integer numberOfSamples ) {
         if ( numberOfSamples.intValue() < 1 ) {
             throw new RuntimeException("numberOfSamples must be larger than 0.");
