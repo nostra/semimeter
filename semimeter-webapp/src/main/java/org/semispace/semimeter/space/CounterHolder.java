@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Collection;
 
 /**
- * Holder for counted elements. A premiss for using this class
+ * Holder for counted elements. A premise for using this class
  * is that it is accessed in a synchronized manner.
  * It is also presumed that this element has a second in resolution.
  */
