@@ -101,9 +101,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         if ( chRegistration != null || pqRegistration != null) {
             log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
         } else {
-            SpacePQListener spacePqListener = new SpacePQListener( space, this);
-            // Listen for events a year
-            chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this), SemiSpace.ONE_DAY*3650);
+            SpacePQListener spacePqListener = new SpacePQListener( space, this, "Query listener - both parameterized and array queries");
+            // Listen for events ten years
+            chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this, "CounterHolder which is elements to be counted"), SemiSpace.ONE_DAY*3650);
+            // Reusing
             pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
             aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
 

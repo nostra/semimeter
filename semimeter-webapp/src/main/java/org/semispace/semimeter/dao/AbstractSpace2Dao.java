@@ -20,6 +20,7 @@ import org.semispace.SemiEventListener;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiAvailabilityEvent;
+import org.semispace.event.SemiExpirationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
     private SemiSpaceInterface space;
     private SemiMeterDao meterDao;
     private boolean isActive;
+    private String eventType;
 
     public SemiSpaceInterface getSpace() {
         return space;
@@ -37,9 +39,10 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
         return meterDao;
     }
 
-    public AbstractSpace2Dao(SemiSpaceInterface space, SemiMeterDao meterDao ) {
+    public AbstractSpace2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
         this.space = space;
         this.meterDao = meterDao;
+        this.eventType = eventType;
         this.isActive = false;
     }
 
@@ -48,6 +51,8 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
         if ( theEvent instanceof SemiAvailabilityEvent) {
             //log.debug("Got availability in "+toString()+" with id "+theEvent.getId());
             activate();
+        } else if ( theEvent instanceof SemiExpirationEvent) {
+            log.warn("Lost event when listening for {}. Element had id: {}. ", eventType, theEvent.getId() );
         }
     }
     public void activate() {

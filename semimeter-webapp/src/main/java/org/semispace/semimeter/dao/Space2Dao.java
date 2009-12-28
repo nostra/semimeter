@@ -8,8 +8,8 @@ import org.semispace.semimeter.space.CounterHolder;
  * This connection ensures that we do not have too many simultaneous insertions.
  */
 public class Space2Dao extends AbstractSpace2Dao {
-    public Space2Dao(SemiSpaceInterface space, SemiMeterDao meterDao) {
-        super(space, meterDao);
+    public Space2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
+        super(space, meterDao, eventType);
     }
 
     public void retrieveAndTreatData() {

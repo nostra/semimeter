@@ -32,8 +32,8 @@ public class SpacePQListener extends AbstractSpace2Dao {
      */
     private static final long MAX_RESULT_LIFE_MS = 30000;
 
-    public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao) {
-        super(space, meterDao);
+    public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
+        super(space, meterDao, eventType);
     }
 
     @Override
