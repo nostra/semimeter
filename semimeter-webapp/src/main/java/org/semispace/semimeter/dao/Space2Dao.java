@@ -1,7 +1,11 @@
 package org.semispace.semimeter.dao;
 
 import org.semispace.SemiSpaceInterface;
+import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.space.CounterHolder;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Read from space in order to get elements to insert into database.
@@ -14,13 +18,18 @@ public class Space2Dao extends AbstractSpace2Dao {
 
     public void retrieveAndTreatData() {
         CounterHolder ch;
+        Collection<Item> items = new ArrayList<Item>();
         do {
             ch = getSpace().takeIfExists(new CounterHolder());
             if ( ch != null ) {
-                getMeterDao().performInsertion( ch.retrieveItems());
+                items.addAll(ch.retrieveItems());
             }
         } while ( ch != null);
-    }
 
+        if ( ! items.isEmpty() ) {
+            getMeterDao().performInsertion( items);
+        }
+
+    }
 
 }

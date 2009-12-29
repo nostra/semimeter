@@ -18,9 +18,9 @@ package org.semispace.semimeter.space;
 
 import org.semispace.semimeter.bean.Item;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Holder for counted elements. A premise for using this class
@@ -31,6 +31,9 @@ public class CounterHolder {
     private Map<String, Item> items = new HashMap<String, Item>();
     public static final String RESOLUTION_MS_SYSTEM_VARIABLE = "semimeter.frequency.ms";
 
+    /**
+     * TODO Need to secure this method better for concurrancy issues.  
+     */
     public void count( String path ) {
         Item item = items.get(path);
         if ( item == null ) {
@@ -48,5 +51,8 @@ public class CounterHolder {
     }
     public int size() {
         return items.size();
+    }
+    public String toString() {
+        return "[CounterHolder - size "+size()+"]";
     }
 }

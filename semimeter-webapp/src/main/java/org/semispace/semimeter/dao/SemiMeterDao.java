@@ -39,9 +39,9 @@ import org.springframework.stereotype.Service;
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,7 +56,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private SemiEventRegistration aqRegistration;
     
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
-    private SemiSpaceInterface space = SemiSpace.retrieveSpace();
+    private SemiSpaceInterface space;
     private static final int MAX_PATH_LENGTH = 2048;
 
     @Autowired
@@ -101,6 +101,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
      */
     public void afterPropertiesSet() {
+        log.debug("Retrieving semispace.");
+        space = SemiSpace.retrieveSpace();
         log.debug("Registering listeners.");
         if ( chRegistration != null || pqRegistration != null) {
             log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
@@ -417,5 +419,22 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             list.add( jr );
         }
         return list;
+    }
+
+    /**
+     * To be used from junit tests
+     */
+    protected SemiSpaceInterface retrieveSpace() {
+        return space;
+    }
+
+    public String toString() {
+        return "chRegistration: "+leaseInfo( chRegistration ) + "\n"+
+                "pqRegistration: "+leaseInfo( pqRegistration ) +"\n"+
+                "caqegistration: "+leaseInfo( aqRegistration );
+
+    }
+    private String leaseInfo(SemiEventRegistration lease) {
+        return "{id: "+lease.getId()+", lease.holderId:"+lease.getLease().getHolderId()+"}";
     }
 }

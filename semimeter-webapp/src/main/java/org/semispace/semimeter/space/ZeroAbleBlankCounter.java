@@ -37,6 +37,9 @@ public class ZeroAbleBlankCounter {
 
     public ZeroAbleBlankCounter( SemiSpaceInterface space ) {
         this.space = space;
+        if ( space == null ) {
+            throw new RuntimeException("Not expecting space to be null");
+        }
     }
 
 
