@@ -166,19 +166,18 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
 
     protected void performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
-        List<Object[]> insertArgs = new ArrayList<Object[]>();
+        SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
         List<Object[]> updateArgs = new ArrayList<Object[]>();
 
         for ( Item item : items ) {
             // Original just called insert
-            insertArgs.add( new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
             updateArgs.add( new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
         }
         rwl.writeLock().lock();
         try {
             try {
                 //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
-                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
                         insertArgs);
             } catch ( Exception e ) {
                 log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: "+e);
