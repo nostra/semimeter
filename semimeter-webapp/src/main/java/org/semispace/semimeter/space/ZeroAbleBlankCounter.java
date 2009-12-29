@@ -33,7 +33,8 @@ public class ZeroAbleBlankCounter {
     private SemiSpaceInterface space;
     private CounterHolder holder = new CounterHolder();
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
-    
+    private static final int REGISTRATION_TIMEOUT = 10*60*1000;
+
     public ZeroAbleBlankCounter( SemiSpaceInterface space ) {
         this.space = space;
     }
@@ -48,7 +49,7 @@ public class ZeroAbleBlankCounter {
         if ( old.size() > 0 ) {
             // Insert lock into space to be counted by separate process.
             // Timeout 10 minutes - if not registered by then, just forget about them.
-            space.write(old, 10*60*1000);
+            space.write(old, REGISTRATION_TIMEOUT);
         } else {
             log.debug("No data was contained in counter holder.");
         }
