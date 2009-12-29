@@ -29,7 +29,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +60,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private static final int MAX_PATH_LENGTH = 2048;
 
     @Autowired
+    @Qualifier("semiMeterDataSource")
     public void setDataSource(DataSource semiMeterDataSource) {
         this.jdbcTemplate = new SimpleJdbcTemplate(semiMeterDataSource);
     }
@@ -114,13 +118,20 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             log.info("Creating table meter");
             // The data type integer in the database is a long in the java world.
             try {
-                jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, count integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
+                jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, counted integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
             } catch ( Exception e ) {
-                log.error("Did not manage to create table meter?!",e);
+                try {
+                    // Probably a different database
+                    jdbcTemplate.getJdbcOperations().execute("create table meter(updated integer NOT NULL, counted integer NOT NULL, path varchar("+MAX_PATH_LENGTH+") NOT NULL)");
+                } catch ( Exception e2 ) {
+                    log.error("Did not manage to create table meter?! First exception is masked: "+e.getMessage(),e2);
+                }
             }
+        }
+        if ( size() < 1 ) {        
             try {
                 // Need an initial default value
-                jdbcTemplate.getJdbcOperations().execute("insert into meter(updated, count, path) values (1, 0, '__disregarded needed default__')");
+                jdbcTemplate.getJdbcOperations().execute("insert into meter(updated, counted, path) values (1, 0, '__disregarded needed default__')");
             } catch ( Exception e ) {
                 log.error("Could not create default?!",e);
             }
@@ -138,6 +149,19 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             // We don't need default any more if we have data
             jdbcTemplate.getJdbcOperations().execute("DELETE FROM meter where updated=1 and path like '__disregarded needed default__'");
         }
+        if ( isAlive() ) {
+            try {
+                jdbcTemplate.getJdbcOperations().execute("select count(count) from meter meter");
+                log.warn("Renaming field count to counted in table meter.");
+                try {
+                    jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter CHANGE COLUMN count counted integer NOT NULL;");
+                } catch ( Exception e ) {
+                    log.error("Could not rename column count to counted. Please drop table or rename column manually");
+                }
+            } catch ( Exception e ) {
+                // Expected
+            }
+        }
     }
 
     protected void performInsertion(Collection<Item> items) {
@@ -154,13 +178,45 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         try {
             try {
                 //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
-                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
                         insertArgs);
             } catch ( Exception e ) {
-                log.warn("Unlikely event occured - failure whilst inserting priming elements. This is not overly critical. Masked exception: "+e);
+                log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: "+e);
             }
-            jdbcTemplate.batchUpdate("update meter SET count=count+? WHERE path like ? and updated=?",
-                updateArgs );        
+            jdbcTemplate.batchUpdate("update meter SET counted=counted+? WHERE path like ? and updated=?",
+                updateArgs );
+        } catch ( Exception e ) {
+            log.error("Could not update elements", e);
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+
+    private void failed_rewrite_performInsertion(Collection<Item> items) {
+        //log.debug("Performing batch insertion of "+items.size()+" items.");
+        //List<Object[]> insertArgs = new ArrayList<Object[]>();
+        //List<Object[]> updateArgs = new ArrayList<Object[]>();
+
+        SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
+        SqlParameterSource[] updateArgs = SqlParameterSourceUtils.createBatch(items.toArray());
+
+        //for ( Item item : items ) {
+            // Original just called insert
+            //insertArgs.add( new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
+            //updateArgs.add( new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
+        //}
+        rwl.writeLock().lock();
+        try {
+            try {
+                //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
+                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
+                        insertArgs);
+            } catch ( Exception e ) {
+                log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: "+e);
+            }
+            jdbcTemplate.batchUpdate("update meter SET counted=counted+:accessNumber WHERE :path like :path and updated=:when",
+                updateArgs );
         } catch ( Exception e ) {
             log.error("Could not update elements", e);
         } finally {
@@ -171,19 +227,23 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     /**
      * Insertion is performed like this: Try to insert item with count of zero if does not already
      * exist. Then update the count to the correct value. The candidate key for the element is
-     * (when + path). This method is now legacy 
+     * (when + path). This method is now legacy.
+     *
+     * Used in junit test for comparison purpose. For this reason is the method protected.
+     *
+     * @deprecated Do not use this code other places than test
      */
-    private void insert(Item item) {
+    protected void insert(Item item) {
         rwl.writeLock().lock();
         try {
             try {
-                jdbcTemplate.update("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                jdbcTemplate.update("INSERT INTO meter(updated, counted, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
                     new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
             } catch ( Exception e ) {
-                log.warn("Unlikely event occured - failure whilst inserting priming element", e);
+                log.warn("Unlikely event occurred - failure whilst inserting priming element", e);
             }
             jdbcTemplate.update(
-                    "update meter SET count=count+? WHERE path like ? and updated=?",
+                    "update meter SET counted=counted+? WHERE path like ? and updated=?",
                     new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
         } catch ( Exception e ) {
             log.error("Could not insert or update", e);
@@ -212,7 +272,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         Long result = Long.valueOf(-1);
         rwl.readLock().lock();
         try {
-            final String sql = "select sum(count) from meter " +
+            final String sql = "select sum(counted) from meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ?";
             //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
@@ -284,7 +344,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         rwl.readLock().lock();
         List<Map<String, Object>> list = null;
         try {
-            final String sql = "SELECT updated, count FROM meter " +
+            final String sql = "SELECT updated, counted FROM meter " +
                     "WHERE " +
                     "updated>? AND updated<=?  AND path like ? ORDER BY updated";
             //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
@@ -296,11 +356,11 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         // Need to add the start and stop in order to get the array correctly bounded.
         Map<String, Object> fake = new HashMap<String, Object>();
         fake.put( "updated", ""+startAt);
-        fake.put( "count", "0");
+        fake.put( "counted", "0");
         list.add(0, fake);
         fake = new HashMap();
         fake.put( "updated", ""+endAt);
-        fake.put( "count", "0");
+        fake.put( "counted", "0");
         list.add(fake);        
         List<JsonResults> result = flatten( list, numberOfSamples.intValue() );
 
@@ -338,7 +398,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             // Still having more data, and current updated value less than where to start in scale
             while ( count < list.size() && Long.valueOf("" + list.get(count).get("updated")).longValue() <= start ) {
                 //log.debug("Shall increment place "+i);
-                res.get(i).getAndAdd(Integer.valueOf("" + list.get(count).get("count")).intValue() );
+                res.get(i).getAndAdd(Integer.valueOf("" + list.get(count).get("counted")).intValue() );
                 count++;
             }
         }

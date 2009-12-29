@@ -17,71 +17,93 @@
 package org.semispace.semimeter.dao;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.JsonResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SemiMeterDaoTest {
+
+@ContextConfiguration(locations={"/context/semimeter-test-context.xml"})
+public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoTest.class);
+    private static final long NUMBER_OF_TEST_ELEMENTS = 100;
+
+    @Autowired
+    private SemiMeterDao semiMeterDao;
+
     @Test
-    public void testEmptySingleEntry() {
-        List<JsonResults> jrs = new SemiMeterDao().flatten(new ArrayList<Map<String,Object>>(), 10);
-        Assert.assertEquals(10, jrs.size());
-        for ( JsonResults jr : jrs ) {
-            Assert.assertEquals("0", jr.getValue());
+    public void testPresentDao() {
+        Assert.assertNotNull(semiMeterDao);
+    }
+
+    @Test
+    public void testStandardDaoFunctionality() {
+        Assert.assertTrue(semiMeterDao.isAlive());
+        int oldSize = semiMeterDao.size();
+
+        Item item = createItem(System.currentTimeMillis());
+        List<Item> items = new ArrayList<Item>();
+        items.add( item );
+        semiMeterDao.performInsertion(items);
+        Assert.assertEquals("Should manage to add a single item", oldSize+1, semiMeterDao.size());
+    }
+
+    @Test
+    public void testInsertionOfANumberOfItemsInArray() {
+        int oldSize = semiMeterDao.size();
+        List<Item> items = new ArrayList<Item>();
+        for ( long x = 1 ; x < NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+            Item item = createItem(x);
+            items.add( item );
         }
+        long bench = System.currentTimeMillis();
+        semiMeterDao.performInsertion(items);
+        log.info("Used {} milliseconds on insertion of {} items ", (System.currentTimeMillis()-bench), items.size());
+        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS-1), semiMeterDao.size());
     }
 
     @Test
-    public void testFlattenSingleEntry() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 1255795233251l, 100));
-        List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
-        Assert.assertEquals(5, jrs.size());
-        Assert.assertEquals("100", jrs.get(0).getValue());
-    }
-
-    @Test
-    public void testFlattenSeveralEntries() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 100, 1));
-        data.add(createMap( 200, 1));
-        data.add(createMap( 300, 1));
-        data.add(createMap( 400, 1));
-        data.add(createMap( 500, 1));
-        List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
-
-        for ( JsonResults jr : jrs ) {
-            Assert.assertEquals("The distribution of 5 data should be flat", "1", jr.getValue());
+    public void testSingleInsertionOfItemsInArray() {
+        int oldSize = semiMeterDao.size();
+        long bench = System.currentTimeMillis();
+        for ( long x = NUMBER_OF_TEST_ELEMENTS ; x < 2*NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+            List<Item> items = new ArrayList<Item>();
+            Item item = createItem(x);
+            items.add( item );
+            semiMeterDao.performInsertion(items);
         }
+        log.info("Used {} milliseconds in testSingleInsertionOfItemsInArray", (System.currentTimeMillis()-bench));
+        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
     }
 
     @Test
-    public void testFlattenWhenAllInSameSpot() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 100, 1));
-        data.add(createMap( 210, 1));
-        data.add(createMap( 220, 1));
-        data.add(createMap( 230, 1));
-        data.add(createMap( 500, 1));
-        List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
-
-        Assert.assertEquals( "1", jrs.get(0).getValue());
-        Assert.assertEquals( "3", jrs.get(1).getValue());
-        Assert.assertEquals( "0", jrs.get(2).getValue());
-        Assert.assertEquals( "1", jrs.get(4).getValue());
+    public void testSingleInsertionOfItems() {
+        int oldSize = semiMeterDao.size();
+        long bench = System.currentTimeMillis();
+        for ( long x = NUMBER_OF_TEST_ELEMENTS * 2 ; x < 3*NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+            Item item = createItem(x);
+            semiMeterDao.insert(item);
+        }
+        log.info("Used {} milliseconds in testSingleInsertionOfItems", (System.currentTimeMillis()-bench));
+        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
     }
 
-    private Map<String, Object> createMap(long updt, int count) {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("updated", Long.valueOf(updt));
-        map.put("count", Integer.valueOf(count));
-        return map;
+
+    private Item createItem( long when ) {
+        Item item = new Item();
+        item.setPath("/junit/testStandardDaoFunctionality");
+        item.setWhen(when);
+        item.increment();
+        return item;
     }
 }

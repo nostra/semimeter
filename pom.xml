@@ -256,11 +256,17 @@
                 <version>${slf4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>hsqldb</groupId>
+                <groupId>org.hsqldb</groupId>
                 <artifactId>hsqldb</artifactId>
-                <version>1.8.0.7</version>
+                <version>1.8.0.10</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <artifactId>commons-dbcp</artifactId>
+                <groupId>commons-dbcp</groupId>
+                <version>1.2.2</version>
+                <scope>test</scope>
+            </dependency>          
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>

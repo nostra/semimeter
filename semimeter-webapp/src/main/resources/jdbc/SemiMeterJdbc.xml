@@ -37,6 +37,7 @@
      -->
 
     <bean id="semiMeterDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <qualifier value="semiMeterDataSource" />
         <property name="jndiName" value="java:comp/env/jdbc/DSSemiMeter"/>
     </bean>
 
