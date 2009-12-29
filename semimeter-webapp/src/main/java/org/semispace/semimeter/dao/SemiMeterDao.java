@@ -421,13 +421,6 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         return list;
     }
 
-    /**
-     * To be used from junit tests
-     */
-    protected SemiSpaceInterface retrieveSpace() {
-        return space;
-    }
-
     public String toString() {
         return "chRegistration: "+leaseInfo( chRegistration ) + "\n"+
                 "pqRegistration: "+leaseInfo( pqRegistration ) +"\n"+

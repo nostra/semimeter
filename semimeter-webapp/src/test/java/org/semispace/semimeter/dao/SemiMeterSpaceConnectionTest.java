@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.space.CounterHolder;
 import org.semispace.semimeter.space.ZeroAbleBlankCounter;
@@ -20,7 +21,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTests {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterSpaceConnectionTest.class);
     private static final long NUMBER_OF_TEST_ELEMENTS = 100;
-    private SemiSpaceInterface space;
+    private final SemiSpaceInterface space = SemiSpace.retrieveSpace();
 
     @Autowired
     private SemiMeterDao semiMeterDao;
@@ -29,15 +30,14 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
 
     @Before
     public void fetchSpaceFromDao() {
-        log.info("Before: Current state of semiMeterDao:\n"+semiMeterDao);
-        space = semiMeterDao.retrieveSpace();
+        //log.info("Before: Current state of semiMeterDao:\n"+semiMeterDao);
         if ( counter == null ) {
             counter = new ZeroAbleBlankCounter(space);
         }
     }
     @After
     public void status() {
-        log.info("After: Current state of semiMeterDao:\n"+semiMeterDao);
+        //log.info("After: Current state of semiMeterDao:\n"+semiMeterDao);
     }
 
     @Test
@@ -45,7 +45,7 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
         int oldSize = semiMeterDao.size();
         counter.count("/junit/InsertionBySpace");
         counter.reset();
-        awaitNoCounterHoldersInSpace();
+        awaitNoCounterHoldersInSpaceAndSilentDb();
         Assert.assertEquals("Expected size of database to increase after addition of a single element.", oldSize+1, semiMeterDao.size() );
     }
 
@@ -58,7 +58,7 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
         }
         log.info("After {} ms, {} elements has been put into space", System.currentTimeMillis() - bench, NUMBER_OF_TEST_ELEMENTS);
         bench = System.currentTimeMillis();
-        awaitNoCounterHoldersInSpace();
+        awaitNoCounterHoldersInSpaceAndSilentDb();
         log.info("After {} _more_ ms all elements are found to be put into database. (This number is misleading if the number of elements are few.)", System.currentTimeMillis() - bench);
     }
 
@@ -71,21 +71,23 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
         }
         log.info("After {} ms, {} collapsible elements has been put into space", System.currentTimeMillis() - bench, NUMBER_OF_TEST_ELEMENTS);
         bench = System.currentTimeMillis();
-        awaitNoCounterHoldersInSpace();
+        awaitNoCounterHoldersInSpaceAndSilentDb();
         log.info("After {} _more_ ms all collapsible elements are found to be put into database. (This number is misleading if the number of elements are few.)", System.currentTimeMillis() - bench);
     }
 
-    private void awaitNoCounterHoldersInSpace() {
+    private void awaitNoCounterHoldersInSpaceAndSilentDb() {
         int c = 0;
         int numberOfFails=0;
+        boolean dbbusy;
         do {
+            int dbsize = semiMeterDao.size();
             c++;
-            if ( c > 100 ) {
+            if ( c > 50 ) {
                 c=0;
                 numberOfFails++;
                 log.info("Waiting for space to be empty when querying for counterHolder...");
             }
-            if ( numberOfFails > 3 ) {
+            if ( numberOfFails > 10 ) {
                 CounterHolder ch = space.takeIfExists( new CounterHolder());
                 log.info("After taking "+(ch==null?"no":"one")+" element, there is "+(
                         ( space.readIfExists( new CounterHolder()) == null )?"no":"more")+
@@ -93,8 +95,9 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
                 Assert.fail("Serious problem with space. Had counter holder which did not get consumed. Taking it now: "+ ch );
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(200);
             } catch (InterruptedException e) {}
-        } while ( space.readIfExists( new CounterHolder()) != null );
+            dbbusy = semiMeterDao.size() != dbsize;
+        } while ( dbbusy || space.readIfExists( new CounterHolder()) != null );
     }
 }

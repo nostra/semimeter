@@ -32,9 +32,9 @@ public class CounterHolder {
     public static final String RESOLUTION_MS_SYSTEM_VARIABLE = "semimeter.frequency.ms";
 
     /**
-     * TODO Need to secure this method better for concurrancy issues.  
+     * Consider using a lock instead  
      */
-    public void count( String path ) {
+    public synchronized void count( String path ) {
         Item item = items.get(path);
         if ( item == null ) {
             item = new Item();
@@ -46,13 +46,13 @@ public class CounterHolder {
         item.increment();
     }
 
-    public Collection<Item> retrieveItems() {
+    public synchronized Collection<Item> retrieveItems() {
         return items.values();
     }
-    public int size() {
+    public synchronized int size() {
         return items.size();
     }
-    public String toString() {
+    public synchronized String toString() {
         return "[CounterHolder - size "+size()+"]";
     }
 }

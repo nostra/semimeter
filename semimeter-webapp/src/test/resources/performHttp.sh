@@ -5,5 +5,5 @@
 
 for a in $(seq 15000)
 do
-     GET -d http://localhost:9013/semimeter/c/mark/$a
+     /usr/sbin/ab2 -n 100 -c 10 http://localhost:9013/semimeter/c/mark/$a > /dev/null
 done
