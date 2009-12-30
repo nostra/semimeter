@@ -20,11 +20,13 @@ import org.semispace.SemiEventListener;
 import org.semispace.SemiEventRegistration;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
+import org.semispace.event.SemiAvailabilityEvent;
 import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiExpirationEvent;
+import org.semispace.semimeter.bean.ThrottleBean;
+import org.semispace.semimeter.space.CounterHolder;
 import org.semispace.semimeter.space.EnsuringResetDuringIdle;
 import org.semispace.semimeter.space.ZeroAbleBlankCounter;
-import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,15 +47,19 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     private byte[] blankImage;
     private long lastReset = System.currentTimeMillis();
     private ZeroAbleBlankCounter counter;
-    private SemiEventRegistration registration;
+    private SemiEventRegistration purgehelperWhenIdle;
+    private SemiEventRegistration throttleRegistration;
     private long resolution_ms;
+    private int throttle;
 
     public void init() {
         log.debug("Initializing");
         blankImage = readBlankImage();
         space = SemiSpace.retrieveSpace();
         counter = new ZeroAbleBlankCounter(space);
-        registration = space.notify(new EnsuringResetDuringIdle(), this, SemiSpace.ONE_DAY*3650);
+        purgehelperWhenIdle = space.notify(new EnsuringResetDuringIdle(), this, SemiSpace.ONE_DAY*3650);
+        throttleRegistration = space.notify(new ThrottleBean(null), this, SemiSpace.ONE_DAY*3650);
+
         String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
         if ( res != null ) {
             resolution_ms = Long.valueOf(res);
@@ -68,7 +74,8 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     public void destroy() {
         log.debug("Shutting down");
         counter.reset();
-        registration.getLease().cancel();
+        purgehelperWhenIdle.getLease().cancel();
+        throttleRegistration.getLease().cancel();
     }
 
     /**
@@ -82,11 +89,12 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         }
         long now = System.currentTimeMillis();
         // Math abs is in order to handle clock skew
-        if ( Math.abs(now - lastReset) > resolution_ms ) {
+        long throttledRes = ( resolution_ms * (throttle+1));
+        if ( Math.abs(now - lastReset) > throttledRes ) {
             lastReset = now;
             EnsuringResetDuringIdle erdi = new EnsuringResetDuringIdle();
             space.takeIfExists(erdi);
-            space.write(erdi, 10000);
+            space.write(erdi, 10000*(throttle+1));
             counter.reset();
         }
         counter.count(path);
@@ -132,6 +140,15 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
             // Notice that the expiration event will not be called the moment it occurs
             log.debug("Calling reset because of expiration of idle element.");
             counter.reset();
+        } else if ( theEvent instanceof SemiAvailabilityEvent ) {
+            ThrottleBean tb = space.takeIfExists(new ThrottleBean(null));
+            int before = throttle;
+            if ( tb != null ) {
+                throttle = Math.max( 0, throttle+tb.getValue().intValue());
+            }
+            if ( throttle != before ) {
+                log.info("Throttle is now "+throttle);
+            }
         }
     }
 }
