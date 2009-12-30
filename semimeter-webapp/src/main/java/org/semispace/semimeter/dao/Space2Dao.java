@@ -17,9 +17,11 @@ import java.util.Collection;
 public class Space2Dao extends AbstractSpace2Dao {
     private static final Logger log = LoggerFactory.getLogger(Space2Dao.class);
     /**
-     * Throttle if more than 10 elements in queue.
+     * Throttle if more than 5 elements in queue. (It used to be 10, but
+     * it was found better to throttle up earlier, as this would mean throttle
+     * down earlier as well.)
      */
-    private static final int THROTTLE_THRESHOLD = 10;
+    private static final int THROTTLE_THRESHOLD = 5;
 
     public Space2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
         super(space, meterDao, eventType);

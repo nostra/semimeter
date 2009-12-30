@@ -109,7 +109,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         } else {
             SpacePQListener spacePqListener = new SpacePQListener( space, this, "Query listener - both parameterized and array queries");
             // Listen for events ten years
-            chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this, "CounterHolder which is elements to be counted"), SemiSpace.ONE_DAY*3650);
+            chRegistration = space.notify(new CounterHolder(), new Space2Dao( space, this, "CounterHolder which holds elements to be counted"), SemiSpace.ONE_DAY*3650);
             // Reusing
             pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
             aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY*3650);
@@ -421,13 +421,70 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         return list;
     }
 
-    public String toString() {
-        return "chRegistration: "+leaseInfo( chRegistration ) + "\n"+
-                "pqRegistration: "+leaseInfo( pqRegistration ) +"\n"+
-                "caqegistration: "+leaseInfo( aqRegistration );
-
-    }
     private String leaseInfo(SemiEventRegistration lease) {
         return "{id: "+lease.getId()+", lease.holderId:"+lease.getLease().getHolderId()+"}";
+    }
+
+    /**
+     * This method is intended to be used from a junit tests.
+     *
+     * @param whenStartedTest From inclusive when to delete item
+     * @param path Path to delete, with percentage signs as applicable.
+     */
+    protected void deleteItemsFrom(long whenStartedTest, String path) {
+        rwl.writeLock().lock();
+        try {
+            jdbcTemplate.update(
+                    "DELETE FROM meter WHERE path like ? and updated>=?",
+                    new Object[] {path, whenStartedTest});
+        } catch ( Exception e ) {
+            throw new RuntimeException("Could not delete items. From "+whenStartedTest+", " +
+                    "path: "+path, e);
+        } finally {
+            rwl.writeLock().unlock();
+        }
+
+    }
+
+    /**
+     * @param start Where to start, inclusive
+     * @param end Where to end, inclusive
+     */
+    public void collate(long start, long end) {
+        rwl.readLock().lock();
+        // Find new elements
+        List<Map<String, Object>> items = null;
+        try {
+            final String sql = "SELECT distinct path AS path, sum(counted) AS counted, min(updated) AS updated FROM meter " +
+                    "WHERE " +
+                    "updated>=? AND updated<=? GROUP BY path";
+            log.debug("Querying with ("+start+","+end+") : "+sql);
+            items = jdbcTemplate.queryForList(sql,
+                    new Object[]{Long.valueOf( start ), Long.valueOf( end )});
+        } finally {
+            rwl.readLock().unlock();
+        }
+        // Remove old items
+        rwl.writeLock().lock();
+        try {
+            for ( Map<String, Object> item : items ) {
+                jdbcTemplate.update(
+                        "DELETE FROM meter WHERE path like ? AND updated>=? AND updated<=?",
+                        new Object[] {item.get("path"), start, end});
+            }
+        } finally {
+            rwl.writeLock().unlock();
+        }
+        // Translate
+        List<Item>replacements = new ArrayList<Item>();
+        for ( Map<String, Object> item : items ) {
+            Item i = new Item();
+            i.setPath(item.get("path").toString());
+            i.setAccessNumber(Integer.parseInt( item.get("counted").toString()));
+            i.setWhen(Long.parseLong( item.get("updated").toString()));
+            replacements.add(i);
+        }
+        // Insert
+        performInsertion(replacements);
     }
 }
