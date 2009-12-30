@@ -17,41 +17,22 @@ public class Space2Dao extends AbstractSpace2Dao {
     }
 
     public void retrieveAndTreatData() {
-        /*if ( getSpace().readIfExists(new TakeInProgressMarker()) != null ) {
-            return;
-        }*/
-
         CounterHolder ch;
         Collection<Item> items = new ArrayList<Item>();
 
-        /*
-        ch = getSpace().readIfExists(new CounterHolder());
-        if (ch != null) {
-            // We have not taken object yet.
-            try {
-                // Add a marker which indicates that we are in progress
-                getSpace().write(new TakeInProgressMarker(), SemiSpace.ONE_DAY);
-                */
-                do {
-                    ch = getSpace().takeIfExists(new CounterHolder());
-                    if (ch == null) {
-                        if (!items.isEmpty()) {
-                            getMeterDao().performInsertion(items);
-                            items.clear();
-                            // Forcing another loop - things may have been introduced whilst inserting.
-                            ch = new CounterHolder();
-                        }
-                    } else {
-                        items.addAll(ch.retrieveItems());
-                    }
-                } while (ch != null);
-/*
-            } finally {
-                // Clear marker
-                getSpace().takeIfExists(new TakeInProgressMarker());
+        do {
+            ch = getSpace().takeIfExists(new CounterHolder());
+            if (ch == null) {
+                if (!items.isEmpty()) {
+                    getMeterDao().performInsertion(items);
+                    items.clear();
+                    // Forcing another loop - things may have been introduced whilst inserting.
+                    ch = new CounterHolder();
+                }
+            } else {
+                items.addAll(ch.retrieveItems());
             }
-
-        }*/
+        } while (ch != null);
     }
 
 }
