@@ -51,28 +51,35 @@ public class SemiMeterSpaceConnectionTest extends AbstractJUnit4SpringContextTes
 
     @Test
     public void testMultipleInsertionBySpace() {
-        long bench = System.currentTimeMillis();
+        long start= System.currentTimeMillis();
         for ( int i=0 ; i < NUMBER_OF_TEST_ELEMENTS ; i++ ) {
             counter.count("/junit/InsertionBySpace/"+i);
             counter.reset();
         }
-        log.info("After {} ms, {} elements has been put into space", System.currentTimeMillis() - bench, NUMBER_OF_TEST_ELEMENTS);
-        bench = System.currentTimeMillis();
+        log.info("After {} ms, {} elements has been put into space", System.currentTimeMillis() - start, NUMBER_OF_TEST_ELEMENTS);
+        long bench = System.currentTimeMillis();
         awaitNoCounterHoldersInSpaceAndSilentDb();
         log.info("After {} _more_ ms all elements are found to be put into database. (This number is misleading if the number of elements are few.)", System.currentTimeMillis() - bench);
+
+        // The -1 is as the method works on elements _larger_ than start
+        Long count = semiMeterDao.sumItems(start-1, System.currentTimeMillis(), "/junit/InsertionBySpace/%");
+        Assert.assertEquals("Presuming all inserted elements to be present", NUMBER_OF_TEST_ELEMENTS, count.longValue());
     }
 
     @Test
     public void testMultipleInsertionBySpaceWithEqualElements() {
-        long bench = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         for ( int i=0 ; i < NUMBER_OF_TEST_ELEMENTS ; i++ ) {
             counter.count("/junit/InsertionBySpace/count/up");
             counter.reset();
         }
-        log.info("After {} ms, {} collapsible elements has been put into space", System.currentTimeMillis() - bench, NUMBER_OF_TEST_ELEMENTS);
-        bench = System.currentTimeMillis();
+        log.info("After {} ms, {} collapsible elements has been put into space", System.currentTimeMillis() - start, NUMBER_OF_TEST_ELEMENTS);
+        long bench = System.currentTimeMillis();
         awaitNoCounterHoldersInSpaceAndSilentDb();
         log.info("After {} _more_ ms all collapsible elements are found to be put into database. (This number is misleading if the number of elements are few.)", System.currentTimeMillis() - bench);
+
+        Long count = semiMeterDao.sumItems(start-1, System.currentTimeMillis(), "/junit/InsertionBySpace/count/up");
+        Assert.assertEquals("Presuming all inserted elements to be present", NUMBER_OF_TEST_ELEMENTS, count.longValue());
     }
 
     private void awaitNoCounterHoldersInSpaceAndSilentDb() {
