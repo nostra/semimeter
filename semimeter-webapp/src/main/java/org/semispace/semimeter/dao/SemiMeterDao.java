@@ -455,7 +455,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         // Find new elements
         List<Map<String, Object>> items = null;
         try {
-            final String sql = "SELECT distinct path AS path, sum(counted) AS counted, min(updated) AS updated FROM meter " +
+            final String sql = "SELECT path AS path, sum(counted) AS counted, min(updated) AS updated FROM meter " +
                     "WHERE " +
                     "updated>=? AND updated<=? GROUP BY path";
             log.debug("Querying with ("+start+","+end+") : "+sql);
