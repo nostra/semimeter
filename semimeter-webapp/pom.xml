@@ -112,10 +112,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
 
         <!-- Drop-in replacement for commons logging -->
         <dependency>
