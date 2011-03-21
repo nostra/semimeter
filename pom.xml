@@ -15,7 +15,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.semispace</groupId>
     <artifactId>semimeter</artifactId>
@@ -44,9 +45,9 @@
         </developer>
     </developers>
 
-	<!--
-		DEPENDENCIES
-	-->
+    <!--
+         DEPENDENCIES
+     -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -129,7 +130,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-           <dependency>
+            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${springframework.version}</version>
@@ -173,22 +174,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-                <version>${springframework.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <artifactId>commons-dbcp</artifactId>
-                <groupId>commons-dbcp</groupId>
-                <version>1.4</version>
-            </dependency>
+
             <dependency>
                 <groupId>org.aspectj</groupId>
                 <artifactId>aspectjrt</artifactId>
@@ -218,7 +204,7 @@
                 <version>2.2</version>
             </dependency>
 
-		<!-- Used for rss translation -->
+            <!-- Used for rss translation -->
             <dependency>
                 <groupId>org.jdom</groupId>
                 <artifactId>jdom</artifactId>
@@ -231,7 +217,7 @@
                 <version>1.0.1</version>
             </dependency>
 
-        <!-- Drop-in replacement for commons logging -->
+            <!-- Drop-in replacement for commons logging -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
@@ -242,23 +228,13 @@
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
-        <!-- Support for log4j -->
+            <!-- Support for log4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-                <version>2.0.0</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.15</version>
-            </dependency>
+
             <dependency>
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>jetty</artifactId>
@@ -285,18 +261,29 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongo-java-driver</artifactId>
+                <version>2.4</version>
+            </dependency>
+
+
+             <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>5.1.15</version>
+            </dependency>
+            <dependency>
                 <groupId>c3p0</groupId>
                 <artifactId>c3p0</artifactId>
                 <version>0.9.1.2</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
 
-	<!--
-		BUILD
-	-->
+    <!--
+         BUILD
+     -->
     <build>
         <plugins>
             <plugin>
@@ -326,9 +313,9 @@
         </plugins>
     </build>
 
-	<!--
-		REPORT SECTION
-	-->
+    <!--
+         REPORT SECTION
+     -->
     <reporting>
 
         <plugins>
@@ -350,7 +337,7 @@
     </modules>
 
     <scm>
-    	<url>http://www.semispace.org/svn/semimeter/trunk/</url>
+        <url>http://www.semispace.org/svn/semimeter/trunk/</url>
         <connection>scm:svn:http://www.semispace.org/svn/semimeter/trunk/</connection>
         <developerConnection>scm:svn:svn+ssh://semispace.org/opt/spacerepo/semimeter/trunk</developerConnection>
     </scm>
