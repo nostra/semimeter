@@ -1,6 +1,4 @@
 h1. SemiMeter
 
-SemiMeter uses
-"SemiSpace (SemiSpace) ":http://www.semispace.org/
-to facilitate rapid storage of web access data.
+SemiMeter uses <a href="http://www.semispace.org/" alt="SemiSpace">SemiSpace</a> to facilitate rapid storage of web access data.
  
