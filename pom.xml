@@ -15,7 +15,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.semispace</groupId>
     <artifactId>semimeter</artifactId>
@@ -31,7 +32,6 @@
         <jetty.version>6.1.26</jetty.version>
     </properties>
 
-
     <developers>
         <developer>
             <id>en</id>
@@ -44,15 +44,20 @@
         </developer>
     </developers>
 
-	<!--
-		DEPENDENCIES
-	-->
+    <!--
+         DEPENDENCIES
+     -->
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.semispace</groupId>
                 <artifactId>semispace-main</artifactId>
                 <version>1.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.semispace</groupId>
+                <artifactId>semimeter-web</artifactId>
+                <version>${version}</version>
             </dependency>
             <dependency>
                 <groupId>org.semispace</groupId>
@@ -129,7 +134,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-           <dependency>
+            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${springframework.version}</version>
@@ -218,7 +223,7 @@
                 <version>2.2</version>
             </dependency>
 
-		<!-- Used for rss translation -->
+            <!-- Used for rss translation -->
             <dependency>
                 <groupId>org.jdom</groupId>
                 <artifactId>jdom</artifactId>
@@ -231,7 +236,7 @@
                 <version>1.0.1</version>
             </dependency>
 
-        <!-- Drop-in replacement for commons logging -->
+            <!-- Drop-in replacement for commons logging -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
@@ -242,7 +247,7 @@
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
-        <!-- Support for log4j -->
+            <!-- Support for log4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
@@ -293,10 +298,9 @@
         </dependencies>
     </dependencyManagement>
 
-
-	<!--
-		BUILD
-	-->
+    <!--
+         BUILD
+     -->
     <build>
         <plugins>
             <plugin>
@@ -326,9 +330,9 @@
         </plugins>
     </build>
 
-	<!--
-		REPORT SECTION
-	-->
+    <!--
+         REPORT SECTION
+     -->
     <reporting>
 
         <plugins>
@@ -343,14 +347,14 @@
         </plugins>
     </reporting>
 
-
     <modules>
         <module>semimeter-webapp</module>
         <module>semimeter-app</module>
+        <module>semimeter-web</module>
     </modules>
 
     <scm>
-    	<url>http://www.semispace.org/svn/semimeter/trunk/</url>
+        <url>http://www.semispace.org/svn/semimeter/trunk/</url>
         <connection>scm:svn:http://www.semispace.org/svn/semimeter/trunk/</connection>
         <developerConnection>scm:svn:svn+ssh://semispace.org/opt/spacerepo/semimeter/trunk</developerConnection>
     </scm>
