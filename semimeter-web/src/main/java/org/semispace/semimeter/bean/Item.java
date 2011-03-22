@@ -51,7 +51,7 @@ public class Item {
     }
 
     public String toString() {
-        return "Item[path:"+path+"][when:"+when+"][accessNumber:"+accessNumber+"]";
+        return "Item[path:" + path + "][when:" + when + "][accessNumber:" + accessNumber + "]";
     }
 
     public void setAccessNumber(int accessNumber) {

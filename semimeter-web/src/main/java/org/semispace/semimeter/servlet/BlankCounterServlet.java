@@ -57,15 +57,15 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         blankImage = readBlankImage();
         space = SemiSpace.retrieveSpace();
         counter = new ZeroAbleBlankCounter(space);
-        purgehelperWhenIdle = space.notify(new EnsuringResetDuringIdle(), this, SemiSpace.ONE_DAY*3650);
-        throttleRegistration = space.notify(new ThrottleBean(null), this, SemiSpace.ONE_DAY*3650);
+        purgehelperWhenIdle = space.notify(new EnsuringResetDuringIdle(), this, SemiSpace.ONE_DAY * 3650);
+        throttleRegistration = space.notify(new ThrottleBean(null), this, SemiSpace.ONE_DAY * 3650);
 
         String res = System.getProperty(CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE);
-        if ( res != null ) {
+        if (res != null) {
             resolution_ms = Long.valueOf(res);
         } else {
             resolution_ms = 1000;
-            log.error("Missing system property "+CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE+" please add it to the java vm as a -D parameter. Using default of "+resolution_ms);
+            log.error("Missing system property " + CounterHolder.RESOLUTION_MS_SYSTEM_VARIABLE + " please add it to the java vm as a -D parameter. Using default of " + resolution_ms);
         }
         log.info("Using {} as least update interval.", resolution_ms);
     }
@@ -84,17 +84,17 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // I know that semimeter/c/xx/yy.gif will resolve to /xx/yy.gif with PathInfo
         String path = request.getPathInfo();
-        if ( path.endsWith(".gif")) {
+        if (path.endsWith(".gif")) {
             path = path.substring(0, path.length() - 4);
         }
         long now = System.currentTimeMillis();
         // Math abs is in order to handle clock skew
-        long throttledRes = ( resolution_ms * (throttle+1));
-        if ( Math.abs(now - lastReset) > throttledRes ) {
+        long throttledRes = (resolution_ms * (throttle + 1));
+        if (Math.abs(now - lastReset) > throttledRes) {
             lastReset = now;
             EnsuringResetDuringIdle erdi = new EnsuringResetDuringIdle();
             space.takeIfExists(erdi);
-            space.write(erdi, 10000*(throttle+1));
+            space.write(erdi, 10000 * (throttle + 1));
             counter.reset();
         }
         counter.count(path);
@@ -123,31 +123,31 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         try {
             int numRead = 0;
             while (offset < bytes.length
-                   && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                    && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
                 offset += numRead;
             }
         } catch (IOException e) {
             log.error("Totally unexpected. Was not able to read image", e);
         }
         byte[] result = Arrays.copyOf(bytes, offset);
-        log.debug("Resulting length: "+result);
+        log.debug("Resulting length: " + result);
         return result;
     }
 
     @Override
     public void notify(SemiEvent theEvent) {
-        if ( theEvent instanceof SemiExpirationEvent) {
+        if (theEvent instanceof SemiExpirationEvent) {
             // Notice that the expiration event will not be called the moment it occurs
             log.debug("Calling reset because of expiration of idle element.");
             counter.reset();
-        } else if ( theEvent instanceof SemiAvailabilityEvent ) {
+        } else if (theEvent instanceof SemiAvailabilityEvent) {
             ThrottleBean tb = space.takeIfExists(new ThrottleBean(null));
             int before = throttle;
-            if ( tb != null ) {
-                throttle = Math.max( 0, throttle+tb.getValue().intValue());
+            if (tb != null) {
+                throttle = Math.max(0, throttle + tb.getValue().intValue());
             }
-            if ( throttle != before ) {
-                log.info("Throttle is now "+throttle);
+            if (throttle != before) {
+                log.info("Throttle is now " + throttle);
             }
         }
     }

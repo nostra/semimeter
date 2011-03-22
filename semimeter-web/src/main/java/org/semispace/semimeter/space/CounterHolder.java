@@ -32,11 +32,11 @@ public class CounterHolder {
     public static final String RESOLUTION_MS_SYSTEM_VARIABLE = "semimeter.frequency.ms";
 
     /**
-     * Consider using a lock instead  
+     * Consider using a lock instead
      */
-    public synchronized void count( String path ) {
+    public synchronized void count(String path) {
         Item item = items.get(path);
-        if ( item == null ) {
+        if (item == null) {
             item = new Item();
             long when = System.currentTimeMillis();
             item.setWhen(when);
@@ -49,10 +49,12 @@ public class CounterHolder {
     public synchronized Collection<Item> retrieveItems() {
         return items.values();
     }
+
     public synchronized int size() {
         return items.size();
     }
+
     public synchronized String toString() {
-        return "[CounterHolder - size "+size()+"]";
+        return "[CounterHolder - size " + size() + "]";
     }
 }

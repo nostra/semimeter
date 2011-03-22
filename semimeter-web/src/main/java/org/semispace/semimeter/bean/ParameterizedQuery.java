@@ -28,7 +28,7 @@ public class ParameterizedQuery {
         this.startAt = startAt;
         this.endAt = endAt;
         this.path = path;
-        this.key = path+"_"+resolution;
+        this.key = path + "_" + resolution;
     }
 
     public ParameterizedQuery() {

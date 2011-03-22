@@ -17,7 +17,7 @@
 package org.semispace.semimeter.bean;
 
 /**
- * 
+ *
  */
 public class ArrayQuery {
     private Long startAt;
@@ -31,7 +31,7 @@ public class ArrayQuery {
         this.endAt = endAt;
         this.path = path;
         this.numberOfSamples = numberOfSamples;
-        this.key = path+"_"+resolution+"_"+numberOfSamples;
+        this.key = path + "_" + resolution + "_" + numberOfSamples;
     }
 
     public ArrayQuery() {

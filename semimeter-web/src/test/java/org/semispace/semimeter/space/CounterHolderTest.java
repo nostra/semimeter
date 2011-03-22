@@ -35,13 +35,13 @@ public class CounterHolderTest {
         Assert.assertEquals(2, ch.size());
         Collection<Item> items = ch.retrieveItems();
         boolean found = false;
-        for ( Item item : items ) {
-            if ( item.getPath().equals("/a/b")) {
+        for (Item item : items) {
+            if (item.getPath().equals("/a/b")) {
                 found = true;
             }
-            Assert.assertTrue( item.getWhen() > 0);
-            Assert.assertTrue( item.getAccessNumber() > 0);
+            Assert.assertTrue(item.getWhen() > 0);
+            Assert.assertTrue(item.getAccessNumber() > 0);
         }
-        Assert.assertTrue( found );
+        Assert.assertTrue(found);
     }
 }

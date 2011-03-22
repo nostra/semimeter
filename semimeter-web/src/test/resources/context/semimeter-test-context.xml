@@ -16,29 +16,29 @@
   -->
 
 <beans
-     xmlns="http://www.springframework.org/schema/beans"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xmlns:context="http://www.springframework.org/schema/context"
-     xmlns:tx="http://www.springframework.org/schema/tx"
-     xmlns:jee="http://www.springframework.org/schema/jee"
-     xmlns:p="http://www.springframework.org/schema/p"
-     xsi:schemaLocation=
-     "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:tx="http://www.springframework.org/schema/tx"
+        xmlns:jee="http://www.springframework.org/schema/jee"
+        xmlns:p="http://www.springframework.org/schema/p"
+        xsi:schemaLocation=
+                "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
      http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd">
 
     <context:component-scan base-package="org.semispace.semimeter.**"/>
 
-       <bean id="semiMeterDataSource"
-                class="org.apache.commons.dbcp.BasicDataSource"
-                destroy-method="close">
-                <qualifier value="semiMeterDataSource" />
-                <property name="driverClassName" value="org.hsqldb.jdbcDriver" />
-                <property name="url" value="jdbc:hsqldb:mem://localhost:9001" />
-                <property name="username" value="sa" />
-                <property name="password" value="" />
-        </bean>
+    <bean id="semiMeterDataSource"
+          class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+        <qualifier value="semiMeterDataSource"/>
+        <property name="driverClassName" value="org.hsqldb.jdbcDriver"/>
+        <property name="url" value="jdbc:hsqldb:mem://localhost:9001"/>
+        <property name="username" value="sa"/>
+        <property name="password" value=""/>
+    </bean>
 
     <!--
        Activate if it is interesting to see performance in the "real" database

@@ -56,6 +56,11 @@
             </dependency>
             <dependency>
                 <groupId>org.semispace</groupId>
+                <artifactId>semimeter-web</artifactId>
+                <version>${version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.semispace</groupId>
                 <artifactId>semimeter-webapp</artifactId>
                 <version>${version}</version>
                 <type>war</type>
@@ -350,6 +355,7 @@
     <modules>
         <module>semimeter-webapp</module>
         <module>semimeter-app</module>
+        <module>semimeter-web</module>
     </modules>
 
     <scm>
