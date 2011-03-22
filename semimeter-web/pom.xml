@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <name>semimeter-web</name>
     <artifactId>semimeter-web</artifactId>
+    <name>semimeter-web</name>
 
     <dependencies>
         <dependency>
