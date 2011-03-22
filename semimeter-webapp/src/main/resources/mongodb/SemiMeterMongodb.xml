@@ -20,13 +20,12 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-
     <bean id="mongo" class="com.mongodb.Mongo">
         <constructor-arg value="localhost"/>
         <constructor-arg value="27017"/>
     </bean>
 
-    <bean id="db" class="org.semispace.semimeter.dao.MongoDbFactory">
+    <bean id="db" class="org.semispace.semimeter.dao.mongo.MongoDbFactory">
         <property name="mongo" ref="mongo"/>
         <property name="name" value="meter"/>
     </bean>

@@ -40,7 +40,7 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
         return meterDao;
     }
 
-    public AbstractSpace2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
+    public AbstractSpace2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType) {
         this.space = space;
         this.meterDao = meterDao;
         this.eventType = eventType;
@@ -49,16 +49,17 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
 
     @Override
     public void notify(SemiEvent theEvent) {
-        if ( theEvent instanceof SemiAvailabilityEvent) {
+        if (theEvent instanceof SemiAvailabilityEvent) {
             //log.debug("Got availability in "+toString()+" with id "+theEvent.getId());
             activate();
-        } else if ( theEvent instanceof SemiExpirationEvent) {
-            log.warn("Lost event when listening for: {}. Element had id: {}. Sending message to throttle.", eventType, theEvent.getId() );
-            getSpace().write(new ThrottleBean( 1 ), 5000 );
+        } else if (theEvent instanceof SemiExpirationEvent) {
+            log.warn("Lost event when listening for: {}. Element had id: {}. Sending message to throttle.", eventType, theEvent.getId());
+            getSpace().write(new ThrottleBean(1), 5000);
         }
     }
+
     public void activate() {
-        if ( isActive ) {
+        if (isActive) {
             // Already at it.
             return;
         }
@@ -66,7 +67,7 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
         try {
             retrieveAndTreatData();
         } finally {
-            isActive =false;
+            isActive = false;
         }
 
     }

@@ -15,7 +15,7 @@ import java.util.Collection;
 /**
  *
  */
-@ContextConfiguration(locations={"/context/semimeter-test-context.xml"})
+@ContextConfiguration(locations = {"/context/semimeter-test-context.xml"})
 public class StrategyForReductionTest extends AbstractJUnit4SpringContextTests {
     @Autowired
     private SemiMeterDao semiMeterDao;
@@ -28,19 +28,19 @@ public class StrategyForReductionTest extends AbstractJUnit4SpringContextTests {
 
     @After
     public void deleteAddedTestEntries() {
-        semiMeterDao.deleteItemsFrom( whenStartedTest, "/junit%");
+        semiMeterDao.deleteItemsFrom(whenStartedTest, "/junit%");
     }
 
     @Test
     public void testHousekeeping() {
         int oldSize = semiMeterDao.size();
         Collection<Item> items = new ArrayList<Item>();
-        items.add(createItem(whenStartedTest +    0));
+        items.add(createItem(whenStartedTest + 0));
         items.add(createItem(whenStartedTest + 1000));
         items.add(createItem(whenStartedTest + 2000));
         semiMeterDao.performInsertion(items);
         Assert.assertEquals(oldSize + 3, semiMeterDao.size());
-        semiMeterDao.deleteItemsFrom( whenStartedTest, "/junit%");
+        semiMeterDao.deleteItemsFrom(whenStartedTest, "/junit%");
         Assert.assertEquals(oldSize, semiMeterDao.size());
     }
 
@@ -55,13 +55,13 @@ public class StrategyForReductionTest extends AbstractJUnit4SpringContextTests {
         items.add(createItem(whenStartedTest + 53000));
 
         semiMeterDao.performInsertion(items);
-        semiMeterDao.collate( whenStartedTest, whenStartedTest+60000 );
+        semiMeterDao.collate(whenStartedTest, whenStartedTest + 60000);
 
         Assert.assertEquals("Having inserted 4 elements, they are collated into a single one",
                 oldSize + 1, semiMeterDao.size());
     }
 
-    private Item createItem( long when ) {
+    private Item createItem(long when) {
         Item item = new Item();
         item.setPath("/junit/test/reduction");
         item.setWhen(when);

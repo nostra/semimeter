@@ -32,7 +32,7 @@ public class SpacePQListener extends AbstractSpace2Dao {
      */
     private static final long MAX_RESULT_LIFE_MS = 30000;
 
-    public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
+    public SpacePQListener(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType) {
         super(space, meterDao, eventType);
     }
 
@@ -43,15 +43,15 @@ public class SpacePQListener extends AbstractSpace2Dao {
         do {
             //log.debug("Taking PQ");
             pq = getSpace().takeIfExists(new ParameterizedQuery());
-            if ( pq != null ) {
+            if (pq != null) {
                 //log.debug("Found PQ with key "+pq.getKey());
-                if ( getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
+                if (getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
                     log.debug("PQ-Query already performed - not doing it again.");
                 } else {
                     JsonResults[] result = getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
                     ParameterizedQueryResult pqr = new ParameterizedQueryResult(pq.getKey(), result);
                     long life = (pq.getEndAt() - pq.getStartAt() / 2);
-                    if ( life > MAX_RESULT_LIFE_MS) {
+                    if (life > MAX_RESULT_LIFE_MS) {
                         life = MAX_RESULT_LIFE_MS;
                     }
                     getSpace().write(pqr, MAX_RESULT_LIFE_MS);
@@ -59,22 +59,22 @@ public class SpacePQListener extends AbstractSpace2Dao {
             }
 
             aq = getSpace().takeIfExists(new ArrayQuery());
-            if ( aq != null ) {
+            if (aq != null) {
                 //log.debug("Found AQ with key "+aq.getKey());
-                if ( getSpace().readIfExists(new ArrayQueryResult(aq.getKey(), null)) != null) {
+                if (getSpace().readIfExists(new ArrayQueryResult(aq.getKey(), null)) != null) {
                     log.debug("Array query already performed - not doing it again.");
                 } else {
-                    JsonResults[] result = getMeterDao().createTimeArray( aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
+                    JsonResults[] result = getMeterDao().createTimeArray(aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
                     ArrayQueryResult aqr = new ArrayQueryResult(aq.getKey(), result);
                     long life = (aq.getEndAt() - aq.getStartAt() / 2);
-                    if ( life > MAX_RESULT_LIFE_MS) {
+                    if (life > MAX_RESULT_LIFE_MS) {
                         life = MAX_RESULT_LIFE_MS;
                     }
                     getSpace().write(aqr, MAX_RESULT_LIFE_MS);
                 }
             }
 
-        } while ( pq != null || aq != null);
+        } while (pq != null || aq != null);
 
     }
 }

@@ -23,7 +23,7 @@ public class Space2Dao extends AbstractSpace2Dao {
      */
     private static final int THROTTLE_THRESHOLD = 5;
 
-    public Space2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType ) {
+    public Space2Dao(SemiSpaceInterface space, SemiMeterDao meterDao, String eventType) {
         super(space, meterDao, eventType);
     }
 
@@ -43,15 +43,15 @@ public class Space2Dao extends AbstractSpace2Dao {
             } else {
                 items.addAll(ch.retrieveItems());
                 numberOfTimesInLoop++;
-                if ( numberOfTimesInLoop % THROTTLE_THRESHOLD == 0 ) {
-                    getSpace().write(new ThrottleBean( 1 ), 5000 );
+                if (numberOfTimesInLoop % THROTTLE_THRESHOLD == 0) {
+                    getSpace().write(new ThrottleBean(1), 5000);
                 }
-                
+
             }
         } while (ch != null);
-        if ( numberOfTimesInLoop == 1 ) {
+        if (numberOfTimesInLoop == 1) {
             // Throttle down
-            getSpace().write(new ThrottleBean( -1 ), 60*1000 );
+            getSpace().write(new ThrottleBean(-1), 60 * 1000);
         }
     }
 

@@ -29,19 +29,20 @@ import java.util.Map;
 
 public class SemiMeterDaoMethodsTest {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoMethodsTest.class);
+
     @Test
     public void testEmptySingleEntry() {
-        List<JsonResults> jrs = new SemiMeterDao().flatten(new ArrayList<Map<String,Object>>(), 10);
+        List<JsonResults> jrs = new SemiMeterDao().flatten(new ArrayList<Map<String, Object>>(), 10);
         Assert.assertEquals(10, jrs.size());
-        for ( JsonResults jr : jrs ) {
+        for (JsonResults jr : jrs) {
             Assert.assertEquals("0", jr.getValue());
         }
     }
 
     @Test
     public void testFlattenSingleEntry() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 1255795233251l, 100));
+        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        data.add(createMap(1255795233251l, 100));
         List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
         Assert.assertEquals(5, jrs.size());
         Assert.assertEquals("100", jrs.get(0).getValue());
@@ -49,33 +50,33 @@ public class SemiMeterDaoMethodsTest {
 
     @Test
     public void testFlattenSeveralEntries() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 100, 1));
-        data.add(createMap( 200, 1));
-        data.add(createMap( 300, 1));
-        data.add(createMap( 400, 1));
-        data.add(createMap( 500, 1));
+        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        data.add(createMap(100, 1));
+        data.add(createMap(200, 1));
+        data.add(createMap(300, 1));
+        data.add(createMap(400, 1));
+        data.add(createMap(500, 1));
         List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
 
-        for ( JsonResults jr : jrs ) {
+        for (JsonResults jr : jrs) {
             Assert.assertEquals("The distribution of 5 data should be flat", "1", jr.getValue());
         }
     }
 
     @Test
     public void testFlattenWhenAllInSameSpot() {
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String,Object>>();
-        data.add(createMap( 100, 1));
-        data.add(createMap( 210, 1));
-        data.add(createMap( 220, 1));
-        data.add(createMap( 230, 1));
-        data.add(createMap( 500, 1));
+        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        data.add(createMap(100, 1));
+        data.add(createMap(210, 1));
+        data.add(createMap(220, 1));
+        data.add(createMap(230, 1));
+        data.add(createMap(500, 1));
         List<JsonResults> jrs = new SemiMeterDao().flatten(data, 5);
 
-        Assert.assertEquals( "1", jrs.get(0).getValue());
-        Assert.assertEquals( "3", jrs.get(1).getValue());
-        Assert.assertEquals( "0", jrs.get(2).getValue());
-        Assert.assertEquals( "1", jrs.get(4).getValue());
+        Assert.assertEquals("1", jrs.get(0).getValue());
+        Assert.assertEquals("3", jrs.get(1).getValue());
+        Assert.assertEquals("0", jrs.get(2).getValue());
+        Assert.assertEquals("1", jrs.get(4).getValue());
     }
 
     private Map<String, Object> createMap(long updt, int count) {

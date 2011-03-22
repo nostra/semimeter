@@ -17,10 +17,8 @@
 package org.semispace.semimeter.dao;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.semispace.semimeter.bean.Item;
-import org.semispace.semimeter.bean.JsonResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +26,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
-@ContextConfiguration(locations={"/context/semimeter-test-context.xml"})
+@ContextConfiguration(locations = {"/context/semimeter-test-context.xml"})
 public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoTest.class);
     private static final long NUMBER_OF_TEST_ELEMENTS = 100;
@@ -53,53 +49,53 @@ public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
 
         Item item = createItem(System.currentTimeMillis());
         List<Item> items = new ArrayList<Item>();
-        items.add( item );
+        items.add(item);
         semiMeterDao.performInsertion(items);
-        Assert.assertEquals("Should manage to add a single item", oldSize+1, semiMeterDao.size());
+        Assert.assertEquals("Should manage to add a single item", oldSize + 1, semiMeterDao.size());
     }
 
     @Test
     public void testInsertionOfANumberOfItemsInArray() {
         int oldSize = semiMeterDao.size();
         List<Item> items = new ArrayList<Item>();
-        for ( long x = 1 ; x < NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+        for (long x = 1; x < NUMBER_OF_TEST_ELEMENTS; x++) {
             Item item = createItem(x);
-            items.add( item );
+            items.add(item);
         }
         long bench = System.currentTimeMillis();
         semiMeterDao.performInsertion(items);
-        log.info("Used {} milliseconds on insertion of {} items ", (System.currentTimeMillis()-bench), items.size());
-        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS-1), semiMeterDao.size());
+        log.info("Used {} milliseconds on insertion of {} items ", (System.currentTimeMillis() - bench), items.size());
+        Assert.assertEquals(oldSize + (NUMBER_OF_TEST_ELEMENTS - 1), semiMeterDao.size());
     }
 
     @Test
     public void testSingleInsertionOfItemsInArray() {
         int oldSize = semiMeterDao.size();
         long bench = System.currentTimeMillis();
-        for ( long x = NUMBER_OF_TEST_ELEMENTS ; x < 2*NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+        for (long x = NUMBER_OF_TEST_ELEMENTS; x < 2 * NUMBER_OF_TEST_ELEMENTS; x++) {
             List<Item> items = new ArrayList<Item>();
             Item item = createItem(x);
-            items.add( item );
+            items.add(item);
             semiMeterDao.performInsertion(items);
         }
-        log.info("Used {} milliseconds in testSingleInsertionOfItemsInArray", (System.currentTimeMillis()-bench));
-        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
+        log.info("Used {} milliseconds in testSingleInsertionOfItemsInArray", (System.currentTimeMillis() - bench));
+        Assert.assertEquals(oldSize + (NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
     }
 
     @Test
     public void testSingleInsertionOfItems() {
         int oldSize = semiMeterDao.size();
         long bench = System.currentTimeMillis();
-        for ( long x = NUMBER_OF_TEST_ELEMENTS * 2 ; x < 3*NUMBER_OF_TEST_ELEMENTS ; x++ ) {
+        for (long x = NUMBER_OF_TEST_ELEMENTS * 2; x < 3 * NUMBER_OF_TEST_ELEMENTS; x++) {
             Item item = createItem(x);
             semiMeterDao.insert(item);
         }
-        log.info("Used {} milliseconds in testSingleInsertionOfItems", (System.currentTimeMillis()-bench));
-        Assert.assertEquals(oldSize+(NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
+        log.info("Used {} milliseconds in testSingleInsertionOfItems", (System.currentTimeMillis() - bench));
+        Assert.assertEquals(oldSize + (NUMBER_OF_TEST_ELEMENTS), semiMeterDao.size());
     }
 
 
-    private Item createItem( long when ) {
+    private Item createItem(long when) {
         Item item = new Item();
         item.setPath("/junit/testStandardDaoFunctionality");
         item.setWhen(when);
