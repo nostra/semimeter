@@ -24,11 +24,6 @@
         <href>http://www.semispace.org</href>
     </bannerLeft>
   <publishDate position="navigation-bottom" format="dd/MM yyyy"/>
-  <skin>
-    <groupId>org.dynamicus.maven</groupId>
-    <artifactId>skinned</artifactId>
-    <version>0.3-SNAPSHOT</version>
-  </skin>
   <body>
     <links>
         <item name="SemiSpace home" href="http://www.semispace.org/semispace"/>
