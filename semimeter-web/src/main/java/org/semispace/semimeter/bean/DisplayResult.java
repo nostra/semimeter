@@ -2,7 +2,7 @@ package org.semispace.semimeter.bean;
 
 public class DisplayResult {
     private final String path;
-    private String str;
+    private Long count;
 
     public DisplayResult(String path) {
         this.path = path;
@@ -13,11 +13,11 @@ public class DisplayResult {
         return path;
     }
 
-    public void setResult(String str) {
-        this.str = str;
+    public void setResult(Long count) {
+        this.count = count;
     }
 
-    public String getResult() {
-        return str;
+    public Long getResult() {
+        return count;
     }
 }
