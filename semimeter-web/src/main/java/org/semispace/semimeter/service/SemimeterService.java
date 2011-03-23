@@ -208,7 +208,7 @@ public class SemimeterService {
         return jrs;
     }
 
-    public static long calculateStartTimeFromResolution(String resolution, long endAt) {
+    public long calculateStartTimeFromResolution(String resolution, long endAt) {
         long startAt;
         if (resolution.equalsIgnoreCase("second")) {
             startAt = endAt - 1000;
