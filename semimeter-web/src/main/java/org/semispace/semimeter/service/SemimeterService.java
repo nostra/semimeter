@@ -2,18 +2,15 @@ package org.semispace.semimeter.service;
 
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.ArrayQuery;
-import org.semispace.semimeter.bean.ArrayQueryResult;
-import org.semispace.semimeter.bean.DisplayIntent;
-import org.semispace.semimeter.bean.DisplayResult;
-import org.semispace.semimeter.bean.JsonResults;
-import org.semispace.semimeter.bean.ParameterizedQuery;
-import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.bean.*;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This service facades all space and dao operations, so that web controllers won't have to
@@ -100,13 +97,13 @@ public class SemimeterService {
     public Long getCurrentCount(final String path, final String resolution, final long endAt, final long startAt) {
         Long result = null;
         DisplayIntent di = new DisplayIntent(path + "_" + resolution);
-        DisplayResult dr = space.readIfExists(new DisplayResult(di.getPath()));
+        DisplayResult dr = space.readIfExists(new DisplayResult(di.getKey()));
         if (dr == null && space.readIfExists(di) == null) {
             space.write(di, QUERY_LIFE_TIME_MS);
 
             Long count = semiMeterDao.sumItems(startAt, endAt, path + "%");
 
-            dr = new DisplayResult(di.getPath());
+            dr = new DisplayResult(di.getKey());
             dr.setResult(count);
             space.write(dr, QUERY_RESULT_TIMEOUT_MS);
             space.takeIfExists(di);
@@ -116,7 +113,7 @@ public class SemimeterService {
             dr = space.read(dr, QUERY_LIFE_TIME_MS);
         }
         if (dr != null) {
-            result = dr.getResult();
+            result = (Long) dr.getResult();
         }
         return result;
     }
@@ -179,6 +176,37 @@ public class SemimeterService {
             log.debug("Query timed out: {}", pq.getKey());
         }
         return jrs;
+    }
+
+    public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt, final String resolution, final int maxResults) {
+        List<GroupedResult> result = new ArrayList<GroupedResult>();
+        String path = query.buildPathFromTokens();
+        log.debug("path: {}", path);
+        DisplayIntent di = new DisplayIntent(path + "_" + resolution + "_" + maxResults);
+        DisplayResult dr = space.readIfExists(new DisplayResult(di.getKey()));
+        if (dr == null && space.readIfExists(di) == null) {
+            space.write(di, QUERY_LIFE_TIME_MS);
+
+            List<GroupedResult> resultList = null;
+            try {
+                resultList = semiMeterDao.getGroupedSums(startAt, endAt, query, maxResults);
+            } catch (IllegalArgumentException e) {
+                log.error("invalid query parameter", e);
+            }
+
+            dr = new DisplayResult(di.getKey());
+            dr.setResult(resultList);
+            space.write(dr, QUERY_RESULT_TIMEOUT_MS);
+            space.takeIfExists(di);
+        }
+        if (dr == null) {
+            // DisplayIntent was present
+            dr = space.read(dr, QUERY_LIFE_TIME_MS);
+        }
+        if (dr != null && dr.getResult() != null) {
+            return (List<GroupedResult>) dr.getResult();
+        }
+        return result;
     }
 
 

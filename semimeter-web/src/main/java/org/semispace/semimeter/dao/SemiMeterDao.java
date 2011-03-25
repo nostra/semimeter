@@ -19,10 +19,8 @@ package org.semispace.semimeter.dao;
 import org.semispace.SemiEventRegistration;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.ArrayQuery;
-import org.semispace.semimeter.bean.Item;
-import org.semispace.semimeter.bean.JsonResults;
-import org.semispace.semimeter.bean.ParameterizedQuery;
+import org.semispace.semimeter.bean.*;
+import org.semispace.semimeter.dao.helper.QueryTokenConverter;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,17 +29,16 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -204,8 +201,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
 
         //for ( Item item : items ) {
         // Original just called insert
-        //insertArgs.add( new Object[]{item.getWhen(), item.getPath(),item.getWhen(), item.getPath()});
-        //updateArgs.add( new Object[] {item.getAccessNumber(), item.getPath(), item.getWhen()});
+        //insertArgs.add( new Object[]{item.getWhen(), item.getKey(),item.getWhen(), item.getKey()});
+        //updateArgs.add( new Object[] {item.getAccessNumber(), item.getKey(), item.getWhen()});
         //}
         rwl.writeLock().lock();
         try {
@@ -486,5 +483,34 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         }
         // Insert
         performInsertion(replacements);
+    }
+
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults) throws IllegalArgumentException {
+        final List<GroupedResult> result = new ArrayList<GroupedResult>();
+        /*
+            SELECT SUBSTRING_INDEX(path, '/', -1) as article_id,
+                   sum(counted) as cnt
+            FROM meter m
+            where path like '/album/%/%/%'
+            group by article_id
+            order by cnt desc
+            limit 10
+         */
+        final QueryTokenConverter converter = new QueryTokenConverter(query);
+        String sql = "SELECT " + converter.getQueryString() + ", sum(counted) as cnt FROM meter m where path like "
+                + query.buildPathFromTokens() + " GROUP BY " + converter.getQueryAlias() + " order by cnt desc limit " + maxResults;
+
+        jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
+            @Override
+            public GroupedResult mapRow(ResultSet resultSet, int i) throws SQLException {
+                GroupedResult result = new GroupedResult();
+                result.setKeyName(converter.getQueryAlias());
+                result.setKey(resultSet.getString(converter.getQueryAlias()));
+                result.setCount(resultSet.getInt("cnt"));
+                return result;
+            }
+        });
+
+        return result;
     }
 }

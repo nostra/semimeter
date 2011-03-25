@@ -1,23 +1,22 @@
 package org.semispace.semimeter.bean;
 
 public class DisplayResult {
-    private final String path;
-    private Long count;
+    private final String key;
+    private Object result;
 
-    public DisplayResult(String path) {
-        this.path = path;
+    public DisplayResult(String key) {
+        this.key = key;
     }
 
-
-    public String getPath() {
-        return path;
+    public String getKey() {
+        return key;
     }
 
-    public void setResult(Long count) {
-        this.count = count;
+    public void setResult(Object result) {
+        this.result = result;
     }
 
-    public Long getResult() {
-        return count;
+    public Object getResult() {
+        return result;
     }
 }
