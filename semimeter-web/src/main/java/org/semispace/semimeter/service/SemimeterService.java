@@ -58,7 +58,6 @@ public class SemimeterService {
      *                       day before now" or "an hour before now"
      * @param previousPeriod a long value. marks the beginning of the reference period. the reference period starts at
      *                       <code>previousPeriod</code> and ends at <code>startAt</code>
-     *
      * @return a delta between the counted views of two succeeding periods of time.
      *         The reference period is between <code>previousPeriod</code> and <code>startAt</code>. All counts from
      *         this period will be subtracted from the "current" period, which is between <code>startAt</code> and
@@ -96,8 +95,7 @@ public class SemimeterService {
      *                   "now"
      * @param startAt    a long value. take all events counted after this timestamp into calculation. typically "a
      *                   day before now" or "an hour before now"
-     *
-     * @return sum of counted views for give path expression and given period of time
+     * @return sum of counted views for given path expression and given period of time
      */
     public Long getCurrentCount(final String path, final String resolution, final long endAt, final long startAt) {
         Long result = null;
@@ -136,10 +134,10 @@ public class SemimeterService {
      *                   valid path parameters for this method:
      *                   <ul>
      *                   <li>books/adventure/2121/$  (one complete path)</li>
-     *                   <li>books/$                 (grouped category)</li>
-     *                   <li>books/adventure/$       (grouped sub-category)</li>
-     *                   <li>books/$/2121            (all books with concrete itemId, disregarding subcategory)</li>
-     *                   <li>$/adventure             (all items with sub-cat adventure)</li>
+     *                   <li>books/$                 (all items in books category)</li>
+     *                   <li>books/adventure/$       (all items in book category and adventure subcat)</li>
+     *                   <li>books/$/2121            (all books with concrete itemId, grouped by subcategory)</li>
+     *                   <li>$/adventure/2121        (all items with sub-cat adventure and item id 2121, grouped by cat)</li>
      *                   </ul>
      * @param endAt      a long value. take all events counted up to this timestamp into calculation. typically "now"
      * @param startAt    a long value. take all events counted after this timestamp into calculation. typically "a
@@ -155,7 +153,6 @@ public class SemimeterService {
      *                   <li>month</li>
      *                   <li>total</li>
      *                   </ul>
-     *
      * @return returns an array of JsonResults. Each JsonResult has a key, which is the wildcard value that the dollar
      *         in the given path variable matched with. the JsonResult value is the number of counts for that match in
      *         the given period of time.
