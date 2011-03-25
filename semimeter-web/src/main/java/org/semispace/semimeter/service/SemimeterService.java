@@ -181,30 +181,23 @@ public class SemimeterService {
         return jrs;
     }
 
-    public JsonResults[] getArrayCounts(final String resolution, final Integer numberOfSamples, final String path, final long endAt, final long startAt) {
-        ArrayQuery aq = new ArrayQuery(resolution, startAt, endAt, path + "%", numberOfSamples);
-        ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
-        ArrayQueryResult aqr = space.readIfExists(toFind);
-        if (aqr == null) {
-            //log.debug("No previous result for {}", aq.getKey());
-            if (space.readIfExists(aq) == null) {
-                space.write(aq, QUERY_LIFE_TIME_MS);
-            } else {
-                log.debug("Query for {} has already been placed", aq.getKey());
-            }
-            aqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
-        } else {
-            log.trace("Using existing result for {}", aq.getKey());
-        }
-        JsonResults[] jrs = null;
-        if (aqr != null) {
-            jrs = aqr.getResults();
-        } else {
-            log.debug("ArrayQuery timed out: {}", aq.getKey());
-        }
-        return jrs;
-    }
 
+    /**
+     * Calculates starting point as (in milliseconds).
+     *
+     * @param resolution String indicating how long before <code>endAt</code> the starting point shall be. Valid values are
+     *                   <ul>
+     *                   <li>second</li>
+     *                   <li>minute</li>
+     *                   <li>hour</li>
+     *                   <li>day</li>
+     *                   <li>week</li>
+     *                   <li>month</li>
+     *                   <li>total</li>
+     *                   </ul>
+     * @param endAt      base value for the calculation. the result will be  {whateverresolutionyouchose} before this point in time.
+     * @return a point in time, as milliseconds since 1970/01/01
+     */
     public long calculateStartTimeFromResolution(String resolution, long endAt) {
         long startAt;
         if (resolution.equalsIgnoreCase("second")) {
@@ -229,6 +222,9 @@ public class SemimeterService {
         return startAt;
     }
 
+    /**
+     * @return the soonest possible end point for a calculation period.
+     */
     public long getCurrentEndTime() {
         return System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
     }
@@ -256,4 +252,29 @@ public class SemimeterService {
         }
         return numberOfSamples;
     }
+
+    public JsonResults[] getArrayCounts(final String resolution, final Integer numberOfSamples, final String path, final long endAt, final long startAt) {
+        ArrayQuery aq = new ArrayQuery(resolution, startAt, endAt, path + "%", numberOfSamples);
+        ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
+        ArrayQueryResult aqr = space.readIfExists(toFind);
+        if (aqr == null) {
+            //log.debug("No previous result for {}", aq.getKey());
+            if (space.readIfExists(aq) == null) {
+                space.write(aq, QUERY_LIFE_TIME_MS);
+            } else {
+                log.debug("Query for {} has already been placed", aq.getKey());
+            }
+            aqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
+        } else {
+            log.trace("Using existing result for {}", aq.getKey());
+        }
+        JsonResults[] jrs = null;
+        if (aqr != null) {
+            jrs = aqr.getResults();
+        } else {
+            log.debug("ArrayQuery timed out: {}", aq.getKey());
+        }
+        return jrs;
+    }
+
 }
