@@ -28,6 +28,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongo-java-driver</artifactId>
+            </dependency>
+        <dependency>
             <artifactId>commons-dbcp</artifactId>
             <groupId>commons-dbcp</groupId>
             <scope>test</scope>

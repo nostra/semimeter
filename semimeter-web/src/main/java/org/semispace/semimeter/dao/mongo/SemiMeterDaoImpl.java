@@ -17,37 +17,35 @@
 package org.semispace.semimeter.dao.mongo;
 
 import com.mongodb.DB;
-import org.semispace.SemiEventRegistration;
 import org.semispace.SemiSpaceInterface;
+import org.semispace.semimeter.bean.GroupedResult;
+import org.semispace.semimeter.bean.Item;
+import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.TokenizedPathInfo;
+import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@Service("semimeterDao")
-public class SemiMeterDaoImpl implements InitializingBean, DisposableBean {
+@Repository("semimeterDao")
+public class SemiMeterDaoImpl implements SemiMeterDao {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoImpl.class);
 
     @Autowired
     @Qualifier("db")
     private DB db;
-    private SemiEventRegistration chRegistration;
-    private SemiEventRegistration pqRegistration;
-    private SemiEventRegistration aqRegistration;
 
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space;
 
-
-    /**
-     * @return size of stalegroup table, or -1 if any errors occur.
-     */
     public int size() {
         int result = -1;
         rwl.readLock().lock();
@@ -60,16 +58,39 @@ public class SemiMeterDaoImpl implements InitializingBean, DisposableBean {
         return result;
     }
 
+    @Override
     public boolean isAlive() {
-        rwl.readLock().lock();
-        try {
-            int result = (int) db.getCollection("meter").count();
-            if (result >= 0) {
-                return true;
-            }
-        } finally {
-            rwl.readLock().unlock();
-        }
-        return false;
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public Long sumItems(long startAt, long endAt, String path) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public JsonResults[] performParameterizedQuery(long startAt, long endAt, String path) {
+        return new JsonResults[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public JsonResults[] createTimeArray(String path, long endAt, long startAt, Integer numberOfSamples) {
+        return new JsonResults[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void collate(long start, long end) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults) throws IllegalArgumentException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void performInsertion(Collection<Item> items) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
 }

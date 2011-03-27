@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-//@Service("semimeterDao")
+//@Repository("semimeterDao")
 public class SemiMeterDaoImpl implements SemiMeterDao, InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoImpl.class);
 
@@ -165,7 +165,8 @@ public class SemiMeterDaoImpl implements SemiMeterDao, InitializingBean, Disposa
         }
     }
 
-    protected void performInsertion(Collection<Item> items) {
+     @Override
+     public void performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
         SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
         List<Object[]> updateArgs = new ArrayList<Object[]>();
