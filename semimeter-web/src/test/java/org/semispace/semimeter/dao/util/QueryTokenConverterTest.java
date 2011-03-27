@@ -42,7 +42,7 @@ public class QueryTokenConverterTest {
     }
 
     @Test
-    public void test_multiple_tokens() throws Exception {
+    public void test_multiple_tokens_pass() throws Exception {
         TokenizedPathInfo input = new TokenizedPathInfo("|");
         input.addPathToken(new PathToken(null, "articleType", false));
         input.addPathToken(new PathToken("95", "publicationID", false));
@@ -52,5 +52,21 @@ public class QueryTokenConverterTest {
         assertNotNull(result);
         assertEquals("SUBSTRING_INDEX(path, '|', -1) as articleId", result.getQueryString());
         assertEquals("articleId", result.getQueryAlias());
+    }
+
+    @Test
+    public void test_multiple_tokens_fail() throws Exception {
+        TokenizedPathInfo input = new TokenizedPathInfo("|");
+        input.addPathToken(new PathToken(null, "articleType", false));
+        input.addPathToken(new PathToken("95", "publicationID", false));
+        input.addPathToken(new PathToken(null, "sectionId", false));
+        input.addPathToken(new PathToken(null, "articleId", false));
+        QueryTokenConverter result = null;
+        try {
+            result = new QueryTokenConverter(input);
+        } catch (IllegalArgumentException e) {
+            //good, just what we expect
+            assertNotNull(result);
+        }
     }
 }

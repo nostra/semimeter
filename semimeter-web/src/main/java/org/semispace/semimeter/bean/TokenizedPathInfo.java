@@ -1,7 +1,6 @@
 package org.semispace.semimeter.bean;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TokenizedPathInfo {
@@ -17,7 +16,8 @@ public class TokenizedPathInfo {
     }
 
     public List<PathToken> getPathTokens() {
-        return Collections.unmodifiableList(pathTokens);
+        //return Collections.unmodifiableList(pathTokens);
+        return pathTokens;
     }
 
 
@@ -30,16 +30,16 @@ public class TokenizedPathInfo {
 
         for (PathToken token : pathTokens) {
             sb.append(pathTokenDelimeter);
-            sb.append(pathify(token.getValue()));
+            sb.append(pathify(token));
         }
         return sb.toString();
     }
 
 
-    private String pathify(String value) {
-        if (value == null || value.isEmpty()) {
+    private String pathify(PathToken token) {
+        if (token.getValue() == null || token.getValue().isEmpty() || token.isGroupByThisToken()) {
             return "%";
         }
-        return value;
+        return token.getValue();
     }
 }
