@@ -486,7 +486,6 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     }
 
     public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults) throws IllegalArgumentException {
-        final List<GroupedResult> result = new ArrayList<GroupedResult>();
         /*
             SELECT SUBSTRING_INDEX(path, '/', -1) as article_id,
                    sum(counted) as cnt
@@ -497,10 +496,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             limit 10
          */
         final QueryTokenConverter converter = new QueryTokenConverter(query);
-        String sql = "SELECT " + converter.getQueryString() + ", sum(counted) as cnt FROM meter m where path like "
-                + query.buildPathFromTokens() + " GROUP BY " + converter.getQueryAlias() + " order by cnt desc limit " + maxResults;
+        String sql = "SELECT " + converter.getQueryString() + ", SUM(counted) AS cnt FROM meter m WHERE path LIKE '"
+                + query.buildPathFromTokens() + "' GROUP BY " + converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT " + maxResults;
 
-        jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
+        return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
             @Override
             public GroupedResult mapRow(ResultSet resultSet, int i) throws SQLException {
                 GroupedResult result = new GroupedResult();
@@ -510,7 +509,5 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 return result;
             }
         });
-
-        return result;
     }
 }
