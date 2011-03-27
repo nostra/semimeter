@@ -16,18 +16,9 @@
 
 package org.semispace.semimeter.controller;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
-import org.semispace.SemiSpace;
-import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.ArrayQuery;
-import org.semispace.semimeter.bean.ArrayQueryResult;
-import org.semispace.semimeter.bean.DisplayIntent;
-import org.semispace.semimeter.bean.DisplayResult;
 import org.semispace.semimeter.bean.JsonResults;
-import org.semispace.semimeter.bean.ParameterizedQuery;
-import org.semispace.semimeter.bean.ParameterizedQueryResult;
-import org.semispace.semimeter.dao.mongo.SemiMeterDao;
+import org.semispace.semimeter.service.JsonService;
+import org.semispace.semimeter.service.SemimeterService;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,19 +36,10 @@ public class CounterController {
     private final Logger log = LoggerFactory.getLogger(CounterController.class);
 
     @Autowired
-    private SemiMeterDao semiMeterDao;
+    private SemimeterService semimeterService;
 
-    private SemiSpaceInterface space = SemiSpace.retrieveSpace();
-
-    /**
-     * Default query skew is 20 seconds. This is in order to let the database have
-     * time to insert pending data.
-     * TODO Consider adjusting the value.
-     */
-    private static final long DEFAULT_SKEW_IN_MS = 20000;
-    private static final long QUERY_LIFE_TIME_MS = 5000;
-    private static final long QUERY_RESULT_TIMEOUT_MS = 6000;
-
+    @Autowired
+    private JsonService jsonService;
 
     @RequestMapping("/index.html")
     public String entryPage() {
@@ -73,9 +55,10 @@ public class CounterController {
         if (!isSane(request.getServletPath())) {
             throw new RuntimeException("Disallowed character found in query.");
         }
-        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = calculateStartTimeFromResolution(resolution, endAt);
-        JsonResults[] jrs = createJsonResults(trimPath("/graph.html", request.getServletPath()), endAt, startAt, resolution);
+        long endAt = semimeterService.getCurrentEndTime();
+        long startAt = semimeterService.calculateStartTimeFromResolution(resolution, endAt);
+        JsonResults[] jrs = semimeterService.getJsonResults(trimPath("/graph.html", request.getServletPath()), endAt,
+                startAt, resolution);
         long max = 0;
         for (JsonResults jr : jrs) {
             max = Math.max(max, Long.valueOf(jr.getValue()).longValue());
@@ -116,11 +99,11 @@ public class CounterController {
         if (counterresolution == null) {
             counterresolution = "total";
         }
-        calculateNumberOfSamples(counterresolution); // Just in order to get an exception if value is wrong
+        semimeterService.calculateNumberOfSamples(counterresolution); // Just in order to get an exception if value is wrong
         model.addAttribute("graphresolution", graphresolution);
         model.addAttribute("counterresolution", counterresolution);
         model.addAttribute("path", trimPath("/monitor.html", request.getServletPath()));
-        model.addAttribute("graphsamples", calculateNumberOfSamples(graphresolution));
+        model.addAttribute("graphsamples", semimeterService.calculateNumberOfSamples(graphresolution));
 
         return "monitor";
     }
@@ -141,12 +124,11 @@ public class CounterController {
             throw new RuntimeException("Disallowed character found in query.");
         }
 
-        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        long endAt = semimeterService.getCurrentEndTime();
+        long startAt = semimeterService.calculateStartTimeFromResolution(resolution, endAt);
 
-        JsonResults[] jrs = createJsonResults(trimPath("/json.html", request.getServletPath()), endAt, startAt, resolution);
-
-        String str = createJsonStringFromArray(jrs);
+        JsonResults[] jrs = semimeterService.getJsonResults(trimPath("/json.html", request.getServletPath()), endAt, startAt, resolution);
+        String str = jsonService.createJsonStringFromArray(jrs);
 
         model.addAttribute("numberOfItems", str);
 
@@ -165,41 +147,14 @@ public class CounterController {
             throw new RuntimeException("Disallowed character found in query.");
         }
         String path = trimPath("/array.html", request.getServletPath());
-        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = calculateStartTimeFromResolution(resolution, endAt);
-        ArrayQuery aq = new ArrayQuery(resolution, startAt, endAt, path + "%", numberOfSamples);
-        ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
-        ArrayQueryResult aqr = space.readIfExists(toFind);
-        if (aqr == null) {
-            //log.debug("No previous result for {}", aq.getKey());
-            if (space.readIfExists(aq) == null) {
-                space.write(aq, QUERY_LIFE_TIME_MS);
-            } else {
-                log.debug("Query for {} has already been placed", aq.getKey());
-            }
-            aqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
-        } else {
-            log.trace("Using existing result for {}", aq.getKey());
-        }
-        JsonResults[] jrs = null;
-        if (aqr != null) {
-            jrs = aqr.getResults();
-        } else {
-            log.debug("ArrayQuery timed out: {}", aq.getKey());
-        }
+        long endAt = semimeterService.getCurrentEndTime();
+        long startAt = semimeterService.calculateStartTimeFromResolution(resolution, endAt);
+        JsonResults[] jrs = semimeterService.getArrayCounts(resolution, numberOfSamples, path, endAt, startAt);
 
-        String str = createJsonStringFromArray(jrs);
+        String str = jsonService.createJsonStringFromArray(jrs);
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
-    }
-
-    private String createJsonStringFromArray(JsonResults[] jrs) {
-        XStream xStream = new XStream(new JsonHierarchicalStreamDriver());
-        xStream.setMode(XStream.NO_REFERENCES);
-        xStream.alias("Result", JsonResults.class);
-        String str = xStream.toXML(jrs).replaceAll("Result-array", "Results");
-        return str;
     }
 
     /**
@@ -240,133 +195,44 @@ public class CounterController {
         return true;
     }
 
-    /**
-     *
-     */
-    private JsonResults[] createJsonResults(String path, long endAt, long startAt, String resolution) {
-        ParameterizedQuery pq = new ParameterizedQuery(resolution, startAt, endAt, path);
-        ParameterizedQueryResult toFind = new ParameterizedQueryResult(pq.getKey(), null);
-        ParameterizedQueryResult pqr = space.readIfExists(toFind);
-        if (pqr == null) {
-            //log.debug("No previous result for {}", pq.getKey());
-            if (space.readIfExists(pq) == null) {
-                space.write(pq, QUERY_LIFE_TIME_MS);
-            } else {
-                log.debug("Query for {} has already been placed", pq.getKey());
-            }
-            pqr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
-        } else {
-            log.trace("Using existing result for {}", pq.getKey());
-        }
-        JsonResults[] jrs = null;
-        if (pqr != null) {
-            jrs = pqr.getResults();
-        } else {
-            log.debug("Query timed out: {}", pq.getKey());
-        }
-        return jrs;
-    }
-
     private String trimPath(String toTrim, String path) {
-        path = path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html - for instance
-        return path;
+        return path.substring(0, Math.max(0, path.length() - toTrim.length())); // Trim /json.html - for instance
     }
 
 
     private String displayCurrent(String path, Model model, String resolution) {
-        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = calculateStartTimeFromResolution(resolution, endAt);
+        long endAt = semimeterService.getCurrentEndTime();
+        long startAt = semimeterService.calculateStartTimeFromResolution(resolution, endAt);
 
-        DisplayIntent di = new DisplayIntent(path + "_" + resolution);
-        DisplayResult dr = space.readIfExists(new DisplayResult(di.getPath()));
-        if (dr == null && space.readIfExists(di) == null) {
-            space.write(di, QUERY_LIFE_TIME_MS);
+        Long count = semimeterService.getCurrentCount(path, resolution, endAt, startAt);
 
-            Long result = semiMeterDao.sumItems(startAt, endAt, path + "%");
+        if (count != null) {
             JsonResults[] jrs = new JsonResults[1];
             jrs[0] = new JsonResults();
             jrs[0].setKey("show");
-            jrs[0].setValue("" + result);
-            String str = createJsonStringFromArray(jrs);
-
-            dr = new DisplayResult(di.getPath());
-            dr.setResult(str);
-            space.write(dr, QUERY_RESULT_TIMEOUT_MS);
-            space.takeIfExists(di);
-        }
-        if (dr == null) {
-            // DisplayIntent was present
-            dr = space.read(dr, QUERY_LIFE_TIME_MS);
-        }
-        if (dr != null) {
-            model.addAttribute("numberOfItems", dr.getResult());
+            jrs[0].setValue("" + count);
+            model.addAttribute("numberOfItems", jsonService.createJsonStringFromArray(jrs));
         }
 
         return "showcount";
     }
 
+
     private String displayChange(String path, Model model, String resolution) {
-        long endAt = System.currentTimeMillis() - DEFAULT_SKEW_IN_MS;
-        long startAt = calculateStartTimeFromResolution(resolution, endAt);
-        long previousPeriod = calculateStartTimeFromResolution(resolution, startAt);
-        long result = semiMeterDao.sumItems(startAt, endAt, path + "%").longValue() - semiMeterDao.sumItems(previousPeriod, startAt, path + "%").longValue();
+        long endAt = semimeterService.getCurrentEndTime();
+        long startAt = semimeterService.calculateStartTimeFromResolution(resolution, endAt);
+        long previousPeriod = semimeterService.calculateStartTimeFromResolution(resolution, startAt);
+        long result = semimeterService.getDeltaFromDb(path, endAt, startAt, previousPeriod);
 
         JsonResults[] jrs = new JsonResults[1];
         jrs[0] = new JsonResults();
         jrs[0].setKey("change");
         jrs[0].setValue("" + result);
-        String str = createJsonStringFromArray(jrs);
+        String str = jsonService.createJsonStringFromArray(jrs);
 
         model.addAttribute("numberOfItems", str);
 
         return "showcount";
     }
 
-    public static long calculateNumberOfSamples(String resolution) {
-        long numberOfSamples;
-        if (resolution.equalsIgnoreCase("second")) {
-            numberOfSamples = 60; // A resolution of seconds does not make sense.
-        } else if (resolution.equalsIgnoreCase("minute")) {
-            numberOfSamples = 60;
-        } else if (resolution.equalsIgnoreCase("hour")) {
-            numberOfSamples = 60;
-        } else if (resolution.equalsIgnoreCase("day")) {
-            numberOfSamples = 24;
-        } else if (resolution.equalsIgnoreCase("week")) {
-            numberOfSamples = 7;
-        } else if (resolution.equalsIgnoreCase("month")) {
-            // Using 30 day month
-            numberOfSamples = 30;
-        } else if (resolution.equalsIgnoreCase("total")) {
-            // Defaulting to total - beginning at time 0
-            numberOfSamples = 10;
-        } else {
-            throw new RuntimeException("Did not understand resolution " + resolution);
-        }
-        return numberOfSamples;
-    }
-
-    public static long calculateStartTimeFromResolution(String resolution, long endAt) {
-        long startAt;
-        if (resolution.equalsIgnoreCase("second")) {
-            startAt = endAt - 1000;
-        } else if (resolution.equalsIgnoreCase("minute")) {
-            startAt = endAt - 60000;
-        } else if (resolution.equalsIgnoreCase("hour")) {
-            startAt = endAt - 60000 * 60;
-        } else if (resolution.equalsIgnoreCase("day")) {
-            startAt = endAt - 60000 * 60 * 24;
-        } else if (resolution.equalsIgnoreCase("week")) {
-            startAt = endAt - 60000 * 60 * 24 * 7;
-        } else if (resolution.equalsIgnoreCase("month")) {
-            // Using 30 day month
-            startAt = endAt - 60000 * 60 * 24 * 7 * 30l;
-        } else if (resolution.equalsIgnoreCase("total")) {
-            // Defaulting to total - beginning at time 0
-            startAt = 0;
-        } else {
-            throw new RuntimeException("Did not understand resolution " + resolution);
-        }
-        return startAt;
-    }
 }

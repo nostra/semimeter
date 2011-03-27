@@ -1,14 +1,14 @@
 package org.semispace.semimeter.bean;
 
 public class DisplayIntent {
-    private final String path;
+    private final String key;
 
-    public DisplayIntent(String path) {
+    public DisplayIntent(String key) {
 
-        this.path = path;
+        this.key = key;
     }
 
-    public String getPath() {
-        return path;
+    public String getKey() {
+        return key;
     }
 }
