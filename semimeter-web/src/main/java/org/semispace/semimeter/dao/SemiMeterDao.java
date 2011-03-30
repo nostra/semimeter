@@ -19,7 +19,13 @@ package org.semispace.semimeter.dao;
 import org.semispace.SemiEventRegistration;
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.*;
+import org.semispace.semimeter.bean.ArrayQuery;
+import org.semispace.semimeter.bean.GroupedResult;
+import org.semispace.semimeter.bean.GroupedSumsQuery;
+import org.semispace.semimeter.bean.Item;
+import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.ParameterizedQuery;
+import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.helper.QueryTokenConverter;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
@@ -33,17 +39,21 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@Service("semimeterDao")
+@Repository("semimeterDao")
 public class SemiMeterDao implements InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDao.class);
 
@@ -51,6 +61,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private SemiEventRegistration chRegistration;
     private SemiEventRegistration pqRegistration;
     private SemiEventRegistration aqRegistration;
+    private SemiEventRegistration groupedSumsRegistration;
 
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space;
@@ -101,7 +112,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         log.debug("Retrieving semispace.");
         space = SemiSpace.retrieveSpace();
         log.debug("Registering listeners.");
-        if (chRegistration != null || pqRegistration != null) {
+        if (chRegistration != null || pqRegistration != null || aqRegistration != null || groupedSumsRegistration != null) {
             log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
         } else {
             SpacePQListener spacePqListener = new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
@@ -110,7 +121,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             // Reusing
             pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
             aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-
+            groupedSumsRegistration = space.notify(new GroupedSumsQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
         }
 
         if (size() < 0) {
@@ -263,6 +274,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         if (aqRegistration != null) {
             aqRegistration.getLease().cancel();
             aqRegistration = null;
+        }
+        if (groupedSumsRegistration != null) {
+            groupedSumsRegistration.getLease().cancel();
+            groupedSumsRegistration = null;
         }
     }
 

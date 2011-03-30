@@ -19,11 +19,16 @@ package org.semispace.semimeter.dao;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.ArrayQuery;
 import org.semispace.semimeter.bean.ArrayQueryResult;
+import org.semispace.semimeter.bean.GroupedResult;
+import org.semispace.semimeter.bean.GroupedSumsQuery;
+import org.semispace.semimeter.bean.GroupedSumsResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class SpacePQListener extends AbstractSpace2Dao {
     private final Logger log = LoggerFactory.getLogger(SpacePQListener.class);
@@ -40,7 +45,33 @@ public class SpacePQListener extends AbstractSpace2Dao {
     public void retrieveAndTreatData() {
         ParameterizedQuery pq;
         ArrayQuery aq;
+        GroupedSumsQuery gs;
+
         do {
+            log.debug("retrieveAndTreatData");
+            gs = getSpace().takeIfExists(new GroupedSumsQuery());
+            log.debug("gsq: "+gs);
+            if (gs != null) {
+                log.debug("Found a GroupedSumQUery with key {}", gs.getKey());
+                if (getSpace().readIfExists(new GroupedSumsResult(gs.getKey(), null)) != null) {
+                    log.debug("GroupedSumsQuery already performed - not doing it again");
+                } else {
+                    List<GroupedResult> resultList = null;
+                    try {
+                        resultList = getMeterDao().getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults());
+                    } catch (IllegalArgumentException e) {
+                        log.error("invalid query parameter", e);
+                    }
+                    GroupedSumsResult gsr = new GroupedSumsResult(gs.getKey(), resultList);
+                    /*
+                    long life = (gs.getEndAt() - gs.getStartAt() / 2);
+                    if (life > MAX_RESULT_LIFE_MS) {
+                        life = MAX_RESULT_LIFE_MS;
+                    }*/
+                    getSpace().write(gsr, MAX_RESULT_LIFE_MS);
+                }
+            }
+
             //log.debug("Taking PQ");
             pq = getSpace().takeIfExists(new ParameterizedQuery());
             if (pq != null) {
@@ -74,7 +105,7 @@ public class SpacePQListener extends AbstractSpace2Dao {
                 }
             }
 
-        } while (pq != null || aq != null);
+        } while (pq != null || aq != null || gs != null);
 
     }
 }

@@ -2,14 +2,23 @@ package org.semispace.semimeter.service;
 
 import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.*;
+import org.semispace.semimeter.bean.ArrayQuery;
+import org.semispace.semimeter.bean.ArrayQueryResult;
+import org.semispace.semimeter.bean.DisplayIntent;
+import org.semispace.semimeter.bean.DisplayResult;
+import org.semispace.semimeter.bean.GroupedResult;
+import org.semispace.semimeter.bean.GroupedSumsQuery;
+import org.semispace.semimeter.bean.GroupedSumsResult;
+import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.bean.ParameterizedQuery;
+import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,8 +38,8 @@ public class SemimeterService {
      * TODO Consider adjusting the value.
      */
     private static final long DEFAULT_SKEW_IN_MS = 20000;
-    private static final long QUERY_LIFE_TIME_MS = 5000;
-    private static final long QUERY_RESULT_TIMEOUT_MS = 6000;
+    private static final long QUERY_LIFE_TIME_MS = 15000;
+    private static final long QUERY_RESULT_TIMEOUT_MS = 20000;
 
     @Autowired
     private JsonService jsonService;
@@ -55,6 +64,7 @@ public class SemimeterService {
      *                       day before now" or "an hour before now"
      * @param previousPeriod a long value. marks the beginning of the reference period. the reference period starts at
      *                       <code>previousPeriod</code> and ends at <code>startAt</code>
+     *
      * @return a delta between the counted views of two succeeding periods of time.
      *         The reference period is between <code>previousPeriod</code> and <code>startAt</code>. All counts from
      *         this period will be subtracted from the "current" period, which is between <code>startAt</code> and
@@ -66,7 +76,8 @@ public class SemimeterService {
     }
 
     /**
-     * Fetches count data. This method makes direct use of a DAO, the space is used though to avoid concurrent requests to
+     * Fetches count data. This method makes direct use of a DAO, the space is used though to avoid concurrent requests
+     * to
      * the same data.
      *
      * @param path       either one complete path or just the beginning of a number of grouped paths. Example: if
@@ -92,6 +103,7 @@ public class SemimeterService {
      *                   "now"
      * @param startAt    a long value. take all events counted after this timestamp into calculation. typically "a
      *                   day before now" or "an hour before now"
+     *
      * @return sum of counted views for given path expression and given period of time
      */
     public Long getCurrentCount(final String path, final String resolution, final long endAt, final long startAt) {
@@ -134,7 +146,8 @@ public class SemimeterService {
      *                   <li>books/$                 (all items in books category)</li>
      *                   <li>books/adventure/$       (all items in book category and adventure subcat)</li>
      *                   <li>books/$/2121            (all books with concrete itemId, grouped by subcategory)</li>
-     *                   <li>$/adventure/2121        (all items with sub-cat adventure and item id 2121, grouped by cat)</li>
+     *                   <li>$/adventure/2121        (all items with sub-cat adventure and item id 2121, grouped by
+     *                   cat)</li>
      *                   </ul>
      * @param endAt      a long value. take all events counted up to this timestamp into calculation. typically "now"
      * @param startAt    a long value. take all events counted after this timestamp into calculation. typically "a
@@ -150,6 +163,7 @@ public class SemimeterService {
      *                   <li>month</li>
      *                   <li>total</li>
      *                   </ul>
+     *
      * @return returns an array of JsonResults. Each JsonResult has a key, which is the wildcard value that the dollar
      *         in the given path variable matched with. the JsonResult value is the number of counts for that match in
      *         the given period of time.
@@ -179,41 +193,41 @@ public class SemimeterService {
     }
 
     public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt, final String resolution, final int maxResults) {
-        List<GroupedResult> result = new ArrayList<GroupedResult>();
-        String path = query.buildPathFromTokens();
-        log.debug("path: {}", path);
-        DisplayIntent di = new DisplayIntent(path + "_" + resolution + "_" + maxResults);
-        DisplayResult dr = space.readIfExists(new DisplayResult(di.getKey()));
-        if (dr == null && space.readIfExists(di) == null) {
-            space.write(di, QUERY_LIFE_TIME_MS);
-
-            List<GroupedResult> resultList = null;
-            try {
-                resultList = semiMeterDao.getGroupedSums(startAt, endAt, query, maxResults);
-            } catch (IllegalArgumentException e) {
-                log.error("invalid query parameter", e);
+        GroupedSumsQuery gsq = new GroupedSumsQuery(resolution, startAt, endAt, maxResults, query);
+        GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
+        log.debug("looking for "+gsq.getKey());
+        GroupedSumsResult gsr = space.readIfExists(toFind);
+        log.debug("gsr found: "+gsr);
+        if (gsr == null) {
+            log.debug("No previous result for {}", gsq.getKey());
+            if (space.readIfExists(gsq) == null) {
+                log.debug("writing query to space: "+gsq.getKey());
+                space.write(gsq, QUERY_LIFE_TIME_MS);
+            } else {
+                log.debug("Query for {} has already been placed", gsq.getKey());
             }
+            log.debug("now wait for result");
+            gsr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
+        } else {
+            log.trace("Using existing result for {}", gsq.getKey());
+        }
 
-            dr = new DisplayResult(di.getKey());
-            dr.setResult(resultList);
-            space.write(dr, QUERY_RESULT_TIMEOUT_MS);
-            space.takeIfExists(di);
+        List<GroupedResult> resultList = null;
+        if (gsr != null) {
+            resultList = gsr.getPayload();
+        } else {
+            log.debug("Query timed out: {}", gsq.getKey());
         }
-        if (dr == null) {
-            // DisplayIntent was present
-            dr = space.read(dr, QUERY_LIFE_TIME_MS);
-        }
-        if (dr != null && dr.getResult() != null) {
-            return (List<GroupedResult>) dr.getResult();
-        }
-        return result;
+
+        return resultList;
     }
 
 
     /**
      * Calculates starting point as (in milliseconds).
      *
-     * @param resolution String indicating how long before <code>endAt</code> the starting point shall be. Valid values are
+     * @param resolution String indicating how long before <code>endAt</code> the starting point shall be. Valid values
+     *                   are
      *                   <ul>
      *                   <li>second</li>
      *                   <li>minute</li>
@@ -223,7 +237,9 @@ public class SemimeterService {
      *                   <li>month</li>
      *                   <li>total</li>
      *                   </ul>
-     * @param endAt      base value for the calculation. the result will be  {whateverresolutionyouchose} before this point in time.
+     * @param endAt      base value for the calculation. the result will be  {whateverresolutionyouchose} before this
+     *                   point in time.
+     *
      * @return a point in time, as milliseconds since 1970/01/01
      */
     public long calculateStartTimeFromResolution(String resolution, long endAt) {
