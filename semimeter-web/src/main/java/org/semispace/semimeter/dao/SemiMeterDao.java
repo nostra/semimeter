@@ -511,8 +511,9 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             limit 10
          */
         final QueryTokenConverter converter = new QueryTokenConverter(query);
-        String sql = "SELECT " + converter.getQueryString() + ", SUM(counted) AS cnt FROM meter m WHERE path LIKE '"
-                + query.buildPathFromTokens() + "' GROUP BY " + converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT " + maxResults;
+        String sql = "SELECT " + converter.getQueryString() +
+                ", SUM(counted) AS cnt FROM meter m WHERE path like ? AND updated>=? AND updated<=? " +
+                "GROUP BY " + converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT ?";
 
         return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
             @Override
@@ -523,6 +524,6 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 result.setCount(resultSet.getInt("cnt"));
                 return result;
             }
-        });
+        },query.buildPathFromTokens(), startAt, endAt, maxResults);
     }
 }
