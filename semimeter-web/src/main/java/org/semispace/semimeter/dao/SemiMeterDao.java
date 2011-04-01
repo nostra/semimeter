@@ -26,8 +26,12 @@ import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
+import org.semispace.semimeter.bean.TruncateTimeout;
 import org.semispace.semimeter.dao.helper.QueryTokenConverter;
 import org.semispace.semimeter.space.CounterHolder;
+import org.semispace.semimeter.space.listener.Space2Dao;
+import org.semispace.semimeter.space.listener.SpacePQListener;
+import org.semispace.semimeter.space.listener.TruncateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -62,10 +66,12 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     private SemiEventRegistration pqRegistration;
     private SemiEventRegistration aqRegistration;
     private SemiEventRegistration groupedSumsRegistration;
+    private SemiEventRegistration truncateRegistration;
 
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space;
     private static final int MAX_PATH_LENGTH = 2048;
+
 
     @Autowired
     @Qualifier("semiMeterDataSource")
@@ -109,21 +115,11 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
      * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
      */
     public void afterPropertiesSet() {
-        log.debug("Retrieving semispace.");
-        space = SemiSpace.retrieveSpace();
-        log.debug("Registering listeners.");
-        if (chRegistration != null || pqRegistration != null || aqRegistration != null || groupedSumsRegistration != null) {
-            log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
-        } else {
-            SpacePQListener spacePqListener = new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
-            // Listen for events ten years
-            chRegistration = space.notify(new CounterHolder(), new Space2Dao(space, this, "CounterHolder which holds elements to be counted"), SemiSpace.ONE_DAY * 3650);
-            // Reusing
-            pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-            aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-            groupedSumsRegistration = space.notify(new GroupedSumsQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-        }
+        registerSpaceListeners();
+        ensureTables();
+    }
 
+    private void ensureTables() {
         if (size() < 0) {
             log.info("Creating table meter");
             // The data type integer in the database is a long in the java world.
@@ -174,7 +170,28 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         }
     }
 
-    protected void performInsertion(Collection<Item> items) {
+    private void registerSpaceListeners() {
+        log.debug("Retrieving semispace.");
+        space = SemiSpace.retrieveSpace();
+        log.debug("Registering listeners.");
+        if (chRegistration != null || pqRegistration != null || aqRegistration != null || groupedSumsRegistration != null || truncateRegistration != null) {
+            log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
+        } else {
+            SpacePQListener spacePqListener = new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
+            // Listen for events ten years
+            chRegistration = space.notify(new CounterHolder(), new Space2Dao(space, this, "CounterHolder which holds elements to be counted"), SemiSpace.ONE_DAY * 3650);
+            // Reusing
+            pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
+            aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
+            groupedSumsRegistration = space.notify(new GroupedSumsQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
+
+            TruncateListener truncateListener = new TruncateListener(space, this, "Truncate Listner, truncates data whenever TruncateTimeout bean expires");
+            truncateRegistration = space.notify(new TruncateTimeout(), truncateListener, SemiSpace.ONE_DAY * 3650);
+            truncateListener.triggerTimeout();
+        }
+    }
+
+    public void performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
         SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
         List<Object[]> updateArgs = new ArrayList<Object[]>();
@@ -278,6 +295,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         if (groupedSumsRegistration != null) {
             groupedSumsRegistration.getLease().cancel();
             groupedSumsRegistration = null;
+        }
+        if (truncateRegistration != null) {
+            truncateRegistration.getLease().cancel();
+            truncateRegistration = null;
         }
     }
 
@@ -524,6 +545,11 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 result.setCount(resultSet.getInt("cnt"));
                 return result;
             }
-        },query.buildPathFromTokens(), startAt, endAt, maxResults);
+        }, query.buildPathFromTokens(), startAt, endAt, maxResults);
+    }
+
+    public void deleteEntriesOlderThanMillis(final long millis) {
+        int rows = jdbcTemplate.update("DELETE FROM meter WHERE updated < ?", System.currentTimeMillis() - millis);
+        log.debug("deleted {} rows", rows);
     }
 }

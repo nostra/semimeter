@@ -1,8 +1,9 @@
-package org.semispace.semimeter.dao;
+package org.semispace.semimeter.space.listener;
 
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.ThrottleBean;
+import org.semispace.semimeter.dao.SemiMeterDao;
 import org.semispace.semimeter.space.CounterHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

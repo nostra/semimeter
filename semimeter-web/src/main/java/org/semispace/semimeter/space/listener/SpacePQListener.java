@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.semispace.semimeter.dao;
+package org.semispace.semimeter.space.listener;
 
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.ArrayQuery;
@@ -25,6 +25,7 @@ import org.semispace.semimeter.bean.GroupedSumsResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

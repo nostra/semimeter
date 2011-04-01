@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.semispace.semimeter.dao;
+package org.semispace.semimeter.space.listener;
 
 import org.semispace.SemiEventListener;
 import org.semispace.SemiSpaceInterface;
@@ -22,6 +22,7 @@ import org.semispace.event.SemiAvailabilityEvent;
 import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiExpirationEvent;
 import org.semispace.semimeter.bean.ThrottleBean;
+import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
