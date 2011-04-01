@@ -192,21 +192,47 @@ public class SemimeterService {
         return jrs;
     }
 
+    /**
+     * Fetches ordered, limited countdata.
+     * This request is similar to getJsonResults, only that it takes a TokenizedPathInfo parameter instead of path, it
+     * has a maxResult parameter, orders the results by count, and the returned List is better suited for further
+     * processing in java.
+     *
+     * @param query      contains a List of PathToken objects which shall describe how one particular part of a path is
+     *                   to be treated in this query.
+     * @param endAt      a long value. take all events counted up to this timestamp into calculation. typically "now"
+     * @param startAt    a long value. take all events counted after this timestamp into calculation. typically "a
+     *                   day before now" or "an hour before now"
+     * @param resolution a string describing the period of time that shall be used for the calculation. valid values
+     *                   are:
+     *                   <ul>
+     *                   <li>second</li>
+     *                   <li>minute</li>
+     *                   <li>hour</li>
+     *                   <li>day</li>
+     *                   <li>week</li>
+     *                   <li>month</li>
+     *                   <li>total</li>
+     *                   </ul>
+     * @param maxResults max number of items in the result list.
+     *
+     * @return an ordered List. the first element has most counts, the other rank 2nd, 3rd and so on.
+     */
     public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt, final String resolution, final int maxResults) {
         GroupedSumsQuery gsq = new GroupedSumsQuery(resolution, startAt, endAt, maxResults, query);
         GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
-        log.debug("looking for "+gsq.getKey());
+        //log.debug("looking for " + gsq.getKey());
         GroupedSumsResult gsr = space.readIfExists(toFind);
-        log.debug("gsr found: "+gsr);
+        //log.debug("gsr found: " + gsr);
         if (gsr == null) {
-            log.debug("No previous result for {}", gsq.getKey());
+            //log.debug("No previous result for {}", gsq.getKey());
             if (space.readIfExists(gsq) == null) {
-                log.debug("writing query to space: "+gsq.getKey());
+                //log.debug("writing query to space: " + gsq.getKey());
                 space.write(gsq, QUERY_LIFE_TIME_MS);
             } else {
                 log.debug("Query for {} has already been placed", gsq.getKey());
             }
-            log.debug("now wait for result");
+            //log.debug("now wait for result");
             gsr = space.read(toFind, QUERY_RESULT_TIMEOUT_MS);
         } else {
             log.trace("Using existing result for {}", gsq.getKey());

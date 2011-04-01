@@ -49,11 +49,11 @@ public class SpacePQListener extends AbstractSpace2Dao {
         GroupedSumsQuery gs;
 
         do {
-            log.debug("retrieveAndTreatData");
+            //log.debug("retrieveAndTreatData");
             gs = getSpace().takeIfExists(new GroupedSumsQuery());
-            log.debug("gsq: "+gs);
+            //log.debug("gsq: "+gs);
             if (gs != null) {
-                log.debug("Found a GroupedSumQUery with key {}", gs.getKey());
+                //log.debug("Found a GroupedSumQUery with key {}", gs.getKey());
                 if (getSpace().readIfExists(new GroupedSumsResult(gs.getKey(), null)) != null) {
                     log.debug("GroupedSumsQuery already performed - not doing it again");
                 } else {
