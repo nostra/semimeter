@@ -33,7 +33,7 @@
      -->
     <dependencies>
         <dependency>
-            <groupId>org.semispace</groupId>
+            <groupId>no.api.semimeter</groupId>
             <artifactId>semimeter-web</artifactId>
         </dependency>
 
