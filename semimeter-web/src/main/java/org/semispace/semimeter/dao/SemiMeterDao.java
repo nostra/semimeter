@@ -147,6 +147,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             // Create indexes
             jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on meter( updated )");
             jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on meter( path )");
+            //TODO: evaluate performance impact of PK
+            jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter ADD PRIMARY KEY (updated, path)");
         } catch (Exception e) {
             log.error("Did not manage to create index on updated field. This is probably as it already exists. " +
                     "Ignoring this, as we ALWAYS try to create indexes after restart. Masked exception: " + e);
@@ -204,8 +206,15 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         try {
             try {
                 //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
-                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
-                        insertArgs);
+                //jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
+                //        insertArgs);
+                //TODO: evaluate performance impact of this insert statement in conjunction with new PK (line 151)
+                //jdbcTemplate.batchUpdate("INSERT IGNORE INTO meter(udated,counted,path) values (:when, 0, :path)", insertArgs);
+
+                jdbcTemplate.batchUpdate("MERGE INTO meter USING (VALUES(CAST(:when AS BIGINT), CAST(:path as varchar(" +
+                        MAX_PATH_LENGTH + ") ))) AS vals(mwhen,mpath) ON updated = vals.mwhen AND path = vals.mpath " +
+                        "WHEN NOT MATCHED THEN INSERT VALUES :when,0,:path",insertArgs);
+
             } catch (Exception e) {
                 log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: " + e);
             }
@@ -218,7 +227,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         }
     }
 
-
+    //TODO: consider deletion
+    /*
     private void failed_rewrite_performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
         //List<Object[]> insertArgs = new ArrayList<Object[]>();
@@ -249,6 +259,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             rwl.writeLock().unlock();
         }
     }
+    */
 
     /**
      * Insertion is performed like this: Try to insert item with count of zero if does not already

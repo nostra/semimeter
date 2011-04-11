@@ -8,13 +8,10 @@ import java.util.List;
 
 public class QueryTokenConverter {
 
-    private TokenizedPathInfo tokenizedPathInfo;
     private String queryString;
     private String queryAlias;
 
     public QueryTokenConverter(final TokenizedPathInfo input) throws IllegalArgumentException {
-        this.tokenizedPathInfo = input;
-        List<String> result = new ArrayList<String>();
         if (input != null) {
             for (PathToken token : input.getPathTokens()) {
                 if (token.isGroupByThisToken()) {
