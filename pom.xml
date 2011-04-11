@@ -428,7 +428,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <site-url>scp://maven@maven.api.no/var/www/stable</site-url>
+                <site-url>scp://maven@maven.api.no/var/www/stable/semimeter</site-url>
             </properties>
         </profile>
     </profiles>
