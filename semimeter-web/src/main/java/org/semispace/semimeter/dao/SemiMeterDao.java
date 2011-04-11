@@ -148,7 +148,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on meter( updated )");
             jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on meter( path )");
             //TODO: evaluate performance impact of PK
-            jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter ADD PRIMARY KEY (updated, path)");
+            //jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter ADD PRIMARY KEY (updated, path)");
         } catch (Exception e) {
             log.error("Did not manage to create index on updated field. This is probably as it already exists. " +
                     "Ignoring this, as we ALWAYS try to create indexes after restart. Masked exception: " + e);
