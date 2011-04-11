@@ -411,8 +411,8 @@
 
     <scm>
         <url>https://github.com/a-pressen/semimeter</url>
-        <connection>scm:git:git@github.com:a-pressen/semimeter.git</connection>
-        <developerConnection>scm:git:git@github.com:a-pressen/semimeter.git</developerConnection>
+        <connection>scm:git://git@github.com:a-pressen/semimeter.git</connection>
+        <developerConnection>scm:git://git@github.com:a-pressen/semimeter.git</developerConnection>
     </scm>
 
     <!-- Distribution management moved to parent pom -->
