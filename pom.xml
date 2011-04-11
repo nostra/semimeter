@@ -410,9 +410,9 @@
     </modules>
 
     <scm>
-        <url>scm:git:git@github.com:a-pressen/semimeter.git</url>
-        <connection>scm:git:git@github.com:a-pressen/semimeter.git</connection>
-        <developerConnection>scm:git:git@github.com:a-pressen/semimeter.git</developerConnection>
+        <url>scm:git:git://git@github.com:a-pressen/semimeter.git</url>
+        <connection>scm:git:git://git@github.com:a-pressen/semimeter.git</connection>
+        <developerConnection>scm:git:git://git@github.com:a-pressen/semimeter.git</developerConnection>
     </scm>
 
     <!-- Distribution management moved to parent pom -->
