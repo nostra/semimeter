@@ -341,6 +341,30 @@
                     <outputEncoding>utf-8</outputEncoding>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <!-- sub projects will use a tag with their own artifact id as sub directory
+             You need to create this directory yourself -->
+                    <tagBase>svn+ssh://svn.api.no/var/lib/svn/repos/svn/tags/api/${artifactId}</tagBase>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -391,6 +415,7 @@
         <developerConnection>scm:svn:svn+ssh://semispace.org/opt/spacerepo/semimeter/trunk</developerConnection>
     </scm>
 
+    <!-- Distribution management moved to parent pom -->
     <profiles>
         <profile>
             <id>cruisecontrol</id>
@@ -404,19 +429,22 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <site-url>scp://semispace.org:/var/www/www.semispace.org/htdocs/semimeter-${version}/</site-url>
+                <site-url>scp://maven@maven.api.no/var/www/stable</site-url>
             </properties>
         </profile>
     </profiles>
 
     <distributionManagement>
         <repository>
-            <id>semispace.repo</id>
-            <name>Repository at semispace.org</name>
-            <url>scp://semispace.org:/var/www/www.semispace.org/htdocs/maven2</url>
+            <id>api-repository</id>
+            <name>API Repository</name>
+            <url>
+                scp://maven.api.no/usr/local/maven/repository
+            </url>
         </repository>
         <site>
-            <id>website</id>
+            <id>ci.website</id>
+            <name>ci.dev.api.no</name>
             <url>${site-url}</url>
         </site>
     </distributionManagement>
