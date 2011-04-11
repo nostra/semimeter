@@ -410,9 +410,9 @@
     </modules>
 
     <scm>
-        <url>http://www.semispace.org/svn/semimeter/trunk/</url>
-        <connection>scm:svn:http://www.semispace.org/svn/semimeter/trunk/</connection>
-        <developerConnection>scm:svn:svn+ssh://semispace.org/opt/spacerepo/semimeter/trunk</developerConnection>
+        <url>https://github.com/a-pressen/semimeter</url>
+        <connection>scm:git:git@github.com:a-pressen/semimeter.git</connection>
+        <developerConnection>scm:git:git@github.com:a-pressen/semimeter.git</developerConnection>
     </scm>
 
     <!-- Distribution management moved to parent pom -->
