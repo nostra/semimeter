@@ -124,20 +124,26 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             log.info("Creating table meter");
             // The data type integer in the database is a long in the java world.
             try {
-                jdbcTemplate.getJdbcOperations().execute("create table meter(updated bigint NOT NULL, counted integer NOT NULL, path varchar(" + MAX_PATH_LENGTH + ") NOT NULL)");
+                jdbcTemplate.getJdbcOperations().execute(
+                        "create table meter(updated bigint NOT NULL, counted integer NOT NULL, path varchar(" +
+                                MAX_PATH_LENGTH + ") NOT NULL)");
             } catch (Exception e) {
                 try {
                     // Probably a different database
-                    jdbcTemplate.getJdbcOperations().execute("create table meter(updated integer NOT NULL, counted integer NOT NULL, path varchar(" + MAX_PATH_LENGTH + ") NOT NULL)");
+                    jdbcTemplate.getJdbcOperations().execute(
+                            "create table meter(updated integer NOT NULL, counted integer NOT NULL, path varchar(" +
+                                    MAX_PATH_LENGTH + ") NOT NULL)");
                 } catch (Exception e2) {
-                    log.error("Did not manage to create table meter?! First exception is masked: " + e.getMessage(), e2);
+                    log.error("Did not manage to create table meter?! First exception is masked: " + e.getMessage(),
+                            e2);
                 }
             }
         }
         if (size() < 1) {
             try {
                 // Need an initial default value
-                jdbcTemplate.getJdbcOperations().execute("insert into meter(updated, counted, path) values (1, 0, '__disregarded needed default__')");
+                jdbcTemplate.getJdbcOperations().execute(
+                        "insert into meter(updated, counted, path) values (1, 0, '__disregarded needed default__')");
             } catch (Exception e) {
                 log.error("Could not create default?!", e);
             }
@@ -147,22 +153,22 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             // Create indexes
             jdbcTemplate.getJdbcOperations().execute("create index meter_updt_ix on meter( updated )");
             jdbcTemplate.getJdbcOperations().execute("create index meter_path_ix on meter( path )");
-            //TODO: evaluate performance impact of PK
-            //jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter ADD PRIMARY KEY (updated, path)");
         } catch (Exception e) {
             log.error("Did not manage to create index on updated field. This is probably as it already exists. " +
                     "Ignoring this, as we ALWAYS try to create indexes after restart. Masked exception: " + e);
         }
         if (size() > 1) {
             // We don't need default any more if we have data
-            jdbcTemplate.getJdbcOperations().execute("DELETE FROM meter where updated=1 and path like '__disregarded needed default__'");
+            jdbcTemplate.getJdbcOperations()
+                    .execute("DELETE FROM meter where updated=1 and path like '__disregarded needed default__'");
         }
         if (isAlive()) {
             try {
                 jdbcTemplate.getJdbcOperations().execute("select count(count) from meter meter");
                 log.warn("Renaming field count to counted in table meter.");
                 try {
-                    jdbcTemplate.getJdbcOperations().execute("ALTER TABLE meter CHANGE COLUMN count counted integer NOT NULL;");
+                    jdbcTemplate.getJdbcOperations()
+                            .execute("ALTER TABLE meter CHANGE COLUMN count counted integer NOT NULL;");
                 } catch (Exception e) {
                     log.error("Could not rename column count to counted. Please drop table or rename column manually");
                 }
@@ -176,18 +182,23 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         log.debug("Retrieving semispace.");
         space = SemiSpace.retrieveSpace();
         log.debug("Registering listeners.");
-        if (chRegistration != null || pqRegistration != null || aqRegistration != null || groupedSumsRegistration != null || truncateRegistration != null) {
+        if (chRegistration != null || pqRegistration != null || aqRegistration != null ||
+                groupedSumsRegistration != null || truncateRegistration != null) {
             log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
         } else {
-            SpacePQListener spacePqListener = new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
+            SpacePQListener spacePqListener =
+                    new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
             // Listen for events ten years
-            chRegistration = space.notify(new CounterHolder(), new Space2Dao(space, this, "CounterHolder which holds elements to be counted"), SemiSpace.ONE_DAY * 3650);
+            chRegistration = space.notify(new CounterHolder(),
+                    new Space2Dao(space, this, "CounterHolder which holds elements to be counted"),
+                    SemiSpace.ONE_DAY * 3650);
             // Reusing
             pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
             aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
             groupedSumsRegistration = space.notify(new GroupedSumsQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
 
-            TruncateListener truncateListener = new TruncateListener(space, this, "Truncate Listner, truncates data whenever TruncateTimeout bean expires");
+            TruncateListener truncateListener = new TruncateListener(space, this,
+                    "Truncate Listner, truncates data whenever TruncateTimeout bean expires");
             truncateRegistration = space.notify(new TruncateTimeout(), truncateListener, SemiSpace.ONE_DAY * 3650);
             truncateListener.triggerTimeout();
         }
@@ -206,20 +217,16 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         try {
             try {
                 //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
-                //jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
-                //        insertArgs);
-                //TODO: evaluate performance impact of this insert statement in conjunction with new PK (line 151)
-                //jdbcTemplate.batchUpdate("INSERT IGNORE INTO meter(udated,counted,path) values (:when, 0, :path)", insertArgs);
-
-                jdbcTemplate.batchUpdate("MERGE INTO meter USING (VALUES(CAST(:when AS BIGINT), CAST(:path as varchar(" +
-                        MAX_PATH_LENGTH + ") ))) AS vals(mwhen,mpath) ON updated = vals.mwhen AND path = vals.mpath " +
-                        "WHEN NOT MATCHED THEN INSERT VALUES :when,0,:path",insertArgs);
+                jdbcTemplate.batchUpdate(
+                        "INSERT INTO meter(updated, counted, path) SELECT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path) LIMIT 1",
+                        insertArgs);
 
             } catch (Exception e) {
-                log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: " + e);
+                log.warn(
+                        "Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: " +
+                                e);
             }
-            jdbcTemplate.batchUpdate("update meter SET counted=counted+? WHERE path like ? and updated=?",
-                    updateArgs);
+            jdbcTemplate.batchUpdate("update meter SET counted=counted+? WHERE path like ? and updated=?", updateArgs);
         } catch (Exception e) {
             log.error("Could not update elements", e);
         } finally {
@@ -274,13 +281,13 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         rwl.writeLock().lock();
         try {
             try {
-                jdbcTemplate.update("INSERT INTO meter(updated, counted, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
-                        new Object[]{item.getWhen(), item.getPath(), item.getWhen(), item.getPath()});
+                jdbcTemplate
+                        .update("INSERT INTO meter(updated, counted, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)",
+                                new Object[]{item.getWhen(), item.getPath(), item.getWhen(), item.getPath()});
             } catch (Exception e) {
                 log.warn("Unlikely event occurred - failure whilst inserting priming element", e);
             }
-            jdbcTemplate.update(
-                    "update meter SET counted=counted+? WHERE path like ? and updated=?",
+            jdbcTemplate.update("update meter SET counted=counted+? WHERE path like ? and updated=?",
                     new Object[]{item.getAccessNumber(), item.getPath(), item.getWhen()});
         } catch (Exception e) {
             log.error("Could not insert or update", e);
@@ -317,12 +324,11 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         Long result = Long.valueOf(-1);
         rwl.readLock().lock();
         try {
-            final String sql = "select sum(counted) from meter " +
-                    "WHERE " +
-                    "updated>? AND updated<=?  AND path like ?";
+            final String sql =
+                    "select sum(counted) from meter " + "WHERE " + "updated>? AND updated<=?  AND path like ?";
             //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
-            Long sum = Long.valueOf(jdbcTemplate.queryForLong(sql,
-                    new Object[]{Long.valueOf(startAt), Long.valueOf(endAt), path}));
+            Long sum = Long.valueOf(
+                    jdbcTemplate.queryForLong(sql, new Object[]{Long.valueOf(startAt), Long.valueOf(endAt), path}));
             result = sum;
         } finally {
             rwl.readLock().unlock();
@@ -365,9 +371,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             String sql = "SELECT distinct path AS path FROM meter WHERE path like ? " +
                     "AND path like ? AND updated>? AND updated<=? ORDER BY path";
             List<Map<String, Object>> result = jdbcTemplate.queryForList(sql,
-                    new Object[]{prefix + "%",
-                            "%" + postfix + "%",
-                            Long.valueOf(startAt), Long.valueOf(endAt)});
+                    new Object[]{prefix + "%", "%" + postfix + "%", Long.valueOf(startAt), Long.valueOf(endAt)});
 
             //log.debug("Got "+result.size()+" results when doing "+sql+" with regards to ("+prefix+","+postfix+", "+startAt+","+endAt+")");
             for (Map<String, Object> m : result) {
@@ -389,12 +393,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         rwl.readLock().lock();
         List<Map<String, Object>> list = null;
         try {
-            final String sql = "SELECT updated, counted FROM meter " +
-                    "WHERE " +
+            final String sql = "SELECT updated, counted FROM meter " + "WHERE " +
                     "updated>? AND updated<=?  AND path like ? ORDER BY updated";
             //log.debug("Querying with ("+startAt+","+endAt+","+path+") : "+sql);
-            list = jdbcTemplate.queryForList(sql,
-                    new Object[]{Long.valueOf(startAt), Long.valueOf(endAt), path});
+            list = jdbcTemplate.queryForList(sql, new Object[]{Long.valueOf(startAt), Long.valueOf(endAt), path});
         } finally {
             rwl.readLock().unlock();
         }
@@ -448,7 +450,9 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
             }
         }
         if (count < list.size()) {
-            log.error("Sanity: Did not use all data!? This may happen if the data are not sorted in the updated field. Missing " + (list.size() - count) + " elements");
+            log.error(
+                    "Sanity: Did not use all data!? This may happen if the data are not sorted in the updated field. Missing " +
+                            (list.size() - count) + " elements");
         }
 
         return transformToJR(res);
@@ -478,12 +482,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     protected void deleteItemsFrom(long whenStartedTest, String path) {
         rwl.writeLock().lock();
         try {
-            jdbcTemplate.update(
-                    "DELETE FROM meter WHERE path like ? and updated>=?",
-                    new Object[]{path, whenStartedTest});
+            jdbcTemplate
+                    .update("DELETE FROM meter WHERE path like ? and updated>=?", new Object[]{path, whenStartedTest});
         } catch (Exception e) {
-            throw new RuntimeException("Could not delete items. From " + whenStartedTest + ", " +
-                    "path: " + path, e);
+            throw new RuntimeException("Could not delete items. From " + whenStartedTest + ", " + "path: " + path, e);
         } finally {
             rwl.writeLock().unlock();
         }
@@ -499,12 +501,11 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         // Find new elements
         List<Map<String, Object>> items = null;
         try {
-            final String sql = "SELECT path AS path, sum(counted) AS counted, min(updated) AS updated FROM meter " +
-                    "WHERE " +
-                    "updated>=? AND updated<=? GROUP BY path";
+            final String sql =
+                    "SELECT path AS path, sum(counted) AS counted, min(updated) AS updated FROM meter " + "WHERE " +
+                            "updated>=? AND updated<=? GROUP BY path";
             log.debug("Querying with (" + start + "," + end + ") : " + sql);
-            items = jdbcTemplate.queryForList(sql,
-                    new Object[]{Long.valueOf(start), Long.valueOf(end)});
+            items = jdbcTemplate.queryForList(sql, new Object[]{Long.valueOf(start), Long.valueOf(end)});
         } finally {
             rwl.readLock().unlock();
         }
@@ -512,8 +513,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         rwl.writeLock().lock();
         try {
             for (Map<String, Object> item : items) {
-                jdbcTemplate.update(
-                        "DELETE FROM meter WHERE path like ? AND updated>=? AND updated<=?",
+                jdbcTemplate.update("DELETE FROM meter WHERE path like ? AND updated>=? AND updated<=?",
                         new Object[]{item.get("path"), start, end});
             }
         } finally {
@@ -532,7 +532,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         performInsertion(replacements);
     }
 
-    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults) throws IllegalArgumentException {
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults)
+            throws IllegalArgumentException {
         /*
             SELECT SUBSTRING_INDEX(path, '/', -1) as article_id,
                    sum(counted) as cnt
@@ -544,8 +545,8 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
          */
         final QueryTokenConverter converter = new QueryTokenConverter(query);
         String sql = "SELECT " + converter.getQueryString() +
-                ", SUM(counted) AS cnt FROM meter m WHERE path like ? AND updated>=? AND updated<=? " +
-                "GROUP BY " + converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT ?";
+                ", SUM(counted) AS cnt FROM meter m WHERE path like ? AND updated>=? AND updated<=? " + "GROUP BY " +
+                converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT ?";
 
         return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
             @Override
