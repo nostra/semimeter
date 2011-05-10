@@ -102,14 +102,16 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
         // Adapted from:
         // http://stackoverflow.com/questions/511144/how-to-instruct-web-browsers-not-to-cache-pages
         response.addHeader("Cache-Control", "no-cache"); //HTTP 1.1
-        response.addHeader("Cache-Control", "private"); // HTTP 1.1
-        response.addHeader("Cache-Control", "no-store"); // HTTP 1.1
         response.addHeader("Cache-Control", "must-revalidate"); // HTTP 1.1
-        response.addHeader("Cache-Control", "max-stale=0"); // HTTP 1.1
-        response.addHeader("Cache-Control", "post-check=0"); // HTTP 1.1
-        response.addHeader("Cache-Control", "pre-check=0"); // HTTP 1.1
         response.addHeader("Pragma", "no-cache"); // HTTP 1.0
         response.addHeader("Expires", "Wed, 09 Jun 1999 00:00:00 GMT"); // HTTP 1.0
+        /* The following headers are slightly exotic, therefore commented out. */
+        //response.addHeader("Cache-Control", "private"); // HTTP 1.1
+        //response.addHeader("Cache-Control", "no-store"); // HTTP 1.1
+        //response.addHeader("Cache-Control", "max-stale=0"); // HTTP 1.1
+        //response.addHeader("Cache-Control", "post-check=0"); // HTTP 1.1
+        //response.addHeader("Cache-Control", "pre-check=0"); // HTTP 1.1
+
         response.setContentType("image/gif");
         response.getOutputStream().write(blankImage);
     }
