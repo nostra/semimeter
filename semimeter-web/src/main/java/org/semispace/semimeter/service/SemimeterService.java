@@ -72,7 +72,8 @@ public class SemimeterService {
      *         The subtraction result will be returned.
      */
     public long getDeltaFromDb(final String path, final long endAt, final long startAt, final long previousPeriod) {
-        return semiMeterDao.sumItems(startAt, endAt, path + "%").longValue() - semiMeterDao.sumItems(previousPeriod, startAt, path + "%").longValue();
+        return semiMeterDao.sumItems(startAt, endAt, path + "%").longValue() -
+                semiMeterDao.sumItems(previousPeriod, startAt, path + "%").longValue();
     }
 
     /**
@@ -168,7 +169,8 @@ public class SemimeterService {
      *         in the given path variable matched with. the JsonResult value is the number of counts for that match in
      *         the given period of time.
      */
-    public JsonResults[] getJsonResults(final String path, final long endAt, final long startAt, final String resolution) {
+    public JsonResults[] getJsonResults(final String path, final long endAt, final long startAt,
+            final String resolution) {
         ParameterizedQuery pq = new ParameterizedQuery(resolution, startAt, endAt, path);
         ParameterizedQueryResult toFind = new ParameterizedQueryResult(pq.getKey(), null);
         ParameterizedQueryResult pqr = space.readIfExists(toFind);
@@ -218,9 +220,22 @@ public class SemimeterService {
      *
      * @return an ordered List. the first element has most counts, the other rank 2nd, 3rd and so on.
      */
-    public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt, final String resolution, final int maxResults) {
+    public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt,
+            final String resolution, final int maxResults) {
         GroupedSumsQuery gsq = new GroupedSumsQuery(resolution, startAt, endAt, maxResults, query);
         GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
+        return getGroupedResults(gsq, toFind);
+
+    }
+
+    public List<GroupedResult> getHourlySums() {
+        GroupedSumsQuery gsq = new GroupedSumsQuery(GroupedSumsQuery.HOURLY_SUMS_KEY);
+        GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
+        return getGroupedResults(gsq, toFind);
+    }
+
+
+    private List<GroupedResult> getGroupedResults(final GroupedSumsQuery gsq, final GroupedSumsResult toFind) {
         //log.debug("looking for " + gsq.getKey());
         GroupedSumsResult gsr = space.readIfExists(toFind);
         //log.debug("gsr found: " + gsr);
@@ -323,7 +338,8 @@ public class SemimeterService {
         return numberOfSamples;
     }
 
-    public JsonResults[] getArrayCounts(final String resolution, final Integer numberOfSamples, final String path, final long endAt, final long startAt) {
+    public JsonResults[] getArrayCounts(final String resolution, final Integer numberOfSamples, final String path,
+            final long endAt, final long startAt) {
         ArrayQuery aq = new ArrayQuery(resolution, startAt, endAt, path + "%", numberOfSamples);
         ArrayQueryResult toFind = new ArrayQueryResult(aq.getKey(), null);
         ArrayQueryResult aqr = space.readIfExists(toFind);

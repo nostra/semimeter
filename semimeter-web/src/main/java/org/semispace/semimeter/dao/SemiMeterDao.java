@@ -560,6 +560,24 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         }, query.buildPathFromTokens(), startAt, endAt, maxResults);
     }
 
+    public List<GroupedResult> getHourlySums() {
+        String sql = "SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H') AS hourmark, SUM(counted) AS cnt " +
+                "FROM meter GROUP BY hourmark";
+        return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
+
+            @Override
+            public GroupedResult mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+                GroupedResult result = new GroupedResult();
+                result.setKeyName("hourID");
+                result.setKey(rs.getString("hourmark"));
+                result.setCount(rs.getInt("cnt"));
+                //log.debug("add {}", result);
+                return result;
+            }
+        });
+    }
+
+
     public void deleteEntriesOlderThanMillis(final long millis) {
         int rows = jdbcTemplate.update("DELETE FROM meter WHERE updated < ?", System.currentTimeMillis() - millis);
         log.debug("deleted {} rows", rows);

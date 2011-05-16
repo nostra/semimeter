@@ -59,7 +59,12 @@ public class SpacePQListener extends AbstractSpace2Dao {
                 } else {
                     List<GroupedResult> resultList = null;
                     try {
-                        resultList = getMeterDao().getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults());
+                        if (GroupedSumsQuery.HOURLY_SUMS_KEY.equals(gs.getKey())) {
+                            resultList = getMeterDao().getHourlySums();
+                        } else {
+                            resultList = getMeterDao()
+                                    .getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults());
+                        }
                     } catch (IllegalArgumentException e) {
                         log.error("invalid query parameter", e);
                     }
@@ -80,7 +85,8 @@ public class SpacePQListener extends AbstractSpace2Dao {
                 if (getSpace().readIfExists(new ParameterizedQueryResult(pq.getKey(), null)) != null) {
                     log.debug("PQ-Query already performed - not doing it again.");
                 } else {
-                    JsonResults[] result = getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
+                    JsonResults[] result =
+                            getMeterDao().performParameterizedQuery(pq.getStartAt(), pq.getEndAt(), pq.getPath());
                     ParameterizedQueryResult pqr = new ParameterizedQueryResult(pq.getKey(), result);
                     long life = (pq.getEndAt() - pq.getStartAt() / 2);
                     if (life > MAX_RESULT_LIFE_MS) {
@@ -96,7 +102,8 @@ public class SpacePQListener extends AbstractSpace2Dao {
                 if (getSpace().readIfExists(new ArrayQueryResult(aq.getKey(), null)) != null) {
                     log.debug("Array query already performed - not doing it again.");
                 } else {
-                    JsonResults[] result = getMeterDao().createTimeArray(aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
+                    JsonResults[] result = getMeterDao()
+                            .createTimeArray(aq.getPath(), aq.getEndAt(), aq.getStartAt(), aq.getNumberOfSamples());
                     ArrayQueryResult aqr = new ArrayQueryResult(aq.getKey(), result);
                     long life = (aq.getEndAt() - aq.getStartAt() / 2);
                     if (life > MAX_RESULT_LIFE_MS) {

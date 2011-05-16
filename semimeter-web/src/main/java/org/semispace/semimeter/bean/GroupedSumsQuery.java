@@ -7,12 +7,18 @@ public class GroupedSumsQuery {
     private Integer maxResults;
     private TokenizedPathInfo query;
     private String resolution;
+    public static final String HOURLY_SUMS_KEY = "hourlysums";
 
     public GroupedSumsQuery() {
         //default constructor
     }
 
-    public GroupedSumsQuery(final String resolution, final long startAt, final long endAt, final int maxResults, final TokenizedPathInfo query) {
+    public GroupedSumsQuery(String key) {
+        this.key = key;
+    }
+
+    public GroupedSumsQuery(final String resolution, final long startAt, final long endAt, final int maxResults,
+            final TokenizedPathInfo query) {
         this.resolution = resolution;
         this.startAt = startAt;
         this.endAt = endAt;

@@ -28,4 +28,15 @@ public class GroupedResult {
     public void setCount(int count) {
         this.count = count;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("GroupedResult");
+        sb.append("{keyName='").append(keyName).append('\'');
+        sb.append(", key='").append(key).append('\'');
+        sb.append(", count=").append(count);
+        sb.append('}');
+        return sb.toString();
+    }
 }
