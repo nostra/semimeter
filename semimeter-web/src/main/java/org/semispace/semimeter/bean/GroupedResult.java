@@ -1,9 +1,14 @@
 package org.semispace.semimeter.bean;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GroupedResult {
     private String keyName;
     private String key;
-    private int count;
+    private Integer count;
+
+    private Map<String, Integer> splitCounts = new HashMap<String, Integer>();
 
     public String getKeyName() {
         return keyName;
@@ -29,6 +34,10 @@ public class GroupedResult {
         this.count = count;
     }
 
+    public Map<String, Integer> getSplitCounts() {
+        return splitCounts;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -36,6 +45,7 @@ public class GroupedResult {
         sb.append("{keyName='").append(keyName).append('\'');
         sb.append(", key='").append(key).append('\'');
         sb.append(", count=").append(count);
+        sb.append(", splitCounts=").append(splitCounts);
         sb.append('}');
         return sb.toString();
     }

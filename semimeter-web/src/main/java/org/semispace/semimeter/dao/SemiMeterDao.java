@@ -549,20 +549,29 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 converter.getQueryAlias() + " ORDER BY cnt DESC LIMIT ?";
 
         return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
-            @Override
-            public GroupedResult mapRow(ResultSet resultSet, int i) throws SQLException {
-                GroupedResult result = new GroupedResult();
-                result.setKeyName(converter.getQueryAlias());
-                result.setKey(resultSet.getString(converter.getQueryAlias()));
-                result.setCount(resultSet.getInt("cnt"));
-                return result;
-            }
-        }, query.buildPathFromTokens(), startAt, endAt, maxResults);
+                    @Override
+                    public GroupedResult mapRow(ResultSet resultSet, int i) throws SQLException {
+                        GroupedResult result = new GroupedResult();
+                        result.setKeyName(converter.getQueryAlias());
+                        result.setKey(resultSet.getString(converter.getQueryAlias()));
+                        result.setCount(resultSet.getInt("cnt"));
+                        return result;
+                    }
+                }, query.buildPathFromTokens(), startAt, endAt, maxResults);
     }
 
     public List<GroupedResult> getHourlySums() {
-        String sql = "SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H') AS hourmark, SUM(counted) AS cnt " +
-                "FROM meter GROUP BY hourmark";
+        //TODO: this SQL is very specific. consider moving this method out of semimeter to where this concrete case is home.
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H') AS hourmark, ");
+        sb.append("       SUM(counted) AS cnt,");
+        sb.append("       SUM(case when path like '/article%' then counted else 0 end) articlecnt,");
+        sb.append("       SUM(case when path like '/album%' then counted else 0 end) albumcnt, ");
+        sb.append("       SUM(case when path like '/video%' then counted else 0 end) videocnt, ");
+        sb.append("       SUM(case when path like '/commercial%' then counted else 0 end) commercialcnt ");
+        sb.append("FROM meter GROUP BY hourmark");
+        String sql = sb.toString();
+
         return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
 
             @Override
@@ -571,6 +580,10 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 result.setKeyName("hourID");
                 result.setKey(rs.getString("hourmark"));
                 result.setCount(rs.getInt("cnt"));
+                result.getSplitCounts().put("article", rs.getInt("articlecnt"));
+                result.getSplitCounts().put("album", rs.getInt("albumcnt"));
+                result.getSplitCounts().put("video", rs.getInt("videocnt"));
+                result.getSplitCounts().put("commercial", rs.getInt("commercialcnt"));
                 //log.debug("add {}", result);
                 return result;
             }
