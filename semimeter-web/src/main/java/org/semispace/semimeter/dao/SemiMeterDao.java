@@ -560,7 +560,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
                 }, query.buildPathFromTokens(), startAt, endAt, maxResults);
     }
 
-    public List<GroupedResult> getHourlySums() {
+    public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId) {
         //TODO: this SQL is very specific. consider moving this method out of semimeter to where this concrete case is home.
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H') AS hourmark, ");
@@ -569,25 +569,31 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
         sb.append("       SUM(case when path like '/album%' then counted else 0 end) albumcnt, ");
         sb.append("       SUM(case when path like '/video%' then counted else 0 end) videocnt, ");
         sb.append("       SUM(case when path like '/commercial%' then counted else 0 end) commercialcnt ");
-        sb.append("FROM meter GROUP BY hourmark");
+        sb.append("FROM meter ");
+        sb.append("WHERE path LIKE ? ");
+        sb.append("GROUP BY hourmark");
         String sql = sb.toString();
+
+        String pathString = "/%/";
+        pathString += publicationId == null ? "%/" : (publicationId + "/");
+        pathString += sectionId == null ? "%/%" : (sectionId + "/%");
 
         return jdbcTemplate.query(sql, new RowMapper<GroupedResult>() {
 
-            @Override
-            public GroupedResult mapRow(final ResultSet rs, final int rowNum) throws SQLException {
-                GroupedResult result = new GroupedResult();
-                result.setKeyName("hourID");
-                result.setKey(rs.getString("hourmark"));
-                result.setCount(rs.getInt("cnt"));
-                result.getSplitCounts().put("article", rs.getInt("articlecnt"));
-                result.getSplitCounts().put("album", rs.getInt("albumcnt"));
-                result.getSplitCounts().put("video", rs.getInt("videocnt"));
-                result.getSplitCounts().put("commercial", rs.getInt("commercialcnt"));
-                //log.debug("add {}", result);
-                return result;
-            }
-        });
+                    @Override
+                    public GroupedResult mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+                        GroupedResult result = new GroupedResult();
+                        result.setKeyName("hourID");
+                        result.setKey(rs.getString("hourmark"));
+                        result.setCount(rs.getInt("cnt"));
+                        result.getSplitCounts().put("article", rs.getInt("articlecnt"));
+                        result.getSplitCounts().put("album", rs.getInt("albumcnt"));
+                        result.getSplitCounts().put("video", rs.getInt("videocnt"));
+                        result.getSplitCounts().put("commercial", rs.getInt("commercialcnt"));
+                        //log.debug("add {}", result);
+                        return result;
+                    }
+                }, pathString);
     }
 
 

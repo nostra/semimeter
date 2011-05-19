@@ -13,8 +13,9 @@ public class GroupedSumsQuery {
         //default constructor
     }
 
-    public GroupedSumsQuery(String key) {
+    public GroupedSumsQuery(String key, TokenizedPathInfo query) {
         this.key = key;
+        this.query = query;
     }
 
     public GroupedSumsQuery(final String resolution, final long startAt, final long endAt, final int maxResults,

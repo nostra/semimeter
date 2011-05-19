@@ -25,6 +25,7 @@ import org.semispace.semimeter.bean.GroupedSumsResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +60,20 @@ public class SpacePQListener extends AbstractSpace2Dao {
                 } else {
                     List<GroupedResult> resultList = null;
                     try {
-                        if (GroupedSumsQuery.HOURLY_SUMS_KEY.equals(gs.getKey())) {
-                            resultList = getMeterDao().getHourlySums();
+                        if (gs.getKey().startsWith(GroupedSumsQuery.HOURLY_SUMS_KEY)) {
+                            Integer publicationId = null;
+                            Integer sectionId = null;
+                            for (PathToken pathToken : gs.getQuery().getPathTokens()) {
+                                if ("publicationId".equals(pathToken.getTokenAlias())) {
+                                    publicationId =
+                                            pathToken.getValue() == null ? null : Integer.valueOf(pathToken.getValue());
+                                }
+                                if ("sectionId".equals(pathToken.getTokenAlias())) {
+                                    sectionId =
+                                            pathToken.getValue() == null ? null : Integer.valueOf(pathToken.getValue());
+                                }
+                            }
+                            resultList = getMeterDao().getHourlySums(publicationId, sectionId);
                         } else {
                             resultList = getMeterDao()
                                     .getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults());

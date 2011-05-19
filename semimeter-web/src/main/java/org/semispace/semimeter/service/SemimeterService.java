@@ -12,6 +12,7 @@ import org.semispace.semimeter.bean.GroupedSumsResult;
 import org.semispace.semimeter.bean.JsonResults;
 import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.ParameterizedQueryResult;
+import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
@@ -228,8 +229,15 @@ public class SemimeterService {
 
     }
 
-    public List<GroupedResult> getHourlySums() {
-        GroupedSumsQuery gsq = new GroupedSumsQuery(GroupedSumsQuery.HOURLY_SUMS_KEY);
+    public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId) {
+        GroupedSumsQuery gsq =
+                new GroupedSumsQuery(GroupedSumsQuery.HOURLY_SUMS_KEY + "_" + publicationId + "_" + sectionId,
+                        new TokenizedPathInfo("/"));
+        gsq.getQuery().addPathToken(
+                new PathToken((publicationId == null) ? null : String.valueOf(publicationId), "publicationId", false));
+        gsq.getQuery()
+                .addPathToken(new PathToken(sectionId == null ? null : String.valueOf(sectionId), "sectionId", false));
+
         GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
         return getGroupedResults(gsq, toFind);
     }
