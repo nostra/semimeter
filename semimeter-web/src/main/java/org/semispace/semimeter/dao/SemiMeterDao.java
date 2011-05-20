@@ -563,7 +563,7 @@ public class SemiMeterDao implements InitializingBean, DisposableBean {
     public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId) {
         //TODO: this SQL is very specific. consider moving this method out of semimeter to where this concrete case is home.
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H') AS hourmark, ");
+        sb.append("SELECT FROM_UNIXTIME (updated / 1000, '%y-%m-%d-%H-%i') AS hourmark, ");
         sb.append("       SUM(counted) AS cnt,");
         sb.append("       SUM(case when path like '/article%' then counted else 0 end) articlecnt,");
         sb.append("       SUM(case when path like '/album%' then counted else 0 end) albumcnt, ");
