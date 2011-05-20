@@ -39,7 +39,7 @@ public class SemimeterService {
      * TODO Consider adjusting the value.
      */
     private static final long DEFAULT_SKEW_IN_MS = 20000;
-    private static final long QUERY_LIFE_TIME_MS = 15000;
+    private static final long QUERY_LIFE_TIME_MS = 30000;
     private static final long QUERY_RESULT_TIMEOUT_MS = 20000;
 
     @Autowired

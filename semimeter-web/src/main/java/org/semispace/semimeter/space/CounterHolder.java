@@ -35,13 +35,15 @@ public class CounterHolder {
      * Consider using a lock instead
      */
     public synchronized void count(String path) {
-        Item item = items.get(path);
+        long when = System.currentTimeMillis();
+        long sec = when / 1000;
+        String key = path + "_" + sec;
+        Item item = items.get(key);
         if (item == null) {
             item = new Item();
-            long when = System.currentTimeMillis();
             item.setWhen(when);
             item.setPath(path);
-            items.put(path, item);
+            items.put(key, item);
         }
         item.increment();
     }
