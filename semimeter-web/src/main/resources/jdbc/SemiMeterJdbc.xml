@@ -49,4 +49,6 @@
         <property name="password" value="" />
     </bean>
 -->
+
+    <bean id="semiMeterDao" class="org.semispace.semimeter.dao.jdbc.SemiMeterDaoJdbc"/>
 </beans>

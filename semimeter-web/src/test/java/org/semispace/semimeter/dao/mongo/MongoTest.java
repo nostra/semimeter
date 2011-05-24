@@ -7,59 +7,40 @@ import com.mongodb.DBCursor;
 import com.mongodb.Mongo;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.semispace.semimeter.bean.mongo.MeterHit;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = {"/context/mongo-test.context.xml"})
 public class MongoTest {
-    private DB db;
+
+    @Autowired
+    private MeterRepository meterRepository;
+
 
     @Before
     public void setUp() throws Exception {
-        Mongo m = new Mongo("127.0.0.1", 27017);
-        db = m.getDB("meter");
     }
 
     @Test
     public void testName() throws Exception {
-        Set<String> colls = db.getCollectionNames();
+        meterRepository.deleteAll();
+        
+        System.out.println("lala: " + meterRepository.count());
 
-        for (String s : colls) {
-            System.out.println(s);
-        }
+        meterRepository.save(new MeterHit(12345l, "/article/41/2344/23434433", "/", 3));
+        
+        System.out.println("find: "+        meterRepository.findAll().size());
 
-        db.getCollection("meter").drop();
-
-        db.getCollection("meter").insert(new BasicDBObject(createAttributes(123123123123l, "article", 20, 100, 11, 0)));
-        db.getCollection("meter").insert(new BasicDBObject(createAttributes(123123123123l, "album", 20, 101, 12, 0)));
-        db.getCollection("meter").insert(new BasicDBObject(createAttributes(123123123123l, "video", 30, 201, 13, 0)));
-        db.getCollection("meter").insert(new BasicDBObject(createAttributes(123123123123l, "video", 30, 200, 14, 0)));
-        db.getCollection("meter").insert(new BasicDBObject(createAttributes(123123123123l, "article", 30, 200, 11, 0)));
-        DBCursor result = db.getCollection("meter").find();
-        while (result.hasNext()) {
-            System.out.println(result.next());
-        }
-
-        db.getCollection("meter").update(new BasicDBObject(createAttributes(123123123123l, "article", 20, 100, 11, -1)),
-                new BasicDBObject("$inc", new BasicDBObject("$.count", 1)),true, true);
-
-        result = db.getCollection("meter").find();
-        while (result.hasNext()) {
-            System.out.println(result.next());
-        }
+        System.out.println("lala: " + meterRepository.count());
     }
 
-    private Map<String, Object> createAttributes(long when, String articleType, int pub, int sec, int art, int cnt) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
-        attributes.put("when", when);
-        attributes.put("articleType", articleType);
-        attributes.put("publicationId", pub);
-        attributes.put("sectionId", sec);
-        attributes.put("articleId", art);
-        if (cnt >= 0) {
-            attributes.put("count", cnt);
-        }
-        return attributes;
-    }
+
 }

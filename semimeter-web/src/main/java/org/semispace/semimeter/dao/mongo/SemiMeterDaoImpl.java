@@ -16,7 +16,6 @@
 
 package org.semispace.semimeter.dao.mongo;
 
-import com.mongodb.DB;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
@@ -26,31 +25,28 @@ import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@Repository("semimeterDao")
+//@Repository("semimeterDao")
 public class SemiMeterDaoImpl implements SemiMeterDao {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoImpl.class);
 
     @Autowired
-    @Qualifier("db")
-    private DB db;
+    MeterRepository meterRepository;
 
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
     private SemiSpaceInterface space;
 
+    @Override
     public int size() {
         int result = -1;
         rwl.readLock().lock();
         try {
-            result = (int) db.getCollection("meter").count();
+            result = meterRepository.count().intValue();
         } finally {
             rwl.readLock().unlock();
         }
@@ -79,13 +75,18 @@ public class SemiMeterDaoImpl implements SemiMeterDao {
     }
 
     @Override
-    public void collate(long start, long end) {
-        //To change body of implemented methods use File | Settings | File Templates.
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults)
+            throws IllegalArgumentException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults) throws IllegalArgumentException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public List<GroupedResult> getHourlySums(final Integer publicationId, final Integer sectionId) {
+        return null;
+    }
+
+    @Override
+    public void deleteEntriesOlderThanMillis(final long millis) {
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.util.Collection;
 public class StrategyForReductionTest extends AbstractJUnit4SpringContextTests {
     @Autowired
     @Qualifier("testDao")
-    private SemiMeterDaoImpl semiMeterDao;
+    private SemiMeterDaoJdbc semiMeterDao;
     private long whenStartedTest;
 
     @Before

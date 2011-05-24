@@ -44,7 +44,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -58,7 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@Repository("semimeterDao")
+//@Repository("semimeterDao")
 public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDao.class);
 

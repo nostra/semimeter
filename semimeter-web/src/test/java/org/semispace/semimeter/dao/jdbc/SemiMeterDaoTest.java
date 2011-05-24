@@ -37,7 +37,7 @@ public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
 
     @Autowired
     @Qualifier("testDao")
-    private SemiMeterDaoImpl semiMeterDao;
+    private SemiMeterDaoJdbc semiMeterDao;
 
     @Test
     public void testPresentDao() {

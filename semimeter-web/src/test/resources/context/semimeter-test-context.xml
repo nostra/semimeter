@@ -34,7 +34,7 @@
         <property name="password" value=""/>
     </bean>
 
-    <bean id="testDao" class="org.semispace.semimeter.dao.jdbc.SemiMeterDaoImpl"/>
+    <bean id="testDao" class="org.semispace.semimeter.dao.jdbc.SemiMeterDaoJdbc"/>
 
     <!--
        Activate if it is interesting to see performance in the "real" database
