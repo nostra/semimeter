@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.semispace.semimeter.dao;
+package org.semispace.semimeter.dao.jdbc;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,7 +35,7 @@ public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
     private static final long NUMBER_OF_TEST_ELEMENTS = 100;
 
     @Autowired
-    private SemiMeterDao semiMeterDao;
+    private SemiMeterDaoJdbc semiMeterDao;
 
     @Test
     public void testPresentDao() {
