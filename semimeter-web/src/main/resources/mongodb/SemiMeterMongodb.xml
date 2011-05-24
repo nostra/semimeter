@@ -15,13 +15,19 @@
   ~ limitations under the License.
   -->
 
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <import resource="mongodb/SemiMeterMongodb.xml"/>
-<!--
-    <import resource="jdbc/SemiMeterJdbc.xml"/>
--->
+    <bean id="mongo" class="com.mongodb.Mongo">
+        <constructor-arg value="localhost"/>
+        <constructor-arg value="27017"/>
+    </bean>
+
+    <bean id="db" class="org.semispace.semimeter.dao.mongo.MongoDbFactory">
+        <property name="mongo" ref="mongo"/>
+        <property name="name" value="meter"/>
+    </bean>
 
 </beans>
-

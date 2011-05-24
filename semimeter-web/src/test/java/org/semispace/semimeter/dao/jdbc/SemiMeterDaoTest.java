@@ -22,6 +22,7 @@ import org.semispace.semimeter.bean.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
@@ -35,7 +36,8 @@ public class SemiMeterDaoTest extends AbstractJUnit4SpringContextTests {
     private static final long NUMBER_OF_TEST_ELEMENTS = 100;
 
     @Autowired
-    private SemiMeterDaoJdbc semiMeterDao;
+    @Qualifier("testDao")
+    private SemiMeterDaoImpl semiMeterDao;
 
     @Test
     public void testPresentDao() {

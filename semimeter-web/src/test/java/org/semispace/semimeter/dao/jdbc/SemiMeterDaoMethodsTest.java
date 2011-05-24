@@ -19,6 +19,7 @@ package org.semispace.semimeter.dao.jdbc;
 import org.junit.Assert;
 import org.junit.Test;
 import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ public class SemiMeterDaoMethodsTest {
 
     @Test
     public void testEmptySingleEntry() {
-        List<JsonResults> jrs = new SemiMeterDaoJdbc().flatten(new ArrayList<Map<String, Object>>(), 10);
+        List<JsonResults> jrs = new SemiMeterDaoImpl().flatten(new ArrayList<Map<String, Object>>(), 10);
         Assert.assertEquals(10, jrs.size());
         for (JsonResults jr : jrs) {
             Assert.assertEquals("0", jr.getValue());
@@ -43,7 +44,7 @@ public class SemiMeterDaoMethodsTest {
     public void testFlattenSingleEntry() {
         ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
         data.add(createMap(1255795233251l, 100));
-        List<JsonResults> jrs = new SemiMeterDaoJdbc().flatten(data, 5);
+        List<JsonResults> jrs = new SemiMeterDaoImpl().flatten(data, 5);
         Assert.assertEquals(5, jrs.size());
         Assert.assertEquals("100", jrs.get(0).getValue());
     }
@@ -56,7 +57,7 @@ public class SemiMeterDaoMethodsTest {
         data.add(createMap(300, 1));
         data.add(createMap(400, 1));
         data.add(createMap(500, 1));
-        List<JsonResults> jrs = new SemiMeterDaoJdbc().flatten(data, 5);
+        List<JsonResults> jrs = new SemiMeterDaoImpl().flatten(data, 5);
 
         for (JsonResults jr : jrs) {
             Assert.assertEquals("The distribution of 5 data should be flat", "1", jr.getValue());
@@ -71,7 +72,7 @@ public class SemiMeterDaoMethodsTest {
         data.add(createMap(220, 1));
         data.add(createMap(230, 1));
         data.add(createMap(500, 1));
-        List<JsonResults> jrs = new SemiMeterDaoJdbc().flatten(data, 5);
+        List<JsonResults> jrs = new SemiMeterDaoImpl().flatten(data, 5);
 
         Assert.assertEquals("1", jrs.get(0).getValue());
         Assert.assertEquals("3", jrs.get(1).getValue());

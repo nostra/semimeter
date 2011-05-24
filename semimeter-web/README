@@ -1,0 +1,20 @@
+setup mongodb:
+
+1.) sudo apt-get install mongodb
+
+2.) open the mongodb client using "mongo meter" command in terminal. this creates a db called "meter".
+
+3.) then create a new collection called "meter". "db.createCollection("meter")"
+
+4.) Now exit the client with "exit"
+
+
+
+
+switch to jdbc backend:
+
+1.)
+activate @Repository annotation in org.semispace.semimeter.dao.jdbc.SemiMeterDaoImpl and likewise deactivate it in org.semispace.semimeter.dao.mongo.SemiMeterDaoImpl
+
+2.)
+in resources/semimeter-context.xml, deactivate the mongodb inclusion file, activate the jdbc one.
