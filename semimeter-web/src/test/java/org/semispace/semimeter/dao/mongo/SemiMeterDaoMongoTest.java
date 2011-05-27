@@ -145,8 +145,7 @@ public class SemiMeterDaoMongoTest {
         assertNotNull(result);
         assertEquals(0, result.size());
 
-        mongoTemplate
-                .save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1000l, "/article/95/37/411", "/", 1));
+        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1000l, "/article/95/37/411", "/", 1));
         mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1001l, "/album/95/2344/412", "/", 4));
         mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(2000l, "/article/95/37/413", "/", 2));
         mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(5000l, "/article/95/37/413", "/", 3));
@@ -208,11 +207,6 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.performInsertion(items);
 
-        List<MeterHit> result = mongoTemplate.getCollection(mongoTemplate.getDefaultCollectionName(), MeterHit.class);
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(3, result.get(0).getCount().intValue());
-        assertEquals(4455667788l, result.get(0).getWhen().longValue());
     }
 
     @Test
@@ -228,6 +222,12 @@ public class SemiMeterDaoMongoTest {
         item.setAccessNumber(7);
         item.setPath("/article/1/37/411");
         item.setWhen(4455667789l);
+        items.add(item);
+
+        item = new Item();
+        item.setAccessNumber(7);
+        item.setPath("/article/1/37/411");
+        item.setWhen(4455767789l);
         items.add(item);
 
         semiMeterDao.performInsertion(items);

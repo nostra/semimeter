@@ -37,8 +37,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.document.mongodb.MongoTemplate;
 import org.springframework.data.document.mongodb.query.Criteria;
+import org.springframework.data.document.mongodb.query.Index;
+import org.springframework.data.document.mongodb.query.Order;
 import org.springframework.data.document.mongodb.query.Query;
-import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@Repository("semimeterDao")
+//@Repository("semimeterDao")
 public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoMongo.class);
 
@@ -166,6 +167,16 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
            limit 10
         */
 
+        mongoTemplate.ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("when", Order.DESCENDING));
+        mongoTemplate.ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("pathElements.e1", Order.DESCENDING));
+        mongoTemplate
+                .ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("pathElements.e2", Order.DESCENDING));
+        mongoTemplate
+                .ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("pathElements.e3", Order.DESCENDING));
+        mongoTemplate
+                .ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("pathElements.e4", Order.DESCENDING));
+        mongoTemplate
+                .ensureIndex(mongoTemplate.getDefaultCollectionName(), new Index("pathElements.e5", Order.DESCENDING));
         //building query condition, starting with time window
         BasicDBObjectBuilder builder =
                 BasicDBObjectBuilder.start("when", BasicDBObjectBuilder.start("$gt", startAt).add("$lte", endAt).get());

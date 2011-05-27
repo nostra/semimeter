@@ -37,5 +37,5 @@
         </constructor-arg>
     </bean>
 
-    <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo"/>
+    <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo2"/>
 </beans>
