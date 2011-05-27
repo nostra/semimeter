@@ -14,7 +14,7 @@ setup mongodb:
 switch to jdbc backend:
 
 1.)
-activate @Repository annotation in org.semispace.semimeter.dao.jdbc.SemiMeterDaoImpl and likewise deactivate it in org.semispace.semimeter.dao.mongo.SemiMeterDaoImpl
+activate @Repository annotation in org.semispace.semimeter.dao.jdbc.SemiMeterDaoImpl and likewise deactivate it in org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo
 
 2.)
 in resources/semimeter-context.xml, deactivate the mongodb inclusion file, activate the jdbc one.

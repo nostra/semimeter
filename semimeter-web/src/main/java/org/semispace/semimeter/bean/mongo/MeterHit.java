@@ -1,11 +1,8 @@
 package org.semispace.semimeter.bean.mongo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MeterHit {
     private Long when;
-    private List<String> pathElements = new ArrayList<String>();
+    private PathElements pathElements;
     private Integer count;
 
     public MeterHit() {
@@ -15,11 +12,34 @@ public class MeterHit {
     public MeterHit(Long when, String path, String delim, Integer count) {
         this.when = when;
         this.count = count;
+        this.pathElements = calcPath(path, delim);
+    }
+
+    public static PathElements calcPath(final String path, final String delim) {
+        PathElements result = null;
         if (path != null && delim != null) {
-            for (String token : path.split(delim)) {
-                this.pathElements.add(token);
+            String trimmedPath = path.trim();
+            if (trimmedPath.startsWith(delim)) {
+                trimmedPath = trimmedPath.substring(1);
+            }
+            String[] tokens = trimmedPath.split(delim);
+            if (tokens != null && tokens.length > 0) {
+                result = new PathElements();
+                for (int i = 0; i < tokens.length; i++) {
+                    String s = tokens[i];
+                    if (s != null && !s.isEmpty() && !"%".equals(s) && !"*".equals(s) && ! "_".equals(s)) {
+                        try {
+                            result.getClass().getMethod("setE" + (i + 1), String.class).invoke(result, s);
+                        } catch (Exception e) {
+                            //should not happen
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         }
+
+        return result;
     }
 
     public Long getWhen() {
@@ -30,13 +50,6 @@ public class MeterHit {
         this.when = when;
     }
 
-    public List<String> getPathElements() {
-        return pathElements;
-    }
-
-    public void setPathElements(final List<String> pathElements) {
-        this.pathElements = pathElements;
-    }
 
     public Integer getCount() {
         return count;
@@ -44,5 +57,25 @@ public class MeterHit {
 
     public void setCount(final Integer count) {
         this.count = count;
+    }
+
+
+    public PathElements getPathElements() {
+        return pathElements;
+    }
+
+    public void setPathElements(final PathElements pathElements) {
+        this.pathElements = pathElements;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("MeterHit");
+        sb.append("{when=").append(when);
+        sb.append(", pathElements=").append(pathElements);
+        sb.append(", count=").append(count);
+        sb.append('}');
+        return sb.toString();
     }
 }

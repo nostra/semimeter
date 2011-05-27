@@ -15,7 +15,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>no.api.semimeter</groupId>
     <artifactId>semimeter</artifactId>
@@ -28,6 +29,7 @@
     <properties>
         <springframework.version>3.0.5.RELEASE</springframework.version>
         <spring.data.mongo.version>1.0.0.M2</spring.data.mongo.version>
+        <mongo.version>2.5.3</mongo.version>
         <slf4j.version>1.6.1</slf4j.version>
         <jetty.version>6.1.26</jetty.version>
     </properties>
@@ -297,12 +299,18 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongo-java-driver</artifactId>
-                <version>2.4</version>
+                <version>${mongo.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-mongodb</artifactId>
                 <version>${spring.data.mongo.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.mongodb</groupId>
+                        <artifactId>mongo-java-driver</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
         </dependencies>
@@ -385,8 +393,8 @@
                 <configuration>
                     <inputEncoding>utf-8</inputEncoding>
                     <outputEncoding>utf-8</outputEncoding>
-		</configuration>
-	    </plugin>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>

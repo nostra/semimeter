@@ -28,17 +28,14 @@
 
     <mongo:mongo host="127.0.0.1" port="27017" id="mongo"/>
 
-    <mongo:repositories base-package="org.semispace.semimeter.dao.mongo">
-        <mongo:repository id="meterRepository"/>
-    </mongo:repositories>
-
     <bean id="mongoTemplate" class="org.springframework.data.document.mongodb.MongoTemplate">
         <constructor-arg ref="mongo"/>
         <constructor-arg name="databaseName" value="unittest"/>
-        <constructor-arg value="collection"/>
+        <constructor-arg value="meter"/>
         <constructor-arg>
             <mongo:mapping-converter/>
         </constructor-arg>
     </bean>
 
+    <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo"/>
 </beans>

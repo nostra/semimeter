@@ -18,26 +18,26 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd">
+                           http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
     <!-- Use this post processor to translate any MongoExceptions thrown in @Repository annotated classes -->
     <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
 
     <mongo:mongo host="127.0.0.1" port="27017" id="mongo"/>
 
-
-    <mongo:repositories base-package="org.semispace.semimeter.dao.mongo">
-        <mongo:repository id="meterRepository"/>
-    </mongo:repositories>
-
     <bean id="mongoTemplate" class="org.springframework.data.document.mongodb.MongoTemplate">
-        <constructor-arg ref="mongo" />
-        <constructor-arg name="databaseName" value="mittari" />
-        <constructor-arg value="collection"/>
+        <constructor-arg ref="mongo"/>
+        <constructor-arg name="databaseName" value="mittari"/>
+        <constructor-arg value="meter"/>
         <constructor-arg>
             <mongo:mapping-converter/>
         </constructor-arg>
     </bean>
+
+    <context:component-scan base-package="org.semispace.semimeter.dao.mongo" />
+
 
 </beans>

@@ -50,5 +50,5 @@
     </bean>
 -->
 
-    <bean id="semiMeterDao" class="org.semispace.semimeter.dao.jdbc.SemiMeterDaoJdbc"/>
+    <context:component-scan base-package="org.semispace.semimeter.dao.jdbc"/>
 </beans>

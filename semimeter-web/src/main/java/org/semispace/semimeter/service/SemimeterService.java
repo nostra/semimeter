@@ -38,9 +38,9 @@ public class SemimeterService {
      * time to insert pending data.
      * TODO Consider adjusting the value.
      */
-    private static final long DEFAULT_SKEW_IN_MS = 20000;
-    private static final long QUERY_LIFE_TIME_MS = 30000;
-    private static final long QUERY_RESULT_TIMEOUT_MS = 20000;
+    private static final long DEFAULT_SKEW_IN_MS = 20000; //when selecting, "endTime" is now - this number in queries
+    private static final long QUERY_LIFE_TIME_MS = 30000; //cache results this long
+    private static final long QUERY_RESULT_TIMEOUT_MS = 60000; //wait 60 seconds for queries to complete
 
     @Autowired
     private JsonService jsonService;

@@ -16,27 +16,14 @@ package org.semispace.semimeter.dao.jdbc;
  * limitations under the License.
  */
 
-import org.semispace.SemiEventRegistration;
-import org.semispace.SemiSpace;
-import org.semispace.SemiSpaceInterface;
-import org.semispace.semimeter.bean.ArrayQuery;
 import org.semispace.semimeter.bean.GroupedResult;
-import org.semispace.semimeter.bean.GroupedSumsQuery;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.JsonResults;
-import org.semispace.semimeter.bean.ParameterizedQuery;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
-import org.semispace.semimeter.bean.TruncateTimeout;
-import org.semispace.semimeter.dao.SemiMeterDao;
+import org.semispace.semimeter.dao.AbstractSemiMeterDaoImpl;
 import org.semispace.semimeter.dao.helper.QueryTokenConverter;
-import org.semispace.semimeter.space.CounterHolder;
-import org.semispace.semimeter.space.listener.Space2Dao;
-import org.semispace.semimeter.space.listener.SpacePQListener;
-import org.semispace.semimeter.space.listener.TruncateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
@@ -44,7 +31,9 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.springframework.stereotype.Repository;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,23 +42,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-//@Repository("semimeterDao")
-public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, DisposableBean {
-    private static final Logger log = LoggerFactory.getLogger(SemiMeterDao.class);
+@Repository("semimeterDao")
+public class SemiMeterDaoJdbc extends AbstractSemiMeterDaoImpl {
+    private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoJdbc.class);
 
     private SimpleJdbcTemplate jdbcTemplate;
-    private SemiEventRegistration chRegistration;
-    private SemiEventRegistration pqRegistration;
-    private SemiEventRegistration aqRegistration;
-    private SemiEventRegistration groupedSumsRegistration;
-    private SemiEventRegistration truncateRegistration;
+
 
     private ReadWriteLock rwl = new ReentrantReadWriteLock();
-    private SemiSpaceInterface space;
     private static final int MAX_PATH_LENGTH = 2048;
 
 
@@ -111,14 +94,8 @@ public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, Disposa
         return false;
     }
 
-    /**
-     * Method called from Spring. Will (try to) create the table with the meter, if it does not already exist.
-     */
-    public void afterPropertiesSet() {
-        registerSpaceListeners();
-        ensureTables();
-    }
 
+    @PostConstruct
     private void ensureTables() {
         if (size() < 0) {
             log.info("Creating table meter");
@@ -178,31 +155,7 @@ public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, Disposa
         }
     }
 
-    private void registerSpaceListeners() {
-        log.debug("Retrieving semispace.");
-        space = SemiSpace.retrieveSpace();
-        log.debug("Registering listeners.");
-        if (chRegistration != null || pqRegistration != null || aqRegistration != null ||
-                groupedSumsRegistration != null || truncateRegistration != null) {
-            log.error("Did not expect any SemiSpace registration to exist already. Not registering again");
-        } else {
-            SpacePQListener spacePqListener =
-                    new SpacePQListener(space, this, "Query listener - both parameterized and array queries");
-            // Listen for events ten years
-            chRegistration = space.notify(new CounterHolder(),
-                    new Space2Dao(space, this, "CounterHolder which holds elements to be counted"),
-                    SemiSpace.ONE_DAY * 3650);
-            // Reusing
-            pqRegistration = space.notify(new ParameterizedQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-            aqRegistration = space.notify(new ArrayQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
-            groupedSumsRegistration = space.notify(new GroupedSumsQuery(), spacePqListener, SemiSpace.ONE_DAY * 3650);
 
-            TruncateListener truncateListener = new TruncateListener(space, this,
-                    "Truncate Listner, truncates data whenever TruncateTimeout bean expires");
-            truncateRegistration = space.notify(new TruncateTimeout(), truncateListener, SemiSpace.ONE_DAY * 3650);
-            truncateListener.triggerTimeout();
-        }
-    }
 
     public void performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
@@ -234,39 +187,7 @@ public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, Disposa
         }
     }
 
-    //TODO: consider deletion
-    /*
-    private void failed_rewrite_performInsertion(Collection<Item> items) {
-        //log.debug("Performing batch insertion of "+items.size()+" items.");
-        //List<Object[]> insertArgs = new ArrayList<Object[]>();
-        //List<Object[]> updateArgs = new ArrayList<Object[]>();
-
-        SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
-        SqlParameterSource[] updateArgs = SqlParameterSourceUtils.createBatch(items.toArray());
-
-        //for ( Item item : items ) {
-        // Original just called insert
-        //insertArgs.add( new Object[]{item.getWhen(), item.getKey(),item.getWhen(), item.getKey()});
-        //updateArgs.add( new Object[] {item.getAccessNumber(), item.getKey(), item.getWhen()});
-        //}
-        rwl.writeLock().lock();
-        try {
-            try {
-                //log.debug("INSERT INTO meter(updated, count, path) SELECT DISTINCT ?, 0, ? FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=? AND path=?)");
-                jdbcTemplate.batchUpdate("INSERT INTO meter(updated, counted, path) SELECT DISTINCT :when, 0, :path FROM meter WHERE NOT EXISTS ( SELECT * FROM meter WHERE updated=:when AND path=:path)",
-                        insertArgs);
-            } catch (Exception e) {
-                log.warn("Unlikely event occurred - failure whilst inserting priming elements. This is not overly critical. Masked exception: " + e);
-            }
-            jdbcTemplate.batchUpdate("update meter SET counted=counted+:accessNumber WHERE :path like :path and updated=:when",
-                    updateArgs);
-        } catch (Exception e) {
-            log.error("Could not update elements", e);
-        } finally {
-            rwl.writeLock().unlock();
-        }
-    }
-    */
+   
 
     /**
      * Insertion is performed like this: Try to insert item with count of zero if does not already
@@ -293,30 +214,6 @@ public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, Disposa
             log.error("Could not insert or update", e);
         } finally {
             rwl.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public void destroy() throws Exception {
-        if (chRegistration != null) {
-            chRegistration.getLease().cancel();
-            chRegistration = null;
-        }
-        if (pqRegistration != null) {
-            pqRegistration.getLease().cancel();
-            pqRegistration = null;
-        }
-        if (aqRegistration != null) {
-            aqRegistration.getLease().cancel();
-            aqRegistration = null;
-        }
-        if (groupedSumsRegistration != null) {
-            groupedSumsRegistration.getLease().cancel();
-            groupedSumsRegistration = null;
-        }
-        if (truncateRegistration != null) {
-            truncateRegistration.getLease().cancel();
-            truncateRegistration = null;
         }
     }
 
@@ -412,65 +309,6 @@ public class SemiMeterDaoJdbc implements SemiMeterDao, InitializingBean, Disposa
         List<JsonResults> result = flatten(list, numberOfSamples.intValue());
 
         return result.toArray(new JsonResults[0]);
-    }
-
-    /**
-     * protected for the benefit of junit test
-     */
-    protected List<JsonResults> flatten(List<Map<String, Object>> list, int num) {
-        // Using AtomicInteger just because it has nice adding features.
-        List<AtomicInteger> res = new ArrayList<AtomicInteger>(num);
-        for (int i = 0; i < num; i++) {
-            // Prime
-            res.add(new AtomicInteger());
-        }
-        if (list == null || list.isEmpty()) {
-            return transformToJR(res);
-        }
-        long start = Long.valueOf("" + list.get(0).get("updated")).longValue();
-        long end = Long.valueOf("" + list.get(list.size() - 1).get("updated")).longValue();
-        long subrange = (end - start) / num;
-        if (subrange < 1) {
-            subrange = 1;
-        }
-        long mod = (end - start) / subrange;
-        if (mod > 0) {
-            log.trace("Having a rest which I need to retain. Just adding it to subrange. Rest is " + mod);
-            subrange += mod;
-        }
-        int count = 0;
-        for (int i = 0; i < num; i++) {
-            start += subrange;
-            //log.debug("Starting at "+start+" at iteration "+i+" having subrange "+subrange);
-            // Still having more data, and current updated value less than where to start in scale
-            while (count < list.size() && Long.valueOf("" + list.get(count).get("updated")).longValue() <= start) {
-                //log.debug("Shall increment place "+i);
-                res.get(i).getAndAdd(Integer.valueOf("" + list.get(count).get("counted")).intValue());
-                count++;
-            }
-        }
-        if (count < list.size()) {
-            log.error(
-                    "Sanity: Did not use all data!? This may happen if the data are not sorted in the updated field. Missing " +
-                            (list.size() - count) + " elements");
-        }
-
-        return transformToJR(res);
-    }
-
-    private List<JsonResults> transformToJR(List<AtomicInteger> res) {
-        List<JsonResults> list = new ArrayList<JsonResults>();
-        for (int i = 0; i < res.size(); i++) {
-            JsonResults jr = new JsonResults();
-            jr.setKey("" + i);
-            jr.setValue(res.get(i).toString());
-            list.add(jr);
-        }
-        return list;
-    }
-
-    private String leaseInfo(SemiEventRegistration lease) {
-        return "{id: " + lease.getId() + ", lease.holderId:" + lease.getLease().getHolderId() + "}";
     }
 
     /**

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.semispace.semimeter.dao.jdbc;
+package org.semispace.semimeter.dao;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.semispace.semimeter.bean.JsonResults;
+import org.semispace.semimeter.dao.jdbc.SemiMeterDaoJdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
