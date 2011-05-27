@@ -26,7 +26,7 @@ public class DbUpdaterTest {
     private Mongo mongo;
 
     @Test
-    //@Ignore("only use to import test data (from mysql dump file")
+    @Ignore("only use to import test data (from mysql dump file")
     public void doIt() throws IOException {
         MongoTemplate mongoTemplate = new MongoTemplate(mongo, "mittari", "meter");
         File file = new File("/home/sven/dev/trunk/api/maven-projects/v3/mittari/meter.sql");
