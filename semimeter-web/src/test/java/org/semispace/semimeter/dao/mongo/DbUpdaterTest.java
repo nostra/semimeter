@@ -1,6 +1,7 @@
 package org.semispace.semimeter.dao.mongo;
 
 import com.mongodb.Mongo;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.mongo.MeterHit;
