@@ -26,6 +26,16 @@ public class Item {
 
     private int accessNumber;
 
+    public Item() {
+        //default
+    }
+
+    public Item(long when, String path, int accessNumber) {
+        this.when = when;
+        this.path = path;
+        this.accessNumber = accessNumber;
+    }
+
     public String getPath() {
         return path;
     }

@@ -17,6 +17,7 @@
 package org.semispace.semimeter.dao.mongo;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 import org.semispace.semimeter.bean.GroupedResult;
@@ -51,16 +52,17 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
 
     @Override
     public int size() {
-        return 0;
+        return (int) mongoTemplate.getDefaultCollection().count();
     }
 
     @Override
     public boolean isAlive() {
-        return false;
+        return mongoTemplate.getDb().getMongo().getConnector().isOpen();
     }
 
     @Override
     public void performInsertion(final Collection<Item> items) {
+
         for (Item item : items) {
             //some time calculations
             Calendar cal = new GregorianCalendar();
@@ -71,6 +73,7 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
             long minute = cal.getTimeInMillis();
             cal.set(Calendar.MINUTE, 0);
             long hour = cal.getTimeInMillis();
+            cal.setTimeInMillis(item.getWhen());
 
             BasicDBObject query = new BasicDBObject();
             PathElements pathElements = MeterHit.calcPath(item.getPath(), "/");
@@ -84,14 +87,42 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
             sb.append("      { 'day.count' : " + item.getAccessNumber() + ", ");
             sb.append("        'day.hours." + hour + ".count' : " + item.getAccessNumber() + ",  ");
             sb.append("        'day.hours." + hour + ".minutes." + minute + ".count' : " + item.getAccessNumber() +
-                    ",  ");
-            sb.append("        'day.hours." + hour + ".minutes." + minute + ".seconds." + second + ".count' : " +
-                    item.getAccessNumber() + "  ");
+                    "  ");
+            //sb.append("        'day.hours." + hour + ".minutes." + minute + ".seconds." + second + ".count' : " +                    item.getAccessNumber() + "  ");
             sb.append(" } }");
 
             DBObject update = (DBObject) JSON.parse(sb.toString());
 
             mongoTemplate.getDefaultCollection().update(query, update, true, false);
+
+            query = new BasicDBObject();
+            BasicDBObject time = new BasicDBObject();
+            query.append("time", time);
+            time.append("ts", minute);
+            time.append("year", cal.get(Calendar.YEAR));
+            time.append("month", cal.get(Calendar.MONTH));
+            time.append("day", cal.get(Calendar.DAY_OF_MONTH));
+            time.append("hour", cal.get(Calendar.HOUR_OF_DAY));
+            time.append("minute", cal.get(Calendar.MINUTE));
+
+            sb = new StringBuilder();
+            sb.append(" { '$inc': ");
+            sb.append("{ 'total' : ").append(item.getAccessNumber());
+            if (pathElements.getE1().equals("article")) {
+                sb.append(", 'article' : ").append(item.getAccessNumber());
+            } else if (pathElements.getE1().equals("album")) {
+                sb.append(", 'album' : ").append(item.getAccessNumber());
+            } else if (pathElements.getE1().equals("video")) {
+                sb.append(", 'video' : ").append(item.getAccessNumber());
+            } else {
+                sb.append(", 'other' : ").append(item.getAccessNumber());
+            }
+            sb.append(" } }");
+
+            update = (DBObject) JSON.parse(sb.toString());
+
+            mongoTemplate.getCollection("sums").update(query, update, true, false);
+
         }
     }
 
@@ -124,5 +155,18 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
 
     @Override
     public void deleteEntriesOlderThanMillis(final long millis) {
+        long when=System.currentTimeMillis()-millis;
+        Calendar cal = new GregorianCalendar();
+        cal.setTimeInMillis(when);
+        DBCursor result =
+                mongoTemplate.getCollection("sums").find((DBObject) JSON.parse("{time.ts: {$lt: " + when + "}}"));
+        while(result.hasNext()) {
+            mongoTemplate.getCollection("sums").remove(result.next());
+        }
+
+        result = mongoTemplate.getDefaultCollection().find();
+        while (result.hasNext()) {
+            mongoTemplate.getCollection("sums").remove(result.next());
+        }
     }
 }
