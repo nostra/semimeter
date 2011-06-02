@@ -33,10 +33,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.document.mongodb.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -138,33 +145,157 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
 
     @Override
     public JsonResults[] createTimeArray(final String path, final long endAt, final long startAt,
-            final Integer numberOfSamples) {
+                                         final Integer numberOfSamples) {
         return new JsonResults[0];
     }
 
     @Override
     public List<GroupedResult> getGroupedSums(final long startAt, final long endAt, final TokenizedPathInfo query,
-            final int maxResults) throws IllegalArgumentException {
+                                              final int maxResults) throws IllegalArgumentException {
         return null;
     }
 
+    private DateFormat df = new SimpleDateFormat("yy-MM-dd-HH-mm");
+
     @Override
     public List<GroupedResult> getHourlySums(final Integer publicationId, final Integer sectionId) {
-        return null;
+        List<GroupedResult> result = new ArrayList<GroupedResult>();
+        DBObject query = null;
+        if (publicationId == null) {
+            if (sectionId != null) {
+                throw new IllegalArgumentException("cant have sectionId without publicationId as parameters.");
+            }
+            //total network
+            DBObject sortObj = (DBObject) JSON.parse("{'time.ts': 1}");
+            DBCursor dbResult = mongoTemplate.getCollection("sums").find().sort(sortObj);
+            while (dbResult.hasNext()) {
+                DBObject sum = dbResult.next();
+                GroupedResult groupedResult = new GroupedResult();
+                Long ts = (Long) ((DBObject) sum.get("time")).get("ts");
+                String time = df.format(new Date(ts));
+                groupedResult.setKey(time);
+                groupedResult.setCount((Integer) sum.get("total"));
+                groupedResult.setKeyName("timestamp");
+                groupedResult.getSplitCounts().put("article", sum.get("article") == null ? 0 : (Integer) sum.get("article"));
+                groupedResult.getSplitCounts().put("album", sum.get("album") == null ? 0 : (Integer) sum.get("album"));
+                groupedResult.getSplitCounts().put("video", sum.get("video") == null ? 0 : (Integer) sum.get("video"));
+                groupedResult.getSplitCounts().put("other", sum.get("other") == null ? 0 : (Integer) sum.get("other"));
+                result.add(groupedResult);
+            }
+        } else {
+            if (sectionId == null) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("function() { ");
+                sb.append("    for (h in this.day.hours) { ");
+                sb.append("        var hour = this.day.hours[h]; ");
+                sb.append("        for (m in hour.minutes) { ");
+                sb.append("            var cnt = hour.minutes[m].count; ");
+                sb.append("            var counter = { ");
+                sb.append("                'total': cnt, ");
+                sb.append("                'article': this.type == 'article' ? cnt : 0, ");
+                sb.append("                'album': this.type == 'album' ? cnt : 0,");
+                sb.append("                'video': this.type == 'video' ? cnt : 0 ");
+                sb.append("            }; ");
+                sb.append("            emit(m, counter); ");
+                sb.append("        }");
+                sb.append("    }");
+                sb.append("}");
+
+
+                sb.setLength(0);
+                sb.append("function(key, values) { ");
+                sb.append("    var result = {      ");
+                sb.append("        total: 0, ");
+                sb.append("        article: 0,");
+                sb.append("        album:0,");
+                sb.append("        video:0 ");
+                sb.append("    }; ");
+                sb.append("    for (v in values) { ");
+                sb.append("        var cnt = values[v]; ");
+                sb.append("        result.total += cnt.total; ");
+                sb.append("        result.article += cnt.article; ");
+                sb.append("        result.album += cnt.album; ");
+                sb.append("        result.video += cnt.video ");
+                sb.append("    }; ");
+                sb.append("    return result; ");
+                sb.append("};");
+                String reduce = sb.toString();
+            }
+        }
+        return result;
     }
 
     @Override
     public void deleteEntriesOlderThanMillis(final long millis) {
-        long when=System.currentTimeMillis()-millis;
+        long when = System.currentTimeMillis() - millis;
+        deleteOldSums(when);
+        deleteOldMinutes(when);
+    }
+
+    private void deleteOldMinutes(long when) {
         Calendar cal = new GregorianCalendar();
         cal.setTimeInMillis(when);
-        DBCursor result =
-                mongoTemplate.getCollection("sums").find((DBObject) JSON.parse("{time.ts: {$lt: " + when + "}}"));
-        while(result.hasNext()) {
-            mongoTemplate.getCollection("sums").remove(result.next());
-        }
+        cal.set(Calendar.MILLISECOND, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MINUTE, 0);
+        long targetHour = cal.getTimeInMillis();
 
-        result = mongoTemplate.getDefaultCollection().find();
+        DBCursor result = mongoTemplate.getDefaultCollection().find();
+        while (result.hasNext()) {
+            DBObject doc = result.next();
+            System.out.println("doc: " + doc);
+            DBObject day = (DBObject) doc.get("day");
+            System.out.println("day: " + day);
+            DBObject hours = (DBObject) day.get("hours");
+            System.out.println("hours: " + hours);
+            Set<String> hrSet = new HashSet<String>();
+            hrSet.addAll(hours.keySet());
+            for (String h : hrSet) {
+                long hourmillis = Long.valueOf(h);
+                System.out.println("hour: " + hourmillis);
+                if (hourmillis < targetHour) {
+                    System.out.println("removing hour " + h + " because it is older than " + targetHour);
+                    DBObject obj = (DBObject) hours.get(h);
+                    day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
+                    hours.removeField(h);
+                } else if (hourmillis == targetHour) {
+                    System.out.println("current hour is targetHour, clean minutes");
+                    DBObject currentHour = (DBObject) hours.get(h);
+                    DBObject minutes = (DBObject) currentHour.get("minutes");
+                    Set<String> keys = new HashSet<String>();
+                    keys.addAll(minutes.keySet());
+                    for (String m : keys) {
+                        long minutemillis = Long.valueOf(m);
+                        System.out.println("minute: " + minutemillis);
+                        if (minutemillis < when) {
+                            System.out.println("removing minute " + minutemillis + " because it is older than " + when);
+
+                            DBObject obj = (DBObject) minutes.get(m);
+                            DBObject hourObj = (DBObject) hours.get(h);
+                            day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
+                            hourObj.put("count", (Integer) hourObj.get("count") - (Integer) obj.get("count"));
+                            minutes.removeField(m);
+                        }
+                    }
+                    if (minutes.keySet().isEmpty()) {
+                        System.out.println("no more minutes, removing hour");
+                        hours.removeField(h);
+                    }
+                }
+            }
+            if (hours.keySet().isEmpty()) {
+                System.out.println("no more hours, remove article");
+                mongoTemplate.getDefaultCollection().remove(new BasicDBObject("_id", doc.get("_id")));
+            } else {
+                mongoTemplate.getDefaultCollection().save(doc);
+            }
+        }
+    }
+
+    private void deleteOldSums(long when) {
+        DBCursor result =
+                mongoTemplate.getCollection("sums").find((DBObject) JSON.parse("{'time.ts': {'$lt': " + when + "}}"));
+
         while (result.hasNext()) {
             mongoTemplate.getCollection("sums").remove(result.next());
         }
