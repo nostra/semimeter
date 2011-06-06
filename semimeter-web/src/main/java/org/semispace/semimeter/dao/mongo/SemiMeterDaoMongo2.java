@@ -39,7 +39,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -95,8 +94,8 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
             sb.append(" { '$inc': ");
             sb.append("      { 'day.count' : " + item.getAccessNumber() + ", ");
             sb.append("        'day.hours." + hour + ".count' : " + item.getAccessNumber() + ",  ");
-            sb.append("        'day.hours." + hour + ".minutes." + minute + ".count' : " + item.getAccessNumber() +
-                    "  ");
+            sb.append(
+                    "        'day.hours." + hour + ".minutes." + minute + ".count' : " + item.getAccessNumber() + "  ");
             //sb.append("        'day.hours." + hour + ".minutes." + minute + ".seconds." + second + ".count' : " +                    item.getAccessNumber() + "  ");
             sb.append(" } }");
 
@@ -147,13 +146,13 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
 
     @Override
     public JsonResults[] createTimeArray(final String path, final long endAt, final long startAt,
-                                         final Integer numberOfSamples) {
+            final Integer numberOfSamples) {
         return new JsonResults[0];
     }
 
     @Override
     public List<GroupedResult> getGroupedSums(final long startAt, final long endAt, final TokenizedPathInfo query,
-                                              final int maxResults) throws IllegalArgumentException {
+            final int maxResults) throws IllegalArgumentException {
         return null;
     }
 
@@ -175,82 +174,88 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
                 groupedResult.setKey(time);
                 groupedResult.setCount((Integer) sum.get("total"));
                 groupedResult.setKeyName("timestamp");
-                groupedResult.getSplitCounts().put("article", sum.get("article") == null ? 0 : (Integer) sum.get("article"));
+                groupedResult.getSplitCounts()
+                        .put("article", sum.get("article") == null ? 0 : (Integer) sum.get("article"));
                 groupedResult.getSplitCounts().put("album", sum.get("album") == null ? 0 : (Integer) sum.get("album"));
                 groupedResult.getSplitCounts().put("video", sum.get("video") == null ? 0 : (Integer) sum.get("video"));
                 groupedResult.getSplitCounts().put("other", sum.get("other") == null ? 0 : (Integer) sum.get("other"));
                 result.add(groupedResult);
             }
         } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("function() { ");
+            sb.append("    for (h in this.day.hours) { ");
+            sb.append("        var hour = this.day.hours[h]; ");
+            sb.append("        for (m in hour.minutes) { ");
+            sb.append("            var cnt = hour.minutes[m].count; ");
+            sb.append("            var counter = { ");
+            sb.append("                'total': cnt, ");
+            sb.append("                'article': this.type == 'article' ? cnt : 0, ");
+            sb.append("                'album': this.type == 'album' ? cnt : 0,");
+            sb.append("                'video': this.type == 'video' ? cnt : 0 ");
+            sb.append("            }; ");
+            sb.append("            emit(m, counter); ");
+            sb.append("        }");
+            sb.append("    }");
+            sb.append("}");
+            String map = sb.toString();
+
+            sb.setLength(0);
+            sb.append("function(key, values) { ");
+            sb.append("    var result = {      ");
+            sb.append("        total: 0, ");
+            sb.append("        article: 0,");
+            sb.append("        album:0,");
+            sb.append("        video:0 ");
+            sb.append("    }; ");
+            sb.append("    for (v in values) { ");
+            sb.append("        var cnt = values[v]; ");
+            sb.append("        result.total += cnt.total; ");
+            sb.append("        result.article += cnt.article; ");
+            sb.append("        result.album += cnt.album; ");
+            sb.append("        result.video += cnt.video ");
+            sb.append("    }; ");
+            sb.append("    return result; ");
+            sb.append("};");
+            String reduce = sb.toString();
+            String outputCollectionName = "sums_" + publicationId + "_" + sectionId;
+            DBObject query = null;
             if (sectionId == null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("function() { ");
-                sb.append("    for (h in this.day.hours) { ");
-                sb.append("        var hour = this.day.hours[h]; ");
-                sb.append("        for (m in hour.minutes) { ");
-                sb.append("            var cnt = hour.minutes[m].count; ");
-                sb.append("            var counter = { ");
-                sb.append("                'total': cnt, ");
-                sb.append("                'article': this.type == 'article' ? cnt : 0, ");
-                sb.append("                'album': this.type == 'album' ? cnt : 0,");
-                sb.append("                'video': this.type == 'video' ? cnt : 0 ");
-                sb.append("            }; ");
-                sb.append("            emit(m, counter); ");
-                sb.append("        }");
-                sb.append("    }");
-                sb.append("}");
-                String map = sb.toString();
-
-
-                sb.setLength(0);
-                sb.append("function(key, values) { ");
-                sb.append("    var result = {      ");
-                sb.append("        total: 0, ");
-                sb.append("        article: 0,");
-                sb.append("        album:0,");
-                sb.append("        video:0 ");
-                sb.append("    }; ");
-                sb.append("    for (v in values) { ");
-                sb.append("        var cnt = values[v]; ");
-                sb.append("        result.total += cnt.total; ");
-                sb.append("        result.article += cnt.article; ");
-                sb.append("        result.album += cnt.album; ");
-                sb.append("        result.video += cnt.video ");
-                sb.append("    }; ");
-                sb.append("    return result; ");
-                sb.append("};");
-                String reduce = sb.toString();
-                System.out.println("map: " + map);
-                System.out.println("reduce: " + reduce);
-
-                String outputCollectionName = "sums_" + publicationId + "_" + sectionId;
-
-                DBObject query = new BasicDBObject("publicationId", publicationId);
-
-                MapReduceCommand command = new MapReduceCommand(mongoTemplate.getDefaultCollection(), map, reduce,
-                        outputCollectionName, MapReduceCommand.OutputType.REPLACE, query);
-                mongoTemplate.getDefaultCollection().mapReduce(command);
-
-                DBCursor dbResult = mongoTemplate.getCollection(outputCollectionName).find().sort(new BasicDBObject("_id", 1));
-                while (dbResult.hasNext()) {
-                    DBObject sum = dbResult.next();
-                    System.out.println(sum);
-                    GroupedResult groupedResult = new GroupedResult();
-                    Long ts = Long.valueOf((String) sum.get("_id"));
-                    String time = df.format(new Date(ts));
-                    groupedResult.setKey(time);
-                    DBObject value = (DBObject) sum.get("value");
-                    groupedResult.setCount(((Double) value.get("total")).intValue());
-                    groupedResult.setKeyName("timestamp");
-                    groupedResult.getSplitCounts().put("article", value.get("article") == null ? 0 : ((Double) value.get("article")).intValue());
-                    groupedResult.getSplitCounts().put("album", value.get("album") == null ? 0 : ((Double) value.get("album")).intValue());
-                    groupedResult.getSplitCounts().put("video", value.get("video") == null ? 0 : ((Double) value.get("video")).intValue());
-                    groupedResult.getSplitCounts().put("other", value.get("other") == null ? 0 : ((Double) value.get("other")).intValue());
-                    result.add(groupedResult);
-                }
+                query = new BasicDBObject("publicationId", publicationId);
+            } else {
+                query = new BasicDBObject("sectionId", sectionId);
             }
+
+            MapReduceCommand command =
+                    new MapReduceCommand(mongoTemplate.getDefaultCollection(), map, reduce, outputCollectionName,
+                            MapReduceCommand.OutputType.REPLACE, query);
+
+            mongoTemplate.getDefaultCollection().mapReduce(command);
+
+            DBCursor dbResult =
+                    mongoTemplate.getCollection(outputCollectionName).find().sort(new BasicDBObject("_id", 1));
+            while (dbResult.hasNext()) {
+                DBObject sum = dbResult.next();
+                System.out.println(sum);
+                GroupedResult groupedResult = new GroupedResult();
+                Long ts = Long.valueOf((String) sum.get("_id"));
+                String time = df.format(new Date(ts));
+                groupedResult.setKey(time);
+                DBObject value = (DBObject) sum.get("value");
+                groupedResult.setCount(((Double) value.get("total")).intValue());
+                groupedResult.setKeyName("timestamp");
+                groupedResult.getSplitCounts()
+                        .put("article", value.get("article") == null ? 0 : ((Double) value.get("article")).intValue());
+                groupedResult.getSplitCounts()
+                        .put("album", value.get("album") == null ? 0 : ((Double) value.get("album")).intValue());
+                groupedResult.getSplitCounts()
+                        .put("video", value.get("video") == null ? 0 : ((Double) value.get("video")).intValue());
+                groupedResult.getSplitCounts()
+                        .put("other", value.get("other") == null ? 0 : ((Double) value.get("other")).intValue());
+                result.add(groupedResult);
+            }
+
         }
-        System.out.println("result: " + result);
         return result;
     }
 
@@ -269,55 +274,75 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
         cal.set(Calendar.MINUTE, 0);
         long targetHour = cal.getTimeInMillis();
 
-        DBCursor result = mongoTemplate.getDefaultCollection().find();
+        DBCursor result = mongoTemplate.getDefaultCollection().find(new BasicDBObject(), new BasicDBObject("_id", 1));
         while (result.hasNext()) {
             DBObject doc = result.next();
-            System.out.println("doc: " + doc);
+
+            //start a new "session" for each document
+            mongoTemplate.getDefaultCollection().getDB().requestStart();
+
+            //and fetch actual object (result only contains _id's)
+            doc = (DBObject) mongoTemplate.getDefaultCollection().findOne(doc);
+
+            log.trace("cleaning document : {}", doc);
             DBObject day = (DBObject) doc.get("day");
-            System.out.println("day: " + day);
+            //log.trace("day: {}", day);
             DBObject hours = (DBObject) day.get("hours");
-            System.out.println("hours: " + hours);
+            //log.trace("hours: {}", hours);
             Set<String> hrSet = new HashSet<String>();
             hrSet.addAll(hours.keySet());
-            for (String h : hrSet) {
-                long hourmillis = Long.valueOf(h);
-                System.out.println("hour: " + hourmillis);
-                if (hourmillis < targetHour) {
-                    System.out.println("removing hour " + h + " because it is older than " + targetHour);
-                    DBObject obj = (DBObject) hours.get(h);
-                    day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
-                    hours.removeField(h);
-                } else if (hourmillis == targetHour) {
-                    System.out.println("current hour is targetHour, clean minutes");
-                    DBObject currentHour = (DBObject) hours.get(h);
-                    DBObject minutes = (DBObject) currentHour.get("minutes");
-                    Set<String> keys = new HashSet<String>();
-                    keys.addAll(minutes.keySet());
-                    for (String m : keys) {
-                        long minutemillis = Long.valueOf(m);
-                        System.out.println("minute: " + minutemillis);
-                        if (minutemillis < when) {
-                            System.out.println("removing minute " + minutemillis + " because it is older than " + when);
+            boolean docChanged = false;
 
-                            DBObject obj = (DBObject) minutes.get(m);
-                            DBObject hourObj = (DBObject) hours.get(h);
-                            day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
-                            hourObj.put("count", (Integer) hourObj.get("count") - (Integer) obj.get("count"));
-                            minutes.removeField(m);
+            if (hrSet.isEmpty()) {
+                System.out.println("no hours in document, remove it");
+                mongoTemplate.getDefaultCollection().remove(new BasicDBObject("_id", doc.get("_id")));
+            } else {
+
+                for (String h : hrSet) {
+                    long hourmillis = Long.valueOf(h);
+                    log.trace("checking hour: {}", hourmillis);
+                    if (hourmillis < targetHour) {
+                        if (log.isTraceEnabled()) {
+                            log.trace("removing hour " + h + " because it is older than target" + targetHour);
                         }
-                    }
-                    if (minutes.keySet().isEmpty()) {
-                        System.out.println("no more minutes, removing hour");
+                        docChanged = true;
+                        DBObject obj = (DBObject) hours.get(h);
+                        day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
                         hours.removeField(h);
+                    } else if (hourmillis == targetHour) {
+                        log.trace("current hour is targetHour, check minutes");
+                        DBObject currentHour = (DBObject) hours.get(h);
+                        DBObject minutes = (DBObject) currentHour.get("minutes");
+                        Set<String> keys = new HashSet<String>();
+                        keys.addAll(minutes.keySet());
+                        for (String m : keys) {
+                            long minutemillis = Long.valueOf(m);
+                            log.trace("checking minute: {}", minutemillis);
+                            if (minutemillis < when) {
+                                if (log.isTraceEnabled()) {
+                                    log.trace("removing minute " + minutemillis + " because it is older than " + when);
+                                }
+
+                                docChanged = true;
+                                DBObject obj = (DBObject) minutes.get(m);
+                                DBObject hourObj = (DBObject) hours.get(h);
+                                day.put("count", (Integer) day.get("count") - (Integer) obj.get("count"));
+                                hourObj.put("count", (Integer) hourObj.get("count") - (Integer) obj.get("count"));
+                                minutes.removeField(m);
+                            }
+                        }
+                        if (minutes.keySet().isEmpty()) {
+                            log.trace("no more minutes, removing hour {}", h);
+                            hours.removeField(h);
+                            docChanged = true;
+                        }
                     }
                 }
             }
-            if (hours.keySet().isEmpty()) {
-                System.out.println("no more hours, remove article");
-                mongoTemplate.getDefaultCollection().remove(new BasicDBObject("_id", doc.get("_id")));
-            } else {
+            if (docChanged) {
                 mongoTemplate.getDefaultCollection().save(doc);
             }
+            mongoTemplate.getDefaultCollection().getDB().requestDone();
         }
     }
 

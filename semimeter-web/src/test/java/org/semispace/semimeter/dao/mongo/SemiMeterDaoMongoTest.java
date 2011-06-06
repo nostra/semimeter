@@ -1,9 +1,9 @@
 package org.semispace.semimeter.dao.mongo;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.document.mongodb.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import sun.nio.cs.ext.DBCS_ONLY_IBM_EBCDIC_Decoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,11 +156,23 @@ public class SemiMeterDaoMongoTest {
 
         List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
         assertEquals(1, result.size());
+        assertEquals(1, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
+        assertEquals(3, ((DBObject) result.get(0).get("day")).get("count"));
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(1, result.size());
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 5);
+        //after first run, article should be empty, but there
+        result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        assertEquals(0, ((BasicDBObject)((DBObject)result.get(0).get("day")).get("hours")).size());
+        assertEquals(0, ((DBObject) result.get(0).get("day")).get("count"));
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(0, result.size());
 
+        semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 5);
+
+        //now article should be gone
         result = mongoTemplate.getDefaultCollection().find().toArray();
         assertEquals(0, result.size());
         result = mongoTemplate.getCollection("sums").find().toArray();

@@ -1,11 +1,8 @@
 package org.semispace.semimeter.dao.mongo;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
-import com.mongodb.WriteConcern;
-import com.mongodb.util.JSON;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
