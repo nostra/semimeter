@@ -19,6 +19,7 @@ package org.semispace.semimeter.dao.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.MapReduceCommand;
 import com.mongodb.util.JSON;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
@@ -50,6 +51,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Repository("semimeterDao")
 public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
     private static final Logger log = LoggerFactory.getLogger(SemiMeterDaoMongo2.class);
+    private DateFormat df = new SimpleDateFormat("yy-MM-dd-HH-mm");
 
     @Autowired
     MongoTemplate mongoTemplate;
@@ -155,12 +157,9 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
         return null;
     }
 
-    private DateFormat df = new SimpleDateFormat("yy-MM-dd-HH-mm");
-
     @Override
     public List<GroupedResult> getHourlySums(final Integer publicationId, final Integer sectionId) {
         List<GroupedResult> result = new ArrayList<GroupedResult>();
-        DBObject query = null;
         if (publicationId == null) {
             if (sectionId != null) {
                 throw new IllegalArgumentException("cant have sectionId without publicationId as parameters.");
@@ -200,6 +199,7 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
                 sb.append("        }");
                 sb.append("    }");
                 sb.append("}");
+                String map = sb.toString();
 
 
                 sb.setLength(0);
@@ -220,8 +220,37 @@ public class SemiMeterDaoMongo2 extends AbstractSemiMeterDaoImpl {
                 sb.append("    return result; ");
                 sb.append("};");
                 String reduce = sb.toString();
+                System.out.println("map: " + map);
+                System.out.println("reduce: " + reduce);
+
+                String outputCollectionName = "sums_" + publicationId + "_" + sectionId;
+
+                DBObject query = new BasicDBObject("publicationId", publicationId);
+
+                MapReduceCommand command = new MapReduceCommand(mongoTemplate.getDefaultCollection(), map, reduce,
+                        outputCollectionName, MapReduceCommand.OutputType.REPLACE, query);
+                mongoTemplate.getDefaultCollection().mapReduce(command);
+
+                DBCursor dbResult = mongoTemplate.getCollection(outputCollectionName).find().sort(new BasicDBObject("_id", 1));
+                while (dbResult.hasNext()) {
+                    DBObject sum = dbResult.next();
+                    System.out.println(sum);
+                    GroupedResult groupedResult = new GroupedResult();
+                    Long ts = Long.valueOf((String) sum.get("_id"));
+                    String time = df.format(new Date(ts));
+                    groupedResult.setKey(time);
+                    DBObject value = (DBObject) sum.get("value");
+                    groupedResult.setCount(((Double) value.get("total")).intValue());
+                    groupedResult.setKeyName("timestamp");
+                    groupedResult.getSplitCounts().put("article", value.get("article") == null ? 0 : ((Double) value.get("article")).intValue());
+                    groupedResult.getSplitCounts().put("album", value.get("album") == null ? 0 : ((Double) value.get("album")).intValue());
+                    groupedResult.getSplitCounts().put("video", value.get("video") == null ? 0 : ((Double) value.get("video")).intValue());
+                    groupedResult.getSplitCounts().put("other", value.get("other") == null ? 0 : ((Double) value.get("other")).intValue());
+                    result.add(groupedResult);
+                }
             }
         }
+        System.out.println("result: " + result);
         return result;
     }
 

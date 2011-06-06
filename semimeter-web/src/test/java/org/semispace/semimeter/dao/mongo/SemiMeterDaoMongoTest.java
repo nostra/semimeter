@@ -112,6 +112,16 @@ public class SemiMeterDaoMongoTest {
         assertNotNull(result);
     }
 
+        @Test
+    public void testGetHourlySumsPublication() throws Exception {
+
+        long now = System.currentTimeMillis();
+         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
+
+        List<GroupedResult> result = semiMeterDao.getHourlySums(1, null);
+        assertNotNull(result);
+    }
+
     @Test
     public void testDeleteNoEntry() throws Exception {
         long current = System.currentTimeMillis();
