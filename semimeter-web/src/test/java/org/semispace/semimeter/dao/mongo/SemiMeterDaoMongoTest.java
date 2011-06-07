@@ -5,14 +5,12 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
-import org.semispace.semimeter.bean.mongo.MeterHit;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.document.mongodb.MongoTemplate;
@@ -64,61 +62,72 @@ public class SemiMeterDaoMongoTest {
 
 
     @Test
-    @Ignore
+    //@Ignore
     public void testGetGroupedSums() throws Exception {
 
+        long now = System.currentTimeMillis();
         final TokenizedPathInfo query = new TokenizedPathInfo("/");
         query.addPathToken(new PathToken(null, "type", false));
         query.addPathToken(new PathToken("95", "publicationId", false));
         query.addPathToken(new PathToken(null, "sectionId", false));
         query.addPathToken(new PathToken(null, "articleId", true));
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1l, "/dummy/95/37/411", "/", 1));
-        List<GroupedResult> result = semiMeterDao.getGroupedSums(1000, 5000, query, 10);
-        assertNotNull(result);
-        assertEquals(0, result.size());
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 25, "/article/95/37/411", 1)}));
+        List<GroupedResult> result;
+       // result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 24, now, query, 10);
+       // assertNotNull(result);
+       // assertEquals(0, result.size());
 
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1000l, "/article/95/37/411", "/", 1));
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(1001l, "/album/95/2344/412", "/", 4));
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(2000l, "/article/95/37/413", "/", 2));
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(5000l, "/article/95/37/413", "/", 3));
-        mongoTemplate.save(mongoTemplate.getDefaultCollectionName(), new MeterHit(5001l, "/article/95/37/414", "/", 3));
-        result = semiMeterDao.getGroupedSums(1000, 5000, query, 10);
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("413", result.get(0).getKey());
-        assertEquals(5, result.get(0).getCount());
-        assertEquals("412", result.get(1).getKey());
-        assertEquals(4, result.get(1).getCount());
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 23, "/article/95/37/411", 1)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 20, "/album/95/2344/412", 4)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 15, "/article/95/37/413", 2)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 5, "/article/95/37/413", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 15, "/article/95/37/414", 3)}));
 
-        result = semiMeterDao.getGroupedSums(999, 5001, query, 3);
+
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now-1000*60*20, query, 10);
+        System.out.println(result);
         assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals("413", result.get(0).getKey());
-        assertEquals(5, result.get(0).getCount());
-        assertEquals("412", result.get(1).getKey());
-        assertEquals(4, result.get(1).getCount());
-        assertEquals("414", result.get(2).getKey());
-        assertEquals(3, result.get(2).getCount());
+//        assertEquals(2, result.size());
+//        assertEquals("413", result.get(0).getKey());
+//        assertEquals(5, result.get(0).getCount());
+//        assertEquals("412", result.get(1).getKey());
+//        assertEquals(4, result.get(1).getCount());
+
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now, query, 3);
+        assertNotNull(result);
+//        assertEquals(3, result.size());
+//        assertEquals("413", result.get(0).getKey());
+//        assertEquals(5, result.get(0).getCount());
+//        assertEquals("412", result.get(1).getKey());
+//        assertEquals(4, result.get(1).getCount());
+//        assertEquals("414", result.get(2).getKey());
+//        assertEquals(3, result.get(2).getCount());
     }
 
     @Test
     public void testGetHourlySumsTotal() throws Exception {
 
         long now = System.currentTimeMillis();
-         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/95/2342/123432", 5)}));
 
         List<GroupedResult> result = semiMeterDao.getHourlySums(null, null);
         assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(8, result.get(0).getCount());
     }
 
-        @Test
+    @Test
     public void testGetHourlySumsPublication() throws Exception {
 
         long now = System.currentTimeMillis();
-         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
-
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/95/2342/123432", 5)}));
+        
         List<GroupedResult> result = semiMeterDao.getHourlySums(1, null);
         assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(3, result.get(0).getCount());
     }
 
     @Test
@@ -126,8 +135,7 @@ public class SemiMeterDaoMongoTest {
         long current = System.currentTimeMillis();
         long oldmillis = current - 1000 * 60 * 5;
 
-        semiMeterDao.performInsertion(Arrays.asList(
-                new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
 
         List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
         assertEquals(1, result.size());
@@ -151,8 +159,7 @@ public class SemiMeterDaoMongoTest {
         long current = System.currentTimeMillis();
         long oldmillis = current - 1000 * 60 * 5 + 1;
 
-        semiMeterDao.performInsertion(Arrays.asList(
-                new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
 
         List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
         assertEquals(1, result.size());
@@ -165,7 +172,7 @@ public class SemiMeterDaoMongoTest {
         //after first run, article should be empty, but there
         result = mongoTemplate.getDefaultCollection().find().toArray();
         assertEquals(1, result.size());
-        assertEquals(0, ((BasicDBObject)((DBObject)result.get(0).get("day")).get("hours")).size());
+        assertEquals(0, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
         assertEquals(0, ((DBObject) result.get(0).get("day")).get("count"));
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(0, result.size());
@@ -281,7 +288,6 @@ public class SemiMeterDaoMongoTest {
         assertEquals(10, result.get(0).get("total"));
         assertEquals(7, result.get(1).get("total"));
     }
-
 
     /*
     @Test
