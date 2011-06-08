@@ -4,18 +4,16 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.Mongo;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.document.mongodb.MongoTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,22 +23,42 @@ import java.util.List;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = {"/context/mongo-test.context.xml"})
 public class SemiMeterDaoMongoTest {
 
-    @Autowired
     private SemiMeterDao semiMeterDao;
-    @Autowired
     private MongoTemplate mongoTemplate;
     private DBCollection coll;
 
     @Before
     public void before() {
+        assumeTrue(checkMongo());
+
+        ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("/context/mongo-test.context.xml");
+        this.mongoTemplate = (MongoTemplate) ctx.getBean("mongoTemplate");
+        this.semiMeterDao = (SemiMeterDao) ctx.getBean("semimeterDao");
+
         coll = mongoTemplate.getDefaultCollection();
         coll.drop();
         mongoTemplate.getCollection("sums").drop();
+    }
+
+    /**
+     * The tests in this class all require a mongodb installation present at localhost:27017.
+     * junit's "Assume" mechanism ignores tests when the assume clause fails. we use that here to skip all tests
+     * if no mongodb is present.
+     *
+     * @return true, if local mongodb installation is present.
+     */
+    private boolean checkMongo() {
+        try {
+            Mongo mongo = new Mongo("127.0.0.1", 27017);
+            mongo.getDatabaseNames();
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     @Test
@@ -71,37 +89,42 @@ public class SemiMeterDaoMongoTest {
         query.addPathToken(new PathToken("95", "publicationId", false));
         query.addPathToken(new PathToken(null, "sectionId", false));
         query.addPathToken(new PathToken(null, "articleId", true));
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 25, "/article/95/37/411", 1)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 25, "/article/95/37/411", 1)}));
         List<GroupedResult> result;
-       // result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 24, now, query, 10);
-       // assertNotNull(result);
-       // assertEquals(0, result.size());
+        // result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 24, now, query, 10);
+        // assertNotNull(result);
+        // assertEquals(0, result.size());
 
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 23, "/article/95/37/411", 1)}));
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 20, "/album/95/2344/412", 4)}));
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 15, "/article/95/37/413", 2)}));
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 5, "/article/95/37/413", 3)}));
-        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 15, "/article/95/37/414", 3)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 23, "/article/95/37/411", 1)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 20, "/album/95/2344/412", 4)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 15, "/article/95/37/413", 2)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 5, "/article/95/37/413", 3)}));
+        semiMeterDao
+                .performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 15, "/article/95/37/414", 3)}));
 
-
-        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now-1000*60*20, query, 10);
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now - 1000 * 60 * 20, query, 10);
         System.out.println(result);
         assertNotNull(result);
-//        assertEquals(2, result.size());
-//        assertEquals("413", result.get(0).getKey());
-//        assertEquals(5, result.get(0).getCount());
-//        assertEquals("412", result.get(1).getKey());
-//        assertEquals(4, result.get(1).getCount());
+        //        assertEquals(2, result.size());
+        //        assertEquals("413", result.get(0).getKey());
+        //        assertEquals(5, result.get(0).getCount());
+        //        assertEquals("412", result.get(1).getKey());
+        //        assertEquals(4, result.get(1).getCount());
 
         result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now, query, 3);
         assertNotNull(result);
-//        assertEquals(3, result.size());
-//        assertEquals("413", result.get(0).getKey());
-//        assertEquals(5, result.get(0).getCount());
-//        assertEquals("412", result.get(1).getKey());
-//        assertEquals(4, result.get(1).getCount());
-//        assertEquals("414", result.get(2).getKey());
-//        assertEquals(3, result.get(2).getCount());
+        //        assertEquals(3, result.size());
+        //        assertEquals("413", result.get(0).getKey());
+        //        assertEquals(5, result.get(0).getCount());
+        //        assertEquals("412", result.get(1).getKey());
+        //        assertEquals(4, result.get(1).getCount());
+        //        assertEquals("414", result.get(2).getKey());
+        //        assertEquals(3, result.get(2).getCount());
     }
 
     @Test
@@ -123,7 +146,7 @@ public class SemiMeterDaoMongoTest {
         long now = System.currentTimeMillis();
         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/1/37/410", 3)}));
         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(now, "/article/95/2342/123432", 5)}));
-        
+
         List<GroupedResult> result = semiMeterDao.getHourlySums(1, null);
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -288,66 +311,4 @@ public class SemiMeterDaoMongoTest {
         assertEquals(10, result.get(0).get("total"));
         assertEquals(7, result.get(1).get("total"));
     }
-
-    /*
-    @Test
-    public void testSumItems() throws Exception {
-    semiMeterDao.performInsertion(Arrays.asList(
-            new Item[]{new Item(12345l, "/article/1/37/412", 3), new Item(12345l, "/album/41/2344/23434433", 4),
-                    new Item(12345l, "/article/95/223/4", 5), new Item(12345l, "/article/41/2344/23434433", 6)}));
-
-    Long result = semiMeterDao.sumItems(1, 99999999999l, null);
-    assertNotNull(result);
-    assertEquals(18l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "");
-    assertNotNull(result);
-    assertEquals(18l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "/");
-    assertNotNull(result);
-    assertEquals(18l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "/lalala");
-    assertNotNull(result);
-    assertEquals(0l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "/article");
-    assertNotNull(result);
-    assertEquals(14l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "/article/_/_/_");
-    assertNotNull(result);
-    assertEquals(14l, result.longValue());
-
-    result = semiMeterDao.sumItems(1, 99999999999l, "/article/%/%/%");
-    assertNotNull(result);
-    assertEquals(14l, result.longValue());
-    */
-    //result = semiMeterDao.sumItems(1, 99999999999l, "/article/*/*/*");
-    /*
-        assertNotNull(result);
-        assertEquals(14l, result.longValue());
-
-        result = semiMeterDao.sumItems(1, 99999999999l, "/album");
-        assertNotNull(result);
-        assertEquals(4l, result.longValue());
-
-        result = semiMeterDao.sumItems(1, 99999999999l, "/article/95");
-        assertNotNull(result);
-        assertEquals(5l, result.longValue());
-    }
-/*
-    @Test
-    public void testPerformParameterizedQuery() throws Exception {
-
-        Assert.fail("implement test, please");
-    }
-
-    @Test
-    public void testCreateTimeArray() throws Exception {
-        //TODO: extend
-        JsonResults[] result = semiMeterDao.createTimeArray("/article/%/%/%", 99999999999l, 0l, 5);
-    }
-*/
 }

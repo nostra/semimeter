@@ -23,6 +23,9 @@
                            http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
+    <context:annotation-config/>
+    <bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor"/>
+
     <!-- Use this post processor to translate any MongoExceptions thrown in @Repository annotated classes -->
     <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
 
@@ -37,5 +40,5 @@
         </constructor-arg>
     </bean>
 
-    <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo2"/>
+    <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo"/>
 </beans>

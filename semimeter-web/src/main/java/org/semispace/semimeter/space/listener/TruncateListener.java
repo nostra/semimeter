@@ -18,7 +18,7 @@ public class TruncateListener implements SemiEventListener {
     private SemiMeterDao semiMeterDao;
     private String eventType;
 
-    private static final long expirationTime = 1000 * 60 * 15; //15 min
+    private static final long expirationTime = 1000 * 60; //1 min
 
 
     private TruncateTimeout template = new TruncateTimeout();
