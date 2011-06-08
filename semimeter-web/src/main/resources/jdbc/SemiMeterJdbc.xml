@@ -49,4 +49,6 @@
         <property name="password" value="" />
     </bean>
 -->
+
+    <context:component-scan base-package="org.semispace.semimeter.dao.jdbc"/>
 </beans>

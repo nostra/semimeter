@@ -30,7 +30,9 @@
 
     <bean class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver"/>
 
-    <context:component-scan base-package="org.semispace.semimeter.**"/>
+    <context:component-scan base-package="org.semispace.semimeter.**">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
 
     <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>

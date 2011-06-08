@@ -33,7 +33,6 @@
         <param-name>contextConfigLocation</param-name>
         <param-value>
             classpath:semimeter-context.xml
-            classpath:jdbc/SemiMeterJdbc.xml
         </param-value>
     </context-param>
 

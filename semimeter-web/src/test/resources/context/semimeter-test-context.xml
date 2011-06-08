@@ -19,16 +19,12 @@
         xmlns="http://www.springframework.org/schema/beans"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:context="http://www.springframework.org/schema/context"
-        xmlns:tx="http://www.springframework.org/schema/tx"
-        xmlns:jee="http://www.springframework.org/schema/jee"
-        xmlns:p="http://www.springframework.org/schema/p"
-        xsi:schemaLocation=
-                "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
-     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
-     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
-     http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd">
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
 
-    <context:component-scan base-package="org.semispace.semimeter.**"/>
+    <context:component-scan base-package="org.semispace.semimeter.**">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
 
     <bean id="semiMeterDataSource"
           class="org.apache.commons.dbcp.BasicDataSource"
@@ -39,6 +35,8 @@
         <property name="username" value="sa"/>
         <property name="password" value=""/>
     </bean>
+
+    <bean id="testDao" class="org.semispace.semimeter.dao.jdbc.SemiMeterDaoJdbc"/>
 
     <!--
        Activate if it is interesting to see performance in the "real" database
