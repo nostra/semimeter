@@ -26,7 +26,15 @@
     <!-- Use this post processor to translate any MongoExceptions thrown in @Repository annotated classes -->
     <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
 
-    <mongo:mongo host="127.0.0.1" port="27017" id="mongo"/>
+    <bean id="replicationHosts" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/mongodb/replication-hosts</value>
+        </property>
+    </bean>
+
+    <bean id="mongo" class="org.springframework.data.document.mongodb.MongoFactoryBean">
+        <property name="replicaSetSeeds" ref="replicationHosts"/>
+    </bean>
 
     <bean id="mongoTemplate" class="org.springframework.data.document.mongodb.MongoTemplate">
         <constructor-arg ref="mongo"/>
@@ -37,7 +45,6 @@
         </constructor-arg>
     </bean>
 
-    <context:component-scan base-package="org.semispace.semimeter.dao.mongo" />
-
+    <context:component-scan base-package="org.semispace.semimeter.dao.mongo"/>
 
 </beans>

@@ -23,12 +23,30 @@
         <Arg>jdbc/DSSemiMeter</Arg>
         <Arg>
             <New class="com.mchange.v2.c3p0.ComboPooledDataSource">
-                        <Set name="driverClass">com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource</Set>
-                        <Set name="jdbcUrl">jdbc:mysql://localhost/semimeter?useUnicode=true&amp;characterEncoding=UTF-8</Set>
-                        <Set name="user">semimeter</Set>
-                        <Set name="password">semimeter123</Set>
+                <Set name="driverClass">com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource</Set>
+                <Set name="jdbcUrl">jdbc:mysql://localhost/semimeter?useUnicode=true&amp;characterEncoding=UTF-8</Set>
+                <Set name="user">semimeter</Set>
+                <Set name="password">semimeter123</Set>
             </New>
-		</Arg>
-	</New>
+        </Arg>
+    </New>
 
-  </Configure>
+    <New id="mongodb.hosts" class="org.mortbay.jetty.plus.naming.EnvEntry">
+        <Arg>mongodb/replication-hosts</Arg>
+        <Arg>
+            <Array>
+                <Item>
+                    <New class="java.lang.String">
+                        <Arg>127.0.0.1:27017</Arg>
+                    </New>
+                </Item>
+                <Item>
+                    <New class="java.lang.String">
+                        <Arg>127.0.0.1:27017</Arg>
+                    </New>
+                </Item>
+            </Array>
+        </Arg>
+    </New>
+
+</Configure>
