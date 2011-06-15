@@ -32,8 +32,9 @@
         </property>
     </bean>
 
-    <bean id="mongo" class="org.springframework.data.document.mongodb.MongoFactoryBean">
-        <property name="replicaSetSeeds" ref="replicationHosts"/>
+    <bean id="mongo" class="org.springframework.data.document.mongodb.MongoFactoryBean" init-method="afterPropertiesSet">
+        <property name="replicaSetSeeds" value="#{ T(org.semispace.semimeter.JndiHelper).arrayToList(replicationHosts) }" />
+        <property name="host" value="MUST_BE_SET_BUT_CAN_BE_NONSENSE"/>
     </bean>
 
     <bean id="mongoTemplate" class="org.springframework.data.document.mongodb.MongoTemplate">
