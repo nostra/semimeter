@@ -20,7 +20,7 @@
     <groupId>no.api.semimeter</groupId>
     <artifactId>semimeter</artifactId>
     <packaging>pom</packaging>
-    <version>0.10</version>
+    <version>0.11-SNAPSHOT</version>
     <name>semimeter</name>
     <description>Serve a blank gif, and count the access number</description>
     <inceptionYear>2009</inceptionYear>
