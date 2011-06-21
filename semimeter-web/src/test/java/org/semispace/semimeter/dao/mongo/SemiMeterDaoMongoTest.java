@@ -107,7 +107,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao
                 .performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 15, "/article/95/37/414", 3)}));
 
-        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now - 1000 * 60 * 20, query, 10);
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now - 1000 * 60 * 20, query, 10, null);
         System.out.println(result);
         assertNotNull(result);
         //        assertEquals(2, result.size());
@@ -116,7 +116,7 @@ public class SemiMeterDaoMongoTest {
         //        assertEquals("412", result.get(1).getKey());
         //        assertEquals(4, result.get(1).getCount());
 
-        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now, query, 3);
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now, query, 3, null);
         assertNotNull(result);
         //        assertEquals(3, result.size());
         //        assertEquals("413", result.get(0).getKey());
@@ -188,6 +188,8 @@ public class SemiMeterDaoMongoTest {
         assertEquals(1, result.size());
         assertEquals(1, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
         assertEquals(3, ((DBObject) result.get(0).get("day")).get("count"));
+        assertEquals(3, ((DBObject) result.get(0).get("day")).get("last15minutes"));
+        assertEquals(3, ((DBObject) result.get(0).get("day")).get("last180minutes"));
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(1, result.size());
 
@@ -197,6 +199,8 @@ public class SemiMeterDaoMongoTest {
         assertEquals(1, result.size());
         assertEquals(0, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
         assertEquals(0, ((DBObject) result.get(0).get("day")).get("count"));
+        assertEquals(0, ((DBObject) result.get(0).get("day")).get("last15minutes"));
+        assertEquals(0, ((DBObject) result.get(0).get("day")).get("last180minutes"));
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(0, result.size());
 
@@ -223,6 +227,8 @@ public class SemiMeterDaoMongoTest {
         assertEquals(412, doc.get("id"));
         DBObject day = (DBObject) doc.get("day");
         assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
         DBObject hours = (DBObject) day.get("hours");
         DBObject hour = (DBObject) hours.get(hours.keySet().iterator().next());
         //this will fail at the beginning of each hour, hence commented out
@@ -240,6 +246,8 @@ public class SemiMeterDaoMongoTest {
         assertEquals(412, doc.get("id"));
         day = (DBObject) doc.get("day");
         assertEquals(4, day.get("count"));
+        assertEquals(4, day.get("last15minutes"));
+        assertEquals(4, day.get("last180minutes"));
         hours = (DBObject) day.get("hours");
         hour = (DBObject) hours.get(hours.keySet().iterator().next());
         //this will fail at the beginning of each hour, hence commented out
@@ -248,6 +256,162 @@ public class SemiMeterDaoMongoTest {
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(1, result.size());
         assertEquals(4, result.get(0).get("total"));
+    }
+
+    @Test
+    public void testLatest15_1() throws Exception {
+        long current = System.currentTimeMillis();
+        long oldmillis = current - 1000 * 60 * 14;
+
+        semiMeterDao.performInsertion(Arrays.asList(
+                new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current, "/article/1/37/412", 4)}));
+
+        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        DBObject doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        DBObject day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+        DBObject hours = (DBObject) day.get("hours");
+        DBObject hour = (DBObject) hours.get(hours.keySet().iterator().next());
+        //this will fail at the beginning of each hour, hence commented out
+        //assertEquals(7, hour.get("count"));
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+
+        semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60* 24);
+
+        result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        assertEquals(412, result.get(0).get("id"));
+        assertEquals(1, result.size());
+        doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+        hours = (DBObject) day.get("hours");
+        hour = (DBObject) hours.get(hours.keySet().iterator().next());
+        //this will fail at the beginning of each hour, hence commented out
+        //assertEquals(4, hour.get("count"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void testLatest15_2() throws Exception {
+        long current = System.currentTimeMillis();
+        long oldmillis = current - 1000 * 60 * 15;
+
+        semiMeterDao.performInsertion(Arrays.asList(
+                new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current, "/article/1/37/412", 4)}));
+
+        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        DBObject doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        DBObject day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+
+        semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60 * 24);
+
+        result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        assertEquals(412, result.get(0).get("id"));
+        assertEquals(1, result.size());
+        doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(4, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void testLatest180_1() throws Exception {
+        long current = System.currentTimeMillis();
+        long oldmillis = current - 1000 * 60 * 179;
+
+        semiMeterDao.performInsertion(Arrays.asList(
+                new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current - 1000*60*20, "/article/1/37/412", 4)}));
+
+        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        DBObject doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        DBObject day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+
+        semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60 * 24);
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+
+        result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        assertEquals(412, result.get(0).get("id"));
+        assertEquals(1, result.size());
+        doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        day = (DBObject) doc.get("day");
+
+        assertEquals(7, day.get("count"));
+        assertEquals(0, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+    }
+
+    @Test
+    public void testLatest180_2() throws Exception {
+        long current = System.currentTimeMillis();
+        long oldmillis = current - 1000 * 60 * 180 ;
+
+        semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3),
+                new Item(current - 1000 * 60 * 20, "/article/1/37/412", 4)}));
+
+        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        DBObject doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        DBObject day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(7, day.get("last15minutes"));
+        assertEquals(7, day.get("last180minutes"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
+
+        semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60 * 24);
+
+        result = mongoTemplate.getDefaultCollection().find().toArray();
+        assertEquals(1, result.size());
+        assertEquals(412, result.get(0).get("id"));
+        assertEquals(1, result.size());
+        doc = result.get(0);
+        assertEquals(412, doc.get("id"));
+        day = (DBObject) doc.get("day");
+        assertEquals(7, day.get("count"));
+        assertEquals(0, day.get("last15minutes"));
+        assertEquals(4, day.get("last180minutes"));
+
+        result = mongoTemplate.getCollection("sums").find().toArray();
+        assertEquals(2, result.size());
     }
 
     @Test

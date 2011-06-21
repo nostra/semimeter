@@ -76,7 +76,7 @@ public class SpacePQListener extends AbstractSpace2Dao {
                             resultList = getMeterDao().getHourlySums(publicationId, sectionId);
                         } else {
                             resultList = getMeterDao()
-                                    .getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults());
+                                    .getGroupedSums(gs.getStartAt(), gs.getEndAt(), gs.getQuery(), gs.getMaxResults(), gs.getSortBy());
                         }
                     } catch (IllegalArgumentException e) {
                         log.error("invalid query parameter", e);

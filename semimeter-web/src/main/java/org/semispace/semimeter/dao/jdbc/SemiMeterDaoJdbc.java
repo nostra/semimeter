@@ -156,7 +156,6 @@ public class SemiMeterDaoJdbc extends AbstractSemiMeterDaoImpl {
     }
 
 
-
     public void performInsertion(Collection<Item> items) {
         //log.debug("Performing batch insertion of "+items.size()+" items.");
         SqlParameterSource[] insertArgs = SqlParameterSourceUtils.createBatch(items.toArray());
@@ -187,7 +186,6 @@ public class SemiMeterDaoJdbc extends AbstractSemiMeterDaoImpl {
         }
     }
 
-   
 
     /**
      * Insertion is performed like this: Try to insert item with count of zero if does not already
@@ -370,8 +368,8 @@ public class SemiMeterDaoJdbc extends AbstractSemiMeterDaoImpl {
         performInsertion(replacements);
     }
 
-    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults)
-            throws IllegalArgumentException {
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults,
+            String sortBy) throws IllegalArgumentException {
         /*
             SELECT SUBSTRING_INDEX(path, '/', -1) as article_id,
                    sum(counted) as cnt

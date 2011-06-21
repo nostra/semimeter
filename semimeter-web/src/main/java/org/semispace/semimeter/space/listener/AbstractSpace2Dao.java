@@ -17,11 +17,11 @@
 package org.semispace.semimeter.space.listener;
 
 import org.semispace.SemiEventListener;
+import org.semispace.SemiSpace;
 import org.semispace.SemiSpaceInterface;
 import org.semispace.event.SemiAvailabilityEvent;
 import org.semispace.event.SemiEvent;
 import org.semispace.event.SemiExpirationEvent;
-import org.semispace.semimeter.bean.ThrottleBean;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +50,15 @@ public abstract class AbstractSpace2Dao implements SemiEventListener {
 
     @Override
     public void notify(SemiEvent theEvent) {
+
         if (theEvent instanceof SemiAvailabilityEvent) {
             //log.debug("Got availability in "+toString()+" with id "+theEvent.getId());
             activate();
+
         } else if (theEvent instanceof SemiExpirationEvent) {
-            log.warn("Lost event when listening for: {}. Element had id: {}. Sending message to throttle.", eventType, theEvent.getId());
-            getSpace().write(new ThrottleBean(1), 5000);
+            log.warn("Lost event when listening for: {}. Element had id: {} and looked like this: " +
+                    ((SemiSpace) space).readHolderById(theEvent.getId()).getXml(), eventType, theEvent.getId());
+            //getSpace().write(new ThrottleBean(1), 5000);
         }
     }
 

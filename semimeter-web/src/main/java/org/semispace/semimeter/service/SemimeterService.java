@@ -222,8 +222,8 @@ public class SemimeterService {
      * @return an ordered List. the first element has most counts, the other rank 2nd, 3rd and so on.
      */
     public List<GroupedResult> getOrderedResults(final TokenizedPathInfo query, final long startAt, final long endAt,
-            final String resolution, final int maxResults) {
-        GroupedSumsQuery gsq = new GroupedSumsQuery(resolution, startAt, endAt, maxResults, query);
+            final String resolution, final int maxResults, String sortBy) {
+        GroupedSumsQuery gsq = new GroupedSumsQuery(resolution, startAt, endAt, maxResults, query, sortBy);
         GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
         return getGroupedResults(gsq, toFind);
 

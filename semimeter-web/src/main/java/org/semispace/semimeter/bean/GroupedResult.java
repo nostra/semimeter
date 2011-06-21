@@ -6,7 +6,7 @@ import java.util.Map;
 public class GroupedResult {
     private String keyName;
     private String key;
-    private Integer count;
+    private Integer count = 0;
 
     private Map<String, Integer> splitCounts = new HashMap<String, Integer>();
 

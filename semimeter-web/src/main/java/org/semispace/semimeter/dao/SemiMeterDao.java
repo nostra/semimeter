@@ -44,7 +44,7 @@ public interface SemiMeterDao {
      */
     public JsonResults[] createTimeArray(String path, long endAt, long startAt, Integer numberOfSamples);
 
-    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults)
+    public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults, String sortBy)
             throws IllegalArgumentException;
 
     public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId);

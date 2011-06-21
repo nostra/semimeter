@@ -17,10 +17,8 @@
 package org.semispace.semimeter.dao.mongo;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MapReduceCommand;
 import com.mongodb.util.JSON;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
@@ -60,7 +58,14 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @PostConstruct
     public void onCreate() {
-        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.count': 1}"));
+        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.count': -1}"));
+        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.last180minutes': -1}"));
+        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.last15minutes': -1}"));
+        mongoTemplate.getDefaultCollection()
+                .ensureIndex((DBObject) JSON.parse("{'id':1, 'sectionId':1, 'publicationId':1, 'type':1}"));
+        mongoTemplate.getCollection("sums").ensureIndex((DBObject) JSON
+                .parse("{'time.ts':1, 'time.year':1, 'time.month':1, 'time.day':1, 'time.hour':1, 'time.minute':1}"));
+        mongoTemplate.getCollection("sums").ensureIndex((DBObject) JSON.parse("{'time.ts': 1}"));
     }
 
 
@@ -99,6 +104,8 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             StringBuilder sb = new StringBuilder();
             sb.append("{ '$inc': ");
             sb.append(" { 'day.count' : " + item.getAccessNumber() + ", ");
+            sb.append("   'day.last15minutes' : " + item.getAccessNumber() + ", ");
+            sb.append("   'day.last180minutes' : " + item.getAccessNumber() + ", ");
             sb.append("   'day.hours." + hour + ".count' : " + item.getAccessNumber() + ",  ");
             sb.append("   'day.hours." + hour + ".minutes." + minute + ".count' : " + item.getAccessNumber() + "  ");
             sb.append("}}");
@@ -157,7 +164,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @Override
     public List<GroupedResult> getGroupedSums(final long startAt, final long endAt, final TokenizedPathInfo query,
-            final int maxResults) throws IllegalArgumentException {
+            final int maxResults, String sortBy) throws IllegalArgumentException {
         List<GroupedResult> result = new ArrayList<GroupedResult>();
         Calendar cal = new GregorianCalendar();
         cal.setTimeInMillis(startAt);
@@ -185,155 +192,51 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             }
         }
 
-        /**
-         * The mapReduce solution is a lot slower, but if optimized in a way that it is only executed every minute, and in
-         * between the "out" collection is queried, then it can be a good solution, too.
-         */
-        groupedSumsMemory(maxResults, result, endMinus15, endMinus180, toFind);
+        BasicDBObject sortObj = new BasicDBObject();
+        if (sortBy != null && "last15minutes".equals(sortBy)) {
+            sortObj.append("day.last15minutes", -1);
+        } else if (sortBy != null && "last180minutes".equals(sortBy)) {
+            sortObj.append("day.last180minutes", -1);
+        } else {
+            sortObj.append("day.count", -1);
+        }
 
-        //groupedSumsMapReduce(toFind, query, maxResults, result, startMinute, endMinute, endMinus15, endMinus180);
+        groupedSumsMemory(maxResults, result, endMinus15, endMinus180, toFind, sortObj);
 
         return result;
     }
 
     private void groupedSumsMemory(final int maxResults, final List<GroupedResult> result, final long endMinus15,
-            final long endMinus180, final BasicDBObject toFind) {
+            final long endMinus180, final BasicDBObject toFind, final DBObject sortObj) {
         BasicDBObject keys = new BasicDBObject("id", 1);
-        keys.append("day.count", 1);
-        DBCursor dbResult =
-                mongoTemplate.getDefaultCollection().find(toFind, keys).sort(new BasicDBObject("day.count", -1))
-                        .limit(maxResults);
+        DBCursor dbResult = mongoTemplate.getDefaultCollection().find(toFind, keys).sort(sortObj).limit(maxResults);
 
         while (dbResult.hasNext()) {
             DBObject row = dbResult.next();
             Object docId = row.get("_id");
             int id = (Integer) row.get("id");
-            int count = (Integer) ((DBObject) row.get("day")).get("count");
+
             DBObject doc = mongoTemplate.getDefaultCollection().findOne(new BasicDBObject("_id", docId));
 
             DBObject day = (DBObject) doc.get("day");
-            DBObject hours = (DBObject) day.get("hours");
+
             String type = (String) doc.get("type");
 
             GroupedResult gr = new GroupedResult();
-            gr.setCount(count);
+            gr.setCount((Integer) day.get("count"));
             gr.setKey(String.valueOf(id));
             gr.setKeyName("articleId");
-
-            for (String hourString : hours.keySet()) {
-                DBObject hourObject = (DBObject) hours.get(hourString);
-                DBObject minutes = (DBObject) hourObject.get("minutes");
-                for (String minuteString : minutes.keySet()) {
-                    Long ts = Long.valueOf(minuteString);
-
-                    if (ts >= endMinus180) {
-                        DBObject minuteObject = (DBObject) minutes.get(minuteString);
-                        Integer minuteCount = (Integer) minuteObject.get("count");
-
-                        if (gr.getSplitCounts().containsKey("last180minutes")) {
-                            gr.getSplitCounts()
-                                    .put("last180minutes", gr.getSplitCounts().get("last180minutes") + minuteCount);
-                        } else {
-                            gr.getSplitCounts().put("last180minutes", minuteCount);
-                        }
-
-                        if (ts >= endMinus15) {
-                            if (gr.getSplitCounts().containsKey("last15minutes")) {
-                                gr.getSplitCounts()
-                                        .put("last15minutes", gr.getSplitCounts().get("last15minutes") + minuteCount);
-                            } else {
-                                gr.getSplitCounts().put("last15minutes", minuteCount);
-                            }
-                        }
-
-                    }
-                }
-            }
+            gr.getSplitCounts().put("last180minutes", (Integer) day.get("last180minutes"));
+            gr.getSplitCounts().put("last15minutes", (Integer) day.get("last15minutes"));
             result.add(gr);
 
         }
     }
 
-    private void groupedSumsMapReduce(final DBObject toFind, final TokenizedPathInfo query, final int maxResults,
-            final List<GroupedResult> result, final long startMinute, final long endMinute, final long endMinus15,
-            final long endMinus180) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("function() {");
-        sb.append("  for (h in this.day.hours) {");
-        sb.append("     var hour = this.day.hours[h];");
-        sb.append("     for (m in hour.minutes) { ");
-        //sb.append("        if (m > (new Date().getTime() - 1000*60*60*24)) { ");
-        sb.append("        if (m > " + startMinute + " && m <= " + endMinute + ") { ");
-        sb.append("            var current = 0;");
-        sb.append("            var latest = 0;");
-        sb.append("            var cnt = hour.minutes[m].count;");
-        //sb.append("            if (m > (new Date().getTime() - 1000*60*15)) {");
-        sb.append("            if (m > " + endMinus15 + ") {");
-        sb.append("                current += cnt;");
-        sb.append("            }");
-        //sb.append("            if (m > (new Date().getTime() - 1000*60*60*3)) {");
-        sb.append("            if (m > " + endMinus180 + ") {");
-        sb.append("                latest += cnt;");
-        sb.append("            }");
-        sb.append("           emit (''+this.id, {'total':cnt, 'current': current, 'latest': latest} ); ");
-        sb.append("        } ");
-        sb.append("      } ");
-        sb.append("  }  ");
-        sb.append("};");
-        String map = sb.toString();
-        /*String s = map;
-        while (s.contains("  ")) {
-            s = s.replace("  ", " ");
-        }
-        System.out.println("var map = " + s);*/
-
-        sb.setLength(0);
-        sb.append("function(key, values) { ");
-        sb.append("    var result = {'total':0, 'current':0, 'latest':0}; ");
-        sb.append("    for (v in values) {");
-        sb.append("        var obj = values[v];");
-        sb.append("        result = {");
-        sb.append("            'total':result.total + obj.total, ");
-        sb.append("            'current':result.current + obj.current, ");
-        sb.append("            'latest':result.latest + obj.latest");
-        sb.append("        };");
-        sb.append("    }; ");
-        sb.append("    return result; ");
-        sb.append("};");
-        String reduce = sb.toString();
-        /*s = reduce;
-        while (s.contains("  ")) {
-            s = s.replace("  ", " ");
-        }
-        System.out.println("var reduce = " + s.replace("  ", " "));*/
-
-        String outputCollectionName = "groupedSum_" + query.buildPathFromTokens() + "_" + maxResults;
-
-        MapReduceCommand command =
-                new MapReduceCommand(mongoTemplate.getDefaultCollection(), map, reduce, outputCollectionName,
-                        MapReduceCommand.OutputType.REPLACE, toFind);
-
-        mongoTemplate.getDefaultCollection().mapReduce(command);
-
-        DBObject sortObj = BasicDBObjectBuilder.start("value.total", -1).get();
-        DBCursor dbResult = mongoTemplate.getCollection(outputCollectionName).find().sort(sortObj).limit(maxResults);
-
-        while (dbResult.hasNext()) {
-            DBObject row = dbResult.next();
-            DBObject value = (DBObject) row.get("value");
-            GroupedResult gr = new GroupedResult();
-            gr.setCount(((Double) value.get("total")).intValue());
-            gr.setKey(String.valueOf(row.get("_id")));
-            gr.setKeyName("articleId");
-            gr.getSplitCounts().put("last15minutes", ((Double) value.get("current")).intValue());
-            gr.getSplitCounts().put("last180minutes", ((Double) value.get("latest")).intValue());
-            result.add(gr);
-        }
-    }
 
     @Override
     public List<GroupedResult> getHourlySums(final Integer publicationId, final Integer sectionId) {
-        List<GroupedResult> result = new ArrayList<GroupedResult>();
+        Map<String, GroupedResult> result = new TreeMap<String, GroupedResult>();
         if (publicationId == null) {
             if (sectionId != null) {
                 throw new IllegalArgumentException("cant have sectionId without publicationId as parameters.");
@@ -343,18 +246,23 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             DBCursor dbResult = mongoTemplate.getCollection("sums").find().sort(sortObj);
             while (dbResult.hasNext()) {
                 DBObject sum = dbResult.next();
-                GroupedResult groupedResult = new GroupedResult();
                 Long ts = (Long) ((DBObject) sum.get("time")).get("ts");
                 String time = df.format(new Date(ts));
+
+                GroupedResult groupedResult;
+                if (result.containsKey(time)) {
+                    groupedResult = result.get(time);
+                } else {
+                    groupedResult = new GroupedResult();
+                }
                 groupedResult.setKey(time);
-                groupedResult.setCount((Integer) sum.get("total"));
+                groupedResult.setCount(groupedResult.getCount() + (Integer) sum.get("total"));
                 groupedResult.setKeyName("timestamp");
-                groupedResult.getSplitCounts()
-                        .put("article", sum.get("article") == null ? 0 : (Integer) sum.get("article"));
-                groupedResult.getSplitCounts().put("album", sum.get("album") == null ? 0 : (Integer) sum.get("album"));
-                groupedResult.getSplitCounts().put("video", sum.get("video") == null ? 0 : (Integer) sum.get("video"));
-                groupedResult.getSplitCounts().put("other", sum.get("other") == null ? 0 : (Integer) sum.get("other"));
-                result.add(groupedResult);
+                addHourlySplit("article", sum, groupedResult);
+                addHourlySplit("album", sum, groupedResult);
+                addHourlySplit("video", sum, groupedResult);
+                addHourlySplit("other", sum, groupedResult);
+                result.put(time, groupedResult);
             }
         } else {
             DBObject query = null;
@@ -364,28 +272,24 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 query = new BasicDBObject("sectionId", sectionId);
             }
 
-            /**
-             * The mapReduce solution is a lot slower, but if optimized in a way that it is only executed every minute, and in
-             * between the "out" collection is queried, then it can be a good solution too.
-             */
-
-            //hourlySumsMapReduce(publicationId, sectionId, result, query);
-
-            /**
-             * the memory solution just fetches all relevant documents and calculates the rest in memory. if this get's too tough
-             * for the hardware, the mapReduce approach should be looked at again.
-             *
-             */
             hourlySumsMemory(result, query);
 
         }
-        return result;
+        List<GroupedResult> list = new ArrayList<GroupedResult>(result.values().size());
+        list.addAll(result.values());
+        return list;
     }
 
-    private void hourlySumsMemory(final List<GroupedResult> result, final DBObject query) {
-        DBCursor dbResult = mongoTemplate.getDefaultCollection().find(query);
-        Map<String, GroupedResult> map = new TreeMap<String, GroupedResult>();
+    private void addHourlySplit(final String attribute, final DBObject sum, final GroupedResult groupedResult) {
+        Integer val = groupedResult.getSplitCounts().get(attribute) == null ? 0 :
+                groupedResult.getSplitCounts().get(attribute);
+        Integer newVal = sum.get(attribute) == null ? 0 : (Integer) sum.get(attribute);
 
+        groupedResult.getSplitCounts().put(attribute, val + newVal);
+    }
+
+    private void hourlySumsMemory(final Map<String, GroupedResult> result, final DBObject query) {
+        DBCursor dbResult = mongoTemplate.getDefaultCollection().find(query);
         while (dbResult.hasNext()) {
             DBObject row = dbResult.next();
             DBObject day = (DBObject) row.get("day");
@@ -398,8 +302,8 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                     DBObject minuteObject = (DBObject) minutes.get(minuteString);
                     Integer count = (Integer) minuteObject.get("count");
                     GroupedResult gr;
-                    if (map.containsKey(minuteString)) {
-                        gr = map.get(minuteString);
+                    if (result.containsKey(minuteString)) {
+                        gr = result.get(minuteString);
                     } else {
                         gr = new GroupedResult();
                         Long ts = Long.valueOf(minuteString);
@@ -407,7 +311,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                         gr.setKey(time);
                         gr.setKeyName("minute");
                         gr.setCount(0);
-                        map.put(minuteString, gr);
+                        result.put(minuteString, gr);
                     }
                     gr.setCount(gr.getCount() + count);
                     if (gr.getSplitCounts().containsKey(type)) {
@@ -418,99 +322,21 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 }
             }
         }
-        result.addAll(map.values());
-    }
-
-    private void hourlySumsMapReduce(final Integer publicationId, final Integer sectionId,
-            final List<GroupedResult> result, final DBObject query) {
-        StringBuilder sb = new StringBuilder();
-        //function() { for (h in this.day.hours) { var hour = this.day.hours[h]; for (m in hour.minutes) { var cnt = hour.minutes[m].count; var counter = { 'total': cnt, 'article': this.type == 'article' ? cnt : 0, 'album': this.type == 'album' ? cnt : 0, 'video': this.type == 'video' ? cnt : 0 }; emit(m, counter); } }};
-        sb.append("function() { ");
-        sb.append("    for (h in this.day.hours) { ");
-        sb.append("        var hour = this.day.hours[h]; ");
-        sb.append("        for (m in hour.minutes) { ");
-        sb.append("            var cnt = hour.minutes[m].count; ");
-        sb.append("            var counter = { ");
-        sb.append("                'total': cnt, ");
-        sb.append("                'article': this.type == 'article' ? cnt : 0, ");
-        sb.append("                'album': this.type == 'album' ? cnt : 0,");
-        sb.append("                'video': this.type == 'video' ? cnt : 0 ");
-        sb.append("            }; ");
-        sb.append("            emit(m, counter); ");
-        sb.append("        }");
-        sb.append("    }");
-        sb.append("}");
-        String map = sb.toString();
-        //String s = map;
-        //while (s.contains("  ")) {
-        //    s = s.replace("  ", " ");
-        //}
-        //System.out.println("var map = " + s);
-
-        sb.setLength(0);
-        //function(key, values) { var result = { total: 0, article: 0, album:0, video:0 }; for (v in values) { var cnt = values[v]; result.total += cnt.total; result.article += cnt.article; result.album += cnt.album; result.video += cnt.video }; return result; };
-        sb.append("function(key, values) { ");
-        sb.append("    var result = {      ");
-        sb.append("        total: 0, ");
-        sb.append("        article: 0,");
-        sb.append("        album:0,");
-        sb.append("        video:0 ");
-        sb.append("    }; ");
-        sb.append("    for (v in values) { ");
-        sb.append("        var cnt = values[v]; ");
-        sb.append("        result.total += cnt.total; ");
-        sb.append("        result.article += cnt.article; ");
-        sb.append("        result.album += cnt.album; ");
-        sb.append("        result.video += cnt.video ");
-        sb.append("    }; ");
-        sb.append("    return result; ");
-        sb.append("};");
-        String reduce = sb.toString();
-        //s = reduce;
-        //while (s.contains("  ")) {
-        //    s = s.replace("  ", " ");
-        //}
-        //System.out.println("var reduce = " + s.replace("  ", " "));
-        String outputCollectionName = "sums_" + publicationId + "_" + sectionId;
-
-        MapReduceCommand command =
-                new MapReduceCommand(mongoTemplate.getDefaultCollection(), map, reduce, outputCollectionName,
-                        MapReduceCommand.OutputType.REPLACE, query);
-
-        mongoTemplate.getDefaultCollection().mapReduce(command);
-
-        DBCursor dbResult = mongoTemplate.getCollection(outputCollectionName).find().sort(new BasicDBObject("_id", 1));
-        while (dbResult.hasNext()) {
-            DBObject sum = dbResult.next();
-            GroupedResult groupedResult = new GroupedResult();
-            Long ts = Long.valueOf((String) sum.get("_id"));
-            String time = df.format(new Date(ts));
-            groupedResult.setKey(time);
-            DBObject value = (DBObject) sum.get("value");
-            groupedResult.setCount(((Double) value.get("total")).intValue());
-            groupedResult.setKeyName("timestamp");
-            groupedResult.getSplitCounts()
-                    .put("article", value.get("article") == null ? 0 : ((Double) value.get("article")).intValue());
-            groupedResult.getSplitCounts()
-                    .put("album", value.get("album") == null ? 0 : ((Double) value.get("album")).intValue());
-            groupedResult.getSplitCounts()
-                    .put("video", value.get("video") == null ? 0 : ((Double) value.get("video")).intValue());
-            groupedResult.getSplitCounts()
-                    .put("other", value.get("other") == null ? 0 : ((Double) value.get("other")).intValue());
-            result.add(groupedResult);
-        }
     }
 
     @Override
     public void deleteEntriesOlderThanMillis(final long millis) {
-        long when = System.currentTimeMillis() - millis;
+        long now = System.currentTimeMillis();
+        long when = now - millis;
+        long before180min = now - 180 * 60 * 1000;
+        long before15min = now - 15 * 60 * 1000;
         deleteOldSums(when);
-        deleteOldMinutes(when);
+        deleteOldMinutes(when, before180min, before15min);
     }
 
-    private void deleteOldMinutes(long when) {
+    private void deleteOldMinutes(long before24h, long before180min, long before15min) {
         Calendar cal = new GregorianCalendar();
-        cal.setTimeInMillis(when);
+        cal.setTimeInMillis(before24h);
         cal.set(Calendar.MILLISECOND, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MINUTE, 0);
@@ -520,7 +346,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         while (result.hasNext()) {
             DBObject doc = result.next();
 
-            //start a new "session" for each document
+            //start a new "session" for each document. not sure if this actually helps anything consistency-wise
             mongoTemplate.getDefaultCollection().getDB().requestStart();
 
             //and fetch actual object (result only contains _id's)
@@ -539,7 +365,6 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 log.trace("no hours in document, remove it: {}", doc);
                 mongoTemplate.getDefaultCollection().remove(new BasicDBObject("_id", doc.get("_id")));
             } else {
-
                 for (String h : hrSet) {
                     long hourmillis = Long.valueOf(h);
                     log.trace("checking hour: {}", hourmillis);
@@ -560,9 +385,10 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                         for (String m : keys) {
                             long minutemillis = Long.valueOf(m);
                             log.trace("checking minute: {}", minutemillis);
-                            if (minutemillis < when) {
+                            if (minutemillis < before24h) {
                                 if (log.isTraceEnabled()) {
-                                    log.trace("removing minute " + minutemillis + " because it is older than " + when);
+                                    log.trace("removing minute " + minutemillis + " because it is older than " +
+                                            before24h);
                                 }
 
                                 docChanged = true;
@@ -581,12 +407,60 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                     }
                 }
             }
+
+            docChanged |= updateTrendCounters(doc, before180min, before15min);
+
             if (docChanged) {
                 mongoTemplate.getDefaultCollection().save(doc);
             }
             mongoTemplate.getDefaultCollection().getDB().requestDone();
         }
     }
+
+    private boolean updateTrendCounters(final DBObject doc, final long before180min, final long before15min) {
+        long oneHour = 60 * 60 * 1000;
+        BasicDBObject day = (BasicDBObject) doc.get("day");
+        DBObject hours = (DBObject) day.get("hours");
+
+        int last15Counter = 0;
+        int last180Counter = 0;
+        for (String h : hours.keySet()) {
+            long hourmillis = Long.valueOf(h);
+            if (hourmillis >= (before180min - oneHour)) {
+                DBObject currentHour = (DBObject) hours.get(h);
+                DBObject minutes = (DBObject) currentHour.get("minutes");
+
+                for (String m : minutes.keySet()) {
+                    long minutemillis = Long.valueOf(m);
+                    DBObject obj = null;
+                    if (minutemillis >= before180min) {
+                        obj = (DBObject) minutes.get(m);
+                        last180Counter += (Integer) obj.get("count");
+                    }
+                    if (minutemillis >= before15min) {
+                        last15Counter += (Integer) obj.get("count");
+                    }
+
+                }
+            }
+        }
+
+        int oldVal = day.get("last15minutes") == null ? 0 : (Integer) day.get("last15minutes");
+        boolean objChanged = false;
+        if (oldVal != last15Counter) {
+            objChanged = true;
+            day.put("last15minutes", last15Counter);
+        }
+
+        oldVal = day.get("last180minutes") == null ? 0 : (Integer) day.get("last180minutes");
+        if (oldVal != last180Counter) {
+            objChanged = true;
+            day.put("last180minutes", last180Counter);
+        }
+
+        return objChanged;
+    }
+
 
     private void deleteOldSums(long when) {
         DBCursor result =
