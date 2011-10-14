@@ -7,6 +7,7 @@ public class GroupedResult {
     private String keyName;
     private String key;
     private Integer count = 0;
+    private Map<String, Integer> trend = new HashMap<String, Integer>();
 
     private Map<String, Integer> splitCounts = new HashMap<String, Integer>();
 
@@ -20,6 +21,10 @@ public class GroupedResult {
 
     public int getCount() {
         return count;
+    }
+
+    public Map<String, Integer> getTrend() {
+        return trend;
     }
 
     public void setKeyName(String keyName) {
@@ -38,6 +43,10 @@ public class GroupedResult {
         return splitCounts;
     }
 
+    public void setTrend(Map<String, Integer> trend) {
+        this.trend = trend;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -46,6 +55,7 @@ public class GroupedResult {
         sb.append(", key='").append(key).append('\'');
         sb.append(", count=").append(count);
         sb.append(", splitCounts=").append(splitCounts);
+        sb.append(", trend=").append(trend);
         sb.append('}');
         return sb.toString();
     }

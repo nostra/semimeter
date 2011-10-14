@@ -219,8 +219,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             DBObject doc = mongoTemplate.getDefaultCollection().findOne(new BasicDBObject("_id", docId));
 
             DBObject day = (DBObject) doc.get("day");
-
-            String type = (String) doc.get("type");
+            DBObject hours = (DBObject) day.get("hours");
 
             GroupedResult gr = new GroupedResult();
             gr.setCount((Integer) day.get("count"));
@@ -228,6 +227,15 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             gr.setKeyName("articleId");
             gr.getSplitCounts().put("last180minutes", (Integer) day.get("last180minutes"));
             gr.getSplitCounts().put("last15minutes", (Integer) day.get("last15minutes"));
+
+            Map<String, Integer> trend = gr.getTrend();
+
+            for(String key : hours.keySet()) {
+                DBObject hour = (DBObject) hours.get(key);
+                trend.put(key, (Integer) hour.get("count"));
+            }
+
+            gr.setTrend(trend);
             result.add(gr);
 
         }
