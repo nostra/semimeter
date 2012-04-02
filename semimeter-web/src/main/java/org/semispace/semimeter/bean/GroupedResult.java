@@ -11,6 +11,8 @@ public class GroupedResult {
 
     private Map<String, Integer> splitCounts = new HashMap<String, Integer>();
 
+    private int publicationId;
+
     public String getKeyName() {
         return keyName;
     }
@@ -53,10 +55,19 @@ public class GroupedResult {
         sb.append("GroupedResult");
         sb.append("{keyName='").append(keyName).append('\'');
         sb.append(", key='").append(key).append('\'');
+        sb.append(", publicationId=").append(publicationId);
         sb.append(", count=").append(count);
         sb.append(", splitCounts=").append(splitCounts);
         sb.append(", trend=").append(trend);
         sb.append('}');
         return sb.toString();
+    }
+
+    public void setPublicationId(int publicationId) {
+        this.publicationId = publicationId;
+    }
+
+    public int getPublicationId() {
+        return this.publicationId;
     }
 }

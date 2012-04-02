@@ -225,6 +225,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             gr.setCount((Integer) day.get("count"));
             gr.setKey(String.valueOf(id));
             gr.setKeyName("articleId");
+            gr.setPublicationId((Integer) row.get("publicationId"));
             gr.getSplitCounts().put("last180minutes", (Integer) day.get("last180minutes"));
             gr.getSplitCounts().put("last15minutes", (Integer) day.get("last15minutes"));
 
