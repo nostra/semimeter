@@ -46,6 +46,26 @@
         </developer>
     </developers>
 
+    <profiles>
+        <!-- When jenkins builds the site, we want it to copy the site to fantast -->
+        <profile>
+            <id>distribute.site</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>env.USER</name>
+                    <value>jenkins</value>
+                </property>
+            </activation>
+            <distributionManagement>
+                <site>
+                    <id>ci.website</id>
+                    <name>ci.dev.api.no</name>
+                    <url>scp://hemma/var/www/doc.api.no/snapshot/semimeter</url>
+                </site>
+            </distributionManagement>
+        </profile>
+    </profiles>
     <!--
          DEPENDENCIES
      -->
@@ -426,25 +446,6 @@
         <developerConnection>scm:git:ssh://git@github.com/amedia/semimeter.git</developerConnection>
     </scm>
 
-    <!-- Distribution management moved to parent pom -->
-    <profiles>
-        <profile>
-            <id>cruisecontrol</id>
-            <properties>
-                <site-url>file:///var/www/snapshot</site-url>
-            </properties>
-        </profile>
-        <profile>
-            <id>releaseDeploy</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <site-url>scp://maven@maven.api.no/var/www/stable/semimeter</site-url>
-            </properties>
-        </profile>
-    </profiles>
-
     <distributionManagement>
         <repository>
             <id>api-repository</id>
@@ -453,11 +454,6 @@
                 scp://maven.api.no/usr/local/maven/repository
             </url>
         </repository>
-        <site>
-            <id>ci.website</id>
-            <name>ci.dev.api.no</name>
-            <url>${site-url}</url>
-        </site>
     </distributionManagement>
 
 </project>
