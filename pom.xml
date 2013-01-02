@@ -413,9 +413,9 @@
     </modules>
 
     <scm>
-        <url>scm:git:git://git@github.com/amedia/semimeter.git</url>
-        <connection>scm:git:git://git@github.com/amedia/semimeter.git</connection>
-        <developerConnection>scm:git:git://git@github.com/amedia/semimeter.git</developerConnection>
+        <url>https://github.com/amedia/semimeter.git</url>
+        <connection>scm:git:git://github.com/amedia/semimeter.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/amedia/semimeter.git</developerConnection>
     </scm>
 
     <!-- Distribution management moved to parent pom -->
