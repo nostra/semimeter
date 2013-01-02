@@ -31,7 +31,7 @@ import org.semispace.semimeter.dao.AbstractSemiMeterDaoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.document.mongodb.MongoTemplate;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
@@ -58,10 +58,10 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @PostConstruct
     public void onCreate() {
-        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.count': -1}"));
-        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.last180minutes': -1}"));
-        mongoTemplate.getDefaultCollection().ensureIndex((DBObject) JSON.parse("{'day.last15minutes': -1}"));
-        mongoTemplate.getDefaultCollection()
+        mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.count': -1}"));
+        mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last180minutes': -1}"));
+        mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last15minutes': -1}"));
+        mongoTemplate.getCollection("meter")
                 .ensureIndex((DBObject) JSON.parse("{'id':1, 'sectionId':1, 'publicationId':1, 'type':1}"));
         mongoTemplate.getCollection("sums").ensureIndex((DBObject) JSON
                 .parse("{'time.ts':1, 'time.year':1, 'time.month':1, 'time.day':1, 'time.hour':1, 'time.minute':1}"));
@@ -71,7 +71,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @Override
     public int size() {
-        return (int) mongoTemplate.getDefaultCollection().count();
+        return (int) mongoTemplate.getCollection("meter").count();
     }
 
     @Override
@@ -112,7 +112,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             DBObject update = (DBObject) JSON.parse(sb.toString());
 
-            mongoTemplate.getDefaultCollection().update(query, update, true, false);
+            mongoTemplate.getCollection("meter").update(query, update, true, false);
 
             query = new BasicDBObject();
             BasicDBObject time = new BasicDBObject();
@@ -209,14 +209,14 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
     private void groupedSumsMemory(final int maxResults, final List<GroupedResult> result, final long endMinus15,
             final long endMinus180, final BasicDBObject toFind, final DBObject sortObj) {
         BasicDBObject keys = new BasicDBObject("id", 1);
-        DBCursor dbResult = mongoTemplate.getDefaultCollection().find(toFind, keys).sort(sortObj).limit(maxResults);
+        DBCursor dbResult = mongoTemplate.getCollection("meter").find(toFind, keys).sort(sortObj).limit(maxResults);
 
         while (dbResult.hasNext()) {
             DBObject row = dbResult.next();
             Object docId = row.get("_id");
             int id = (Integer) row.get("id");
 
-            DBObject doc = mongoTemplate.getDefaultCollection().findOne(new BasicDBObject("_id", docId));
+            DBObject doc = mongoTemplate.getCollection("meter").findOne(new BasicDBObject("_id", docId));
 
             DBObject day = (DBObject) doc.get("day");
             DBObject hours = (DBObject) day.get("hours");
@@ -298,7 +298,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
     }
 
     private void hourlySumsMemory(final Map<String, GroupedResult> result, final DBObject query) {
-        DBCursor dbResult = mongoTemplate.getDefaultCollection().find(query);
+        DBCursor dbResult = mongoTemplate.getCollection("meter").find(query);
         while (dbResult.hasNext()) {
             DBObject row = dbResult.next();
             DBObject day = (DBObject) row.get("day");
@@ -351,15 +351,15 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         cal.set(Calendar.MINUTE, 0);
         long targetHour = cal.getTimeInMillis();
 
-        DBCursor result = mongoTemplate.getDefaultCollection().find(new BasicDBObject(), new BasicDBObject("_id", 1));
+        DBCursor result = mongoTemplate.getCollection("meter").find(new BasicDBObject(), new BasicDBObject("_id", 1));
         while (result.hasNext()) {
             DBObject doc = result.next();
 
             //start a new "session" for each document. not sure if this actually helps anything consistency-wise
-            mongoTemplate.getDefaultCollection().getDB().requestStart();
+            mongoTemplate.getCollection("meter").getDB().requestStart();
 
             //and fetch actual object (result only contains _id's)
-            doc = (DBObject) mongoTemplate.getDefaultCollection().findOne(doc);
+            doc = (DBObject) mongoTemplate.getCollection("meter").findOne(doc);
 
             log.trace("cleaning document : {}", doc);
             DBObject day = (DBObject) doc.get("day");
@@ -372,7 +372,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             if (hrSet.isEmpty()) {
                 log.trace("no hours in document, remove it: {}", doc);
-                mongoTemplate.getDefaultCollection().remove(new BasicDBObject("_id", doc.get("_id")));
+                mongoTemplate.getCollection("meter").remove(new BasicDBObject("_id", doc.get("_id")));
             } else {
                 for (String h : hrSet) {
                     long hourmillis = Long.valueOf(h);
@@ -420,9 +420,9 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             docChanged |= updateTrendCounters(doc, before180min, before15min);
 
             if (docChanged) {
-                mongoTemplate.getDefaultCollection().save(doc);
+                mongoTemplate.getCollection("meter").save(doc);
             }
-            mongoTemplate.getDefaultCollection().getDB().requestDone();
+            mongoTemplate.getCollection("meter").getDB().requestDone();
         }
     }
 

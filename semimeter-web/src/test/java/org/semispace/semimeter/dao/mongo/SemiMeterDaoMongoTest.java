@@ -13,7 +13,7 @@ import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.data.document.mongodb.MongoTemplate;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +39,7 @@ public class SemiMeterDaoMongoTest {
         this.mongoTemplate = (MongoTemplate) ctx.getBean("mongoTemplate");
         this.semiMeterDao = (SemiMeterDao) ctx.getBean("semimeterDao");
 
-        coll = mongoTemplate.getDefaultCollection();
+        coll = mongoTemplate.getCollection("meter");
         coll.drop();
         mongoTemplate.getCollection("sums").drop();
     }
@@ -160,14 +160,14 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(1, result.size());
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 6);
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -184,7 +184,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(1, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
         assertEquals(3, ((DBObject) result.get(0).get("day")).get("count"));
@@ -195,7 +195,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 5);
         //after first run, article should be empty, but there
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(0, ((BasicDBObject) ((DBObject) result.get(0).get("day")).get("hours")).size());
         assertEquals(0, ((DBObject) result.get(0).get("day")).get("count"));
@@ -207,7 +207,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 5);
 
         //now article should be gone
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(0, result.size());
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(0, result.size());
@@ -221,7 +221,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.performInsertion(Arrays.asList(
                 new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current, "/article/1/37/412", 4)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -238,7 +238,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 4);
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(412, result.get(0).get("id"));
         assertEquals(1, result.size());
@@ -266,7 +266,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.performInsertion(Arrays.asList(
                 new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current, "/article/1/37/412", 4)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -283,7 +283,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60* 24);
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(412, result.get(0).get("id"));
         assertEquals(1, result.size());
@@ -310,7 +310,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.performInsertion(Arrays.asList(
                 new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current, "/article/1/37/412", 4)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -324,7 +324,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60 * 24);
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(412, result.get(0).get("id"));
         assertEquals(1, result.size());
@@ -347,7 +347,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.performInsertion(Arrays.asList(
                 new Item[]{new Item(oldmillis, "/article/1/37/412", 3), new Item(current - 1000*60*20, "/article/1/37/412", 4)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -364,7 +364,7 @@ public class SemiMeterDaoMongoTest {
         result = mongoTemplate.getCollection("sums").find().toArray();
         assertEquals(2, result.size());
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(412, result.get(0).get("id"));
         assertEquals(1, result.size());
@@ -385,7 +385,7 @@ public class SemiMeterDaoMongoTest {
         semiMeterDao.performInsertion(Arrays.asList(new Item[]{new Item(oldmillis, "/article/1/37/412", 3),
                 new Item(current - 1000 * 60 * 20, "/article/1/37/412", 4)}));
 
-        List<DBObject> result = mongoTemplate.getDefaultCollection().find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         DBObject doc = result.get(0);
         assertEquals(412, doc.get("id"));
@@ -399,7 +399,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.deleteEntriesOlderThanMillis(1000 * 60 * 60 * 24);
 
-        result = mongoTemplate.getDefaultCollection().find().toArray();
+        result = mongoTemplate.getCollection("meter").find().toArray();
         assertEquals(1, result.size());
         assertEquals(412, result.get(0).get("id"));
         assertEquals(1, result.size());
@@ -424,7 +424,7 @@ public class SemiMeterDaoMongoTest {
         items.add(item);
 
         semiMeterDao.performInsertion(items);
-        DBCursor dbResult = mongoTemplate.getDefaultCollection().find();
+        DBCursor dbResult = mongoTemplate.getCollection("meter").find();
         assertNotNull(dbResult);
         List<DBObject> dbList = dbResult.toArray();
         assertEquals(1, dbList.size());
@@ -459,7 +459,7 @@ public class SemiMeterDaoMongoTest {
 
         semiMeterDao.performInsertion(items);
 
-        List<DBObject> result = mongoTemplate.getCollection(mongoTemplate.getDefaultCollectionName()).find().toArray();
+        List<DBObject> result = mongoTemplate.getCollection("meter").find().toArray();
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals(3, ((DBObject) result.get(0).get("day")).get("count"));

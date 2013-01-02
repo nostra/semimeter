@@ -20,7 +20,7 @@
        xmlns:mongo="http://www.springframework.org/schema/data/mongo"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+                           http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.1.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
     <!-- Use this post processor to translate any MongoExceptions thrown in @Repository annotated classes -->
@@ -32,19 +32,17 @@
         </property>
     </bean>
 
-    <bean id="mongo" class="org.springframework.data.document.mongodb.MongoFactoryBean" init-method="afterPropertiesSet">
+    <bean id="mongo" class="org.springframework.data.mongodb.core.MongoFactoryBean" init-method="afterPropertiesSet">
         <property name="replicaSetSeeds" value="#{ T(org.semispace.semimeter.JndiHelper).arrayToList(replicationHosts) }" />
         <property name="host" value="MUST_BE_SET_BUT_CAN_BE_NONSENSE"/>
     </bean>
 
-    <bean id="mongoTemplate" class="org.springframework.data.document.mongodb.MongoTemplate">
-        <constructor-arg ref="mongo"/>
-        <constructor-arg name="databaseName" value="mittari"/>
-        <constructor-arg value="meter"/>
-        <constructor-arg>
-            <mongo:mapping-converter/>
-        </constructor-arg>
+     <mongo:db-factory id="mongoDbFactory" dbname="mittari" mongo-ref="mongo"/>
+
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
     </bean>
+
 
     <context:component-scan base-package="org.semispace.semimeter.dao.mongo"/>
 

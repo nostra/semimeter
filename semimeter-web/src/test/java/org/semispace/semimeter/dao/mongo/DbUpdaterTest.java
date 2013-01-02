@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.mongo.MeterHit;
 import org.semispace.semimeter.bean.mongo.PathElements;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.document.mongodb.MongoTemplate;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -36,7 +36,7 @@ public class DbUpdaterTest {
     @Test
     @Ignore("only use to import test data (from mysql dump file")
     public void doIt() throws IOException {
-        MongoTemplate mongoTemplate = new MongoTemplate(mongo, "mittari", "meter");
+        MongoTemplate mongoTemplate = new MongoTemplate(mongo, "mittari");
         File file = new File("/home/sven/dev/trunk/api/maven-projects/v3/mittari/meter.sql");
         if (file.exists()) {
             int cnt = 0;
@@ -79,7 +79,7 @@ public class DbUpdaterTest {
                 line = reader.readLine();
             }
             for (DBObject o : map.values()) {
-                mongoTemplate.getDefaultCollection().insert(o);
+                mongoTemplate.getCollection("meter").insert(o);
             }
             for (DBObject o : sumsmap.values()) {
                 mongoTemplate.getCollection("sums").insert(o);
