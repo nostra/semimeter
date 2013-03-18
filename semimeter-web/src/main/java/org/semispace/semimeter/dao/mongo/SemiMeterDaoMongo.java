@@ -19,6 +19,7 @@ package org.semispace.semimeter.dao.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 import com.mongodb.util.JSON;
 import org.semispace.semimeter.bean.GroupedResult;
 import org.semispace.semimeter.bean.Item;
@@ -58,6 +59,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @PostConstruct
     public void onCreate() {
+        mongoTemplate.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.count': -1}"));
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last180minutes': -1}"));
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last15minutes': -1}"));
