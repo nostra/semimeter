@@ -1,10 +1,13 @@
 package org.semispace.semimeter.dao.mongo;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.Item;
+import org.semispace.semimeter.bean.PathToken;
+import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,12 +50,21 @@ public class DbPerfTest {
         long start = System.currentTimeMillis();
         long last = start;
 
-        for ( int i=0 ; i < 50000 ; i++ ) {
+        final TokenizedPathInfo query = new TokenizedPathInfo("/");
+        query.addPathToken(new PathToken(null, "type", false));
+        query.addPathToken(new PathToken("95", "publicationId", false));
+        query.addPathToken(new PathToken(null, "sectionId", false));
+        query.addPathToken(new PathToken(null, "articleId", true));
+
+        for ( int i=0 ; i < 10000 ; i++ ) {
             semiMeterDao.performInsertion(
                     Arrays.asList(new Item[]{new Item(start - 1000 * 60 * 60 * 23, "/article/95/37/"+i, 1)}));
             if ( i % 1000 == 0 ) {
                 log.debug("* Mark "+i+" * diff "+(System.currentTimeMillis()-last)+" Time spent so far: "+(System.currentTimeMillis()-start));
                 last = System.currentTimeMillis();
+            }
+            if ( i % 20 == 0 ) {
+                Assert.assertNotNull( semiMeterDao.getGroupedSums(last - 60000, last, query, 10, null));
             }
         }
 
