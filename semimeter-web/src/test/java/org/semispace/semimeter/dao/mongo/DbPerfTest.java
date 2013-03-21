@@ -1,6 +1,7 @@
 package org.semispace.semimeter.dao.mongo;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.Item;
@@ -41,6 +42,7 @@ public class DbPerfTest {
      * 6m 53s: WriteConcern.UNACKNOWLEDGED (set in DAO)
      */
     @Test
+    @Ignore
     public void insertion_test() {
         long start = System.currentTimeMillis();
         long last = start;
