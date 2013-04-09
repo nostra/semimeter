@@ -43,6 +43,13 @@ public class DbPerfTest {
      * 6m 56s: Normal
      * 7m 16s: WriteConcern.UNACKNOWLEDGED
      * 6m 53s: WriteConcern.UNACKNOWLEDGED (set in DAO)
+     *
+     * 10000 on laptop:
+     * 2.10.0 un-ack 40s
+     * 2.10.0 ack 37s
+     *
+     * 2.11.1 un-ack 36s
+     * 2.11.1 ack 38s
      */
     @Test
     @Ignore

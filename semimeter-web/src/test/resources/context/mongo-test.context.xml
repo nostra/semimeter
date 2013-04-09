@@ -35,6 +35,7 @@
 
     <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
         <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
+        <property name="writeConcern" value="WriteConcern.UNACKNOWLEDGED" />
     </bean>
 
     <bean id="semimeterDao" class="org.semispace.semimeter.dao.mongo.SemiMeterDaoMongo"/>

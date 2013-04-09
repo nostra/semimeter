@@ -19,13 +19,8 @@ package org.semispace.semimeter.dao.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.WriteConcern;
 import com.mongodb.util.JSON;
-import org.semispace.semimeter.bean.GroupedResult;
-import org.semispace.semimeter.bean.Item;
-import org.semispace.semimeter.bean.JsonResults;
-import org.semispace.semimeter.bean.PathToken;
-import org.semispace.semimeter.bean.TokenizedPathInfo;
+import org.semispace.semimeter.bean.*;
 import org.semispace.semimeter.bean.mongo.MeterHit;
 import org.semispace.semimeter.bean.mongo.PathElements;
 import org.semispace.semimeter.dao.AbstractSemiMeterDaoImpl;
@@ -38,16 +33,7 @@ import org.springframework.stereotype.Repository;
 import javax.annotation.PostConstruct;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 @Repository("semimeterDao")
 public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
@@ -59,7 +45,6 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
     @PostConstruct
     public void onCreate() {
-        mongoTemplate.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.count': -1}"));
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last180minutes': -1}"));
         mongoTemplate.getCollection("meter").ensureIndex((DBObject) JSON.parse("{'day.last15minutes': -1}"));
