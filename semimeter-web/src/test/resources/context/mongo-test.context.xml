@@ -31,7 +31,7 @@
 
     <mongo:mongo host="127.0.0.1" port="27017" id="mongo"/>
 
-    <mongo:db-factory id="mongoDbFactory" dbname="unittest" mongo-ref="mongo" write-concern="NORMAL"/>
+    <mongo:db-factory id="mongoDbFactory" dbname="unittest" mongo-ref="mongo" />
 
     <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
         <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>

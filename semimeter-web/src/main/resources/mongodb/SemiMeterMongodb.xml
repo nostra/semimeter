@@ -27,9 +27,7 @@
     <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
 
     <bean id="replicationHosts" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName">
-            <value>java:comp/env/mongodb/replication-hosts</value>
-        </property>
+        <property name="jndiName" value="java:comp/env/mongodb/replication-hosts"/>
     </bean>
 
     <bean id="mongo" class="org.springframework.data.mongodb.core.MongoFactoryBean" init-method="afterPropertiesSet">
@@ -37,7 +35,7 @@
         <property name="host" value="MUST_BE_SET_BUT_CAN_BE_NONSENSE"/>
     </bean>
 
-     <mongo:db-factory id="mongoDbFactory" dbname="mittari" mongo-ref="mongo" write-concern="NORMAL"/>
+     <mongo:db-factory id="mongoDbFactory" dbname="mittari" mongo-ref="mongo" />
 
     <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
         <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>

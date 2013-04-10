@@ -19,6 +19,7 @@ package org.semispace.semimeter.dao.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 import com.mongodb.util.JSON;
 import org.semispace.semimeter.bean.*;
 import org.semispace.semimeter.bean.mongo.MeterHit;
@@ -99,7 +100,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             DBObject update = (DBObject) JSON.parse(sb.toString());
 
-            mongoTemplate.getCollection("meter").update(query, update, true, false);
+            mongoTemplate.getCollection("meter").update(query, update, true, false, WriteConcern.UNACKNOWLEDGED);
 
             query = new BasicDBObject();
             BasicDBObject time = new BasicDBObject();
@@ -127,7 +128,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             update = (DBObject) JSON.parse(sb.toString());
 
-            mongoTemplate.getCollection("sums").update(query, update, true, false);
+            mongoTemplate.getCollection("sums").update(query, update, true, false, WriteConcern.UNACKNOWLEDGED);
 
         }
     }
