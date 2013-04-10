@@ -1,5 +1,6 @@
 package org.semispace.semimeter.dao.mongo;
 
+import com.mongodb.WriteConcern;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -34,6 +35,12 @@ public class DbPerfTest {
         mongoTemplate.getCollection("meter").drop();
         mongoTemplate.getCollection("sums").drop();
 
+    }
+
+    @Test
+    public void writeConcernCheck() {
+        WriteConcern wc = new WriteConcern(); // should get your default write concern
+        Assert.assertEquals("Default write concern should be unacknowledged", WriteConcern.UNACKNOWLEDGED, wc);
     }
 
     /**
