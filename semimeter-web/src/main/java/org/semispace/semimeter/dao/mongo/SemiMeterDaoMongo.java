@@ -42,7 +42,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
     private DateFormat df = new SimpleDateFormat("yy-MM-dd-HH-mm");
 
     @Autowired
-    MongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
 
     @PostConstruct
     public void onCreate() {
@@ -328,7 +328,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         long before180min = now - 180 * 60 * 1000;
         long before15min = now - 15 * 60 * 1000;
         deleteOldSums(when);
-        deleteOldMinutes(when, before180min, before15min);
+        deleteOldMinutes(when, before180min, before15min); // TODO Double check
     }
 
     private void deleteOldMinutes(long before24h, long before180min, long before15min) {
@@ -347,7 +347,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             mongoTemplate.getCollection("meter").getDB().requestStart();
 
             //and fetch actual object (result only contains _id's)
-            doc = (DBObject) mongoTemplate.getCollection("meter").findOne(doc);
+            doc = (DBObject) mongoTemplate.getCollection("meter").findOne(doc); // TODO Double check
 
             log.trace("cleaning document : {}", doc);
             DBObject day = (DBObject) doc.get("day");
@@ -360,7 +360,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             if (hrSet.isEmpty()) {
                 log.trace("no hours in document, remove it: {}", doc);
-                mongoTemplate.getCollection("meter").remove(new BasicDBObject("_id", doc.get("_id")));
+                mongoTemplate.getCollection("meter").remove(new BasicDBObject("_id", doc.get("_id")), WriteConcern.UNACKNOWLEDGED);
             } else {
                 for (String h : hrSet) {
                     long hourmillis = Long.valueOf(h);
@@ -464,7 +464,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 mongoTemplate.getCollection("sums").find((DBObject) JSON.parse("{'time.ts': {'$lt': " + when + "}}"));
 
         while (result.hasNext()) {
-            mongoTemplate.getCollection("sums").remove(result.next());
+            mongoTemplate.getCollection("sums").remove(result.next(), WriteConcern.UNACKNOWLEDGED);
         }
     }
 }
