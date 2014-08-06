@@ -427,11 +427,10 @@
         <module>semimeter-web</module>
     </modules>
 
-    <scm>
-        <url>https://github.com/amedia/semimeter.git</url>
-        <connection>scm:git:git://github.com/amedia/semimeter.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/amedia/semimeter.git</developerConnection>
-    </scm>
+	<scm>
+		<connection>scm:git:ssh://git@github.com/amedia/semimeter.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/amedia/semimeter.git</developerConnection>
+	</scm>
 
     <distributionManagement>
         <repository>
