@@ -83,9 +83,9 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
 
             BasicDBObject query = new BasicDBObject();
             PathElements pathElements = MeterHit.calcPath(item.getPath(), "/");
-            query.append("id", Integer.valueOf(pathElements.getE4()).intValue());
-            query.append("sectionId", Integer.valueOf(pathElements.getE3()).intValue());
-            query.append("publicationId", Integer.valueOf(pathElements.getE2()).intValue());
+            query.append("id", integerForCompatibilityReasonOrString(pathElements.getE4()));
+            query.append("sectionId", integerForCompatibilityReasonOrString(pathElements.getE3()));
+            query.append("publicationId", integerForCompatibilityReasonOrString(pathElements.getE2()));
             query.append("type", pathElements.getE1());
 
             StringBuilder sb = new StringBuilder();
@@ -132,19 +132,35 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         }
     }
 
+    /**
+     * @return Integer if it is possible to parse as integer, string otherwise. This
+     * clumsy construction is for compatibility reasons.
+     */
+    private Object integerForCompatibilityReasonOrString(String str) {
+        try {
+            return Integer.valueOf(str);
+        } catch (NumberFormatException e ) {
+            return str;
+
+        }
+    }
+
     @Override
     public Long sumItems(final long startAt, final long endAt, final String path) {
+        log.warn("Not implemented");
         return null;
     }
 
     @Override
     public JsonResults[] performParameterizedQuery(final long startAt, final long endAt, final String path) {
+        log.warn("Not implemented");
         return new JsonResults[0];
     }
 
     @Override
     public JsonResults[] createTimeArray(final String path, final long endAt, final long startAt,
                                          final Integer numberOfSamples) {
+        log.warn("Not implemented");
         return new JsonResults[0];
     }
 
