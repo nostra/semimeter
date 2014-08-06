@@ -436,9 +436,7 @@
         <repository>
             <id>api-repository</id>
             <name>API Repository</name>
-            <url>
-                scp://maven.api.no/usr/local/maven/repository
-            </url>
+            <url>scp://maven.api.no/usr/local/maven/repository</url>
         </repository>
     </distributionManagement>
 
