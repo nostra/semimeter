@@ -1,6 +1,11 @@
 package org.semispace.semimeter.bean.mongo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class MeterHit {
+    private static final Logger log = LoggerFactory.getLogger(MeterHit.class);
+
     private Long when;
     private PathElements pathElements;
     private Integer count;
@@ -31,8 +36,7 @@ public class MeterHit {
                         try {
                             result.getClass().getMethod("setE" + (i + 1), String.class).invoke(result, s);
                         } catch (Exception e) {
-                            //should not happen
-                            e.printStackTrace();
+                            log.error("Expected never to happen");
                         }
                     }
                 }

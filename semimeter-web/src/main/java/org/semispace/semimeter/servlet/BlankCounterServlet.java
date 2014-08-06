@@ -114,21 +114,23 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
 
 
     private byte[] readBlankImage() {
-        InputStream is = getClass().getResourceAsStream("/image/blank.gif");
-        byte[] bytes = new byte[128]; // I know the image has a size of 79B
-        // Read in the bytes
-        int offset = 0;
-        try {
+        try (InputStream is = getClass().getResourceAsStream("/image/blank.gif")) {
+
+            byte[] bytes = new byte[128]; // I know the image has a size of 79B
+            // Read in the bytes
+            int offset = 0;
             int numRead = 0;
             while (offset < bytes.length && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
                 offset += numRead;
             }
+
+            byte[] result = Arrays.copyOf(bytes, offset);
+            log.debug("Resulting length: " + result);
+            return result;
         } catch (IOException e) {
-            log.error("Totally unexpected. Was not able to read image", e);
+            log.error("Got exception.", e);
+            return new byte[0];
         }
-        byte[] result = Arrays.copyOf(bytes, offset);
-        log.debug("Resulting length: " + result);
-        return result;
     }
 
     @Override
