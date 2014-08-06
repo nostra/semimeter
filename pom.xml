@@ -85,7 +85,7 @@
             <dependency>
                 <groupId>no.api.semimeter</groupId>
                 <artifactId>semimeter-webapp</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
                 <type>war</type>
             </dependency>
             <dependency>
@@ -331,11 +331,12 @@
      -->
     <build>
         <extensions>
-            <!-- maven3 will need wagon-ssh extension in order to be able to release -->
+            <!-- maven3 will need wagon-ssh extension in order to be able to release,
+            Using external variant in order to retain keys, etc -->
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ssh</artifactId>
-                <version>2.2</version>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>2.5</version>
             </extension>
         </extensions>
         <plugins>
@@ -436,8 +437,15 @@
         <repository>
             <id>api-repository</id>
             <name>API Repository</name>
-            <url>scp://maven.api.no/usr/local/maven/repository</url>
+            <url>scpexe://maven.api.no/usr/local/maven/repository</url>
         </repository>
+
+        <snapshotRepository>
+          <id>snapshots</id>
+          <name>nexus Snapshot Repository</name>
+          <url>http://ci.dev.api.no/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+
     </distributionManagement>
 
 </project>
