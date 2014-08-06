@@ -4,7 +4,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
 import org.junit.Before;
 import org.junit.Test;
 import org.semispace.semimeter.bean.GroupedResult;
@@ -33,7 +32,7 @@ public class SemiMeterDaoMongoTest {
 
     @Before
     public void before() {
-        assumeTrue(checkMongo());
+        assumeTrue(new MongoChecker().checkMongo());
 
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("/context/mongo-test.context.xml");
         this.mongoTemplate = (MongoTemplate) ctx.getBean("mongoTemplate");
@@ -42,23 +41,6 @@ public class SemiMeterDaoMongoTest {
         coll = mongoTemplate.getCollection("meter");
         coll.drop();
         mongoTemplate.getCollection("sums").drop();
-    }
-
-    /**
-     * The tests in this class all require a mongodb installation present at localhost:27017.
-     * junit's "Assume" mechanism ignores tests when the assume clause fails. we use that here to skip all tests
-     * if no mongodb is present.
-     *
-     * @return true, if local mongodb installation is present.
-     */
-    private boolean checkMongo() {
-        try {
-            Mongo mongo = new Mongo("127.0.0.1", 27017);
-            mongo.getDatabaseNames();
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
     }
 
     @Test

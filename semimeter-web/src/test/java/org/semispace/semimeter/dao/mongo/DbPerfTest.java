@@ -19,6 +19,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.Arrays;
 
+import static org.junit.Assume.assumeTrue;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = {"/context/mongo-test.context.xml"})
 public class DbPerfTest {
@@ -32,6 +34,7 @@ public class DbPerfTest {
 
     @Before
     public void setUp() {
+        assumeTrue(new MongoChecker().checkMongo());
         mongoTemplate.getCollection("meter").drop();
         mongoTemplate.getCollection("sums").drop();
 
