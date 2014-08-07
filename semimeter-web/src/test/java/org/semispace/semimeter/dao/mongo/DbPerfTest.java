@@ -1,5 +1,6 @@
 package org.semispace.semimeter.dao.mongo;
 
+import com.mongodb.DBCollection;
 import com.mongodb.WriteConcern;
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,7 +13,7 @@ import org.semispace.semimeter.bean.TokenizedPathInfo;
 import org.semispace.semimeter.dao.SemiMeterDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -26,18 +27,21 @@ import static org.junit.Assume.assumeTrue;
 public class DbPerfTest {
     private static final Logger log = LoggerFactory.getLogger(DbPerfTest.class);
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
-    @Autowired
     private SemiMeterDao semiMeterDao;
+    private MongoTemplate mongoTemplate;
+    private DBCollection coll;
 
     @Before
-    public void setUp() {
+    public void before() {
         assumeTrue(new MongoChecker().checkMongo());
-        mongoTemplate.getCollection("meter").drop();
-        mongoTemplate.getCollection("sums").drop();
 
+        ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("/context/mongo-test.context.xml");
+        this.mongoTemplate = (MongoTemplate) ctx.getBean("mongoTemplate");
+        this.semiMeterDao = (SemiMeterDao) ctx.getBean("semimeterDao");
+
+        coll = mongoTemplate.getCollection("meter");
+        coll.drop();
+        mongoTemplate.getCollection("sums").drop();
     }
 
     @Test

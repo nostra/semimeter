@@ -217,7 +217,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
             while (dbResult.hasNext()) {
                 DBObject row = dbResult.next();
                 Object docId = row.get("_id");
-                String id = row.get("id").toString();
+                String id = stringOrNull(row.get("id"));
 
                 DBObject doc = meterCollection.findOne(new BasicDBObject("_id", docId));
 
@@ -246,6 +246,13 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         } catch (Exception e ) { // Intentional
             log.error("Got trouble treating the query result", e);
         }
+    }
+
+    private String stringOrNull(Object obj) {
+        if ( obj != null ) {
+            return obj.toString();
+        }
+        return null;
     }
 
     @Override
