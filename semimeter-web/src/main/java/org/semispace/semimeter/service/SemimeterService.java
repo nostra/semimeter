@@ -243,6 +243,7 @@ public class SemimeterService {
     }
 
 
+    // TODO The query will fail here
     private List<GroupedResult> getGroupedResults(final GroupedSumsQuery gsq, final GroupedSumsResult toFind) {
         //log.debug("looking for " + gsq.getKey());
         GroupedSumsResult gsr = space.readIfExists(toFind);

@@ -431,6 +431,11 @@ public class SemiMeterDaoJdbc extends AbstractSemiMeterDaoImpl {
                 }, pathString);
     }
 
+    @Override
+    public List<GroupedResult> getHourlySums(String publicationId, String sectionId) {
+        throw new RuntimeException("Method not implemented for jdbc database. Sorry about that.");
+    }
+
 
     public void deleteEntriesOlderThanMillis(final long millis) {
         int rows = jdbcTemplate.update("DELETE FROM meter WHERE updated < ?", System.currentTimeMillis() - millis);

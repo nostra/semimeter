@@ -47,7 +47,13 @@ public interface SemiMeterDao {
     public List<GroupedResult> getGroupedSums(long startAt, long endAt, TokenizedPathInfo query, int maxResults, String sortBy)
             throws IllegalArgumentException;
 
+    /**
+     * @deprecated Method to be removed. Use the version with strings, please
+     */
+    @Deprecated
     public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId);
 
+    /** Get hourly sums with a correct signature */
+    public List<GroupedResult> getHourlySums( String publicationId, String sectionId);
     public void deleteEntriesOlderThanMillis(final long millis);
 }

@@ -213,12 +213,11 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                                    final long endMinus180, final BasicDBObject toFind, final DBObject sortObj) {
         BasicDBObject keys = new BasicDBObject("id", 1);
         DBCollection meterCollection = mongoTemplate.getCollection("meter");
-        DBCursor dbResult = meterCollection.find(toFind, keys).sort(sortObj).limit(maxResults);
-        try {
+        try (DBCursor dbResult = meterCollection.find(toFind, keys).sort(sortObj).limit(maxResults)) {
             while (dbResult.hasNext()) {
                 DBObject row = dbResult.next();
                 Object docId = row.get("_id");
-                int id = (Integer) row.get("id");
+                String id = row.get("id").toString();
 
                 DBObject doc = meterCollection.findOne(new BasicDBObject("_id", docId));
 
@@ -229,7 +228,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 gr.setCount((Integer) day.get("count"));
                 gr.setKey(String.valueOf(id));
                 gr.setKeyName("articleId");
-                gr.setPublicationId((Integer) doc.get("publicationId"));
+                gr.setPublicationId("" + doc.get("publicationId"));
                 gr.getSplitCounts().put("last180minutes", (Integer) day.get("last180minutes"));
                 gr.getSplitCounts().put("last15minutes", (Integer) day.get("last15minutes"));
 
@@ -244,23 +243,26 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 result.add(gr);
 
             }
-        } finally {
-            dbResult.close();
+        } catch (Exception e ) { // Intentional
+            log.error("Got trouble treating the query result", e);
         }
     }
 
-
     @Override
     public List<GroupedResult> getHourlySums(final Integer publicationId, final Integer sectionId) {
-        Map<String, GroupedResult> result = new TreeMap<String, GroupedResult>();
+        return getHourlySums( publicationId == null ? null : publicationId.toString(), sectionId == null ? null : sectionId.toString());
+    }
+
+    @Override
+    public List<GroupedResult> getHourlySums(final String publicationId, final String sectionId) {
+        Map<String, GroupedResult> result = new TreeMap<>();
         if (publicationId == null) {
             if (sectionId != null) {
                 throw new IllegalArgumentException("cant have sectionId without publicationId as parameters.");
             }
             //total network
             DBObject sortObj = (DBObject) JSON.parse("{'time.ts': 1}");
-            DBCursor dbResult = mongoTemplate.getCollection("sums").find().sort(sortObj);
-            try {
+            try (DBCursor dbResult = mongoTemplate.getCollection("sums").find().sort(sortObj)) {
                 while (dbResult.hasNext()) {
                     DBObject sum = dbResult.next();
                     Long ts = (Long) ((DBObject) sum.get("time")).get("ts");
@@ -281,16 +283,14 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                     addHourlySplit("other", sum, groupedResult);
                     result.put(time, groupedResult);
                 }
-            } finally {
-                dbResult.close();
             }
 
         } else {
             DBObject query = null;
             if (sectionId == null) {
-                query = new BasicDBObject("publicationId", publicationId);
+                query = new BasicDBObject("publicationId", integerForCompatibilityReasonOrString( publicationId ));
             } else {
-                query = new BasicDBObject("sectionId", sectionId);
+                query = new BasicDBObject("sectionId", integerForCompatibilityReasonOrString( sectionId ));
             }
 
             hourlySumsMemory(result, query);

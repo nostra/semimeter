@@ -11,7 +11,7 @@ public class GroupedResult {
 
     private Map<String, Integer> splitCounts = new HashMap<String, Integer>();
 
-    private int publicationId;
+    private String publicationId;
 
     public String getKeyName() {
         return keyName;
@@ -63,11 +63,17 @@ public class GroupedResult {
         return sb.toString();
     }
 
-    public void setPublicationId(int publicationId) {
+    /**
+     * @deprecated Use the version that takes a string, please
+     */
+    public void setPublicationId(Integer publicationId) {
+        setPublicationId(""+publicationId);
+    }
+    public void setPublicationId(String publicationId) {
         this.publicationId = publicationId;
     }
 
-    public int getPublicationId() {
+    public String getPublicationId() {
         return this.publicationId;
     }
 }
