@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.semispace.semimeter.bean.Item;
 import org.semispace.semimeter.bean.PathToken;
 import org.semispace.semimeter.bean.TokenizedPathInfo;
@@ -15,15 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.Arrays;
 
 import static org.junit.Assume.assumeTrue;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = {"/context/mongo-test.context.xml"})
 public class DbPerfTest {
     private static final Logger log = LoggerFactory.getLogger(DbPerfTest.class);
 

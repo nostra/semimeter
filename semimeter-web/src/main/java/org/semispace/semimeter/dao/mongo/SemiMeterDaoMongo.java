@@ -186,6 +186,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         for (PathToken token : query.getPathTokens()) {
             if ("sectionId".equals(token.getTokenAlias()) || "publicationId".equals(token.getTokenAlias())) {
                 if (token.getValue() != null) {
+                    // TODO Known to be wrong:
                     toFind.append(token.getTokenAlias(), Integer.valueOf(token.getValue()));
                 }
             } else if ("articleType".equals(token.getTokenAlias())) {
