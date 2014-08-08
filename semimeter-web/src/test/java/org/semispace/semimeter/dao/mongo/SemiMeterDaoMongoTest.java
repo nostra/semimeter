@@ -20,9 +20,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class SemiMeterDaoMongoTest {
@@ -127,6 +127,40 @@ public class SemiMeterDaoMongoTest {
         //        assertEquals(4, result.get(1).getCount());
         //        assertEquals("414", result.get(2).getKey());
         //        assertEquals(3, result.get(2).getCount());
+    }
+
+    @Test
+    public void testGetGroupedSumsNewPath() {
+
+        long now = System.currentTimeMillis();
+        final TokenizedPathInfo query = new TokenizedPathInfo("/");
+        query.addPathToken(new PathToken(null, "type", false));
+        query.addPathToken(new PathToken("www.ba.no", "publicationId", false));
+        query.addPathToken(new PathToken(null, "sectionId", false));
+        query.addPathToken(new PathToken(null, "articleId", true));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 25, "/article/www.ba.no/_/1-37-411", 1)}));
+        List<GroupedResult> result;
+        // result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 24, now, query, 10);
+        // assertNotNull(result);
+        // assertEquals(0, result.size());
+
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 23, "/article/www.ba.no/_/1-37-411", 1)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 20, "/album/www.ba.no/_/1-37-411", 4)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 15, "/article/www.ba.no/_/1-37-411", 2)}));
+        semiMeterDao.performInsertion(
+                Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 60 * 5, "/article/www.ba.no/_/1-37-411", 3)}));
+        semiMeterDao
+                .performInsertion(Arrays.asList(new Item[]{new Item(now - 1000 * 60 * 15, "/article/www.ba.no/_/1-37-411", 3)}));
+
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now - 1000 * 60 * 20, query, 10, null);
+        System.out.println(result);
+        assertNotNull(result);
+        result = semiMeterDao.getGroupedSums(now - 1000 * 60 * 60 * 20 - 60000, now, query, 3, null);
+        assertNotNull(result);
     }
 
     @Test

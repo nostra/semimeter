@@ -61,16 +61,16 @@ public class SpacePQListener extends AbstractSpace2Dao {
                     List<GroupedResult> resultList = null;
                     try {
                         if (gs.getKey().startsWith(GroupedSumsQuery.HOURLY_SUMS_KEY)) {
-                            Integer publicationId = null;
-                            Integer sectionId = null;
+                            String publicationId = null;
+                            String sectionId = null;
                             for (PathToken pathToken : gs.getQuery().getPathTokens()) {
                                 if ("publicationId".equals(pathToken.getTokenAlias())) {
                                     publicationId =
-                                            pathToken.getValue() == null ? null : Integer.valueOf(pathToken.getValue());
+                                            pathToken.getValue() == null ? null : pathToken.getValue();
                                 }
                                 if ("sectionId".equals(pathToken.getTokenAlias())) {
                                     sectionId =
-                                            pathToken.getValue() == null ? null : Integer.valueOf(pathToken.getValue());
+                                            pathToken.getValue() == null ? null : pathToken.getValue();
                                 }
                             }
                             resultList = getMeterDao().getHourlySums(publicationId, sectionId);

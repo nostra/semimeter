@@ -186,8 +186,7 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
         for (PathToken token : query.getPathTokens()) {
             if ("sectionId".equals(token.getTokenAlias()) || "publicationId".equals(token.getTokenAlias())) {
                 if (token.getValue() != null) {
-                    // TODO Known to be wrong:
-                    toFind.append(token.getTokenAlias(), Integer.valueOf(token.getValue()));
+                    toFind.append(token.getTokenAlias(),  integerForCompatibilityReasonOrString(token.getValue()));
                 }
             } else if ("articleType".equals(token.getTokenAlias())) {
                 if (token.getValue() != null) {
@@ -229,7 +228,10 @@ public class SemiMeterDaoMongo extends AbstractSemiMeterDaoImpl {
                 gr.setCount((Integer) day.get("count"));
                 gr.setKey(String.valueOf(id));
                 gr.setKeyName("articleId");
-                gr.setPublicationId("" + doc.get("publicationId"));
+                Object pubId = doc.get("publicationId");
+                if ( pubId != null ) {
+                    gr.setPublicationId( pubId.toString() );
+                }
                 gr.getSplitCounts().put("last180minutes", (Integer) day.get("last180minutes"));
                 gr.getSplitCounts().put("last15minutes", (Integer) day.get("last15minutes"));
 

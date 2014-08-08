@@ -229,21 +229,20 @@ public class SemimeterService {
 
     }
 
-    public List<GroupedResult> getHourlySums(Integer publicationId, Integer sectionId) {
+    public List<GroupedResult> getHourlySums(String publicationId, String sectionId) {
         GroupedSumsQuery gsq =
                 new GroupedSumsQuery(GroupedSumsQuery.HOURLY_SUMS_KEY + "_" + publicationId + "_" + sectionId,
                         new TokenizedPathInfo("/"));
         gsq.getQuery().addPathToken(
-                new PathToken((publicationId == null) ? null : String.valueOf(publicationId), "publicationId", false));
+                new PathToken(publicationId == null ? null : publicationId, "publicationId", false));
         gsq.getQuery()
-                .addPathToken(new PathToken(sectionId == null ? null : String.valueOf(sectionId), "sectionId", false));
+                .addPathToken(new PathToken(sectionId == null ? null : sectionId, "sectionId", false));
 
         GroupedSumsResult toFind = new GroupedSumsResult(gsq.getKey(), null);
         return getGroupedResults(gsq, toFind);
     }
 
 
-    // TODO The query will fail here
     private List<GroupedResult> getGroupedResults(final GroupedSumsQuery gsq, final GroupedSumsResult toFind) {
         //log.debug("looking for " + gsq.getKey());
         GroupedSumsResult gsr = space.readIfExists(toFind);
