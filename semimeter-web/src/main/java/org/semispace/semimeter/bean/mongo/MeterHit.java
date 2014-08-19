@@ -36,7 +36,7 @@ public class MeterHit {
                         try {
                             result.getClass().getMethod("setE" + (i + 1), String.class).invoke(result, s);
                         } catch (Exception e) {
-                            log.error("Expected never to happen");
+                            log.error("Expected never to happen", e);
                         }
                     }
                 }
