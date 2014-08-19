@@ -18,7 +18,7 @@
     <parent>
         <groupId>no.api.semimeter</groupId>
         <artifactId>semimeter</artifactId>
-        <version>0.21-SNAPSHOT</version>
+        <version>0.21</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

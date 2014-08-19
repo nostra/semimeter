@@ -20,7 +20,7 @@
     <groupId>no.api.semimeter</groupId>
     <artifactId>semimeter</artifactId>
     <packaging>pom</packaging>
-    <version>0.21-SNAPSHOT</version>
+    <version>0.21</version>
     <name>semimeter</name>
     <description>Serve a blank gif, and count the access number</description>
     <inceptionYear>2009</inceptionYear>
@@ -400,7 +400,7 @@
 	<scm>
 		<connection>scm:git:ssh://git@github.com/amedia/semimeter.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/amedia/semimeter.git</developerConnection>
-	  <tag>HEAD</tag>
+	  <tag>semimeter-0.21</tag>
   </scm>
 
     <distributionManagement>
