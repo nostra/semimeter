@@ -80,6 +80,16 @@ public class BlankCounterServlet extends HttpServlet implements SemiEventListene
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // I know that semimeter/c/xx/yy.gif will resolve to /xx/yy.gif with PathInfo
         String path = request.getPathInfo();
+        recordAndReturnBlankImage(response, path);
+    }
+
+
+    /**
+     * Method which is extension friendly. Remember to do super.recordAndReturnBlankImage( ... ) after override.
+     * @param pathInfo Result from request.getPathInfo();
+     */
+    public void recordAndReturnBlankImage(HttpServletResponse response, String pathInfo) throws IOException {
+        String path = pathInfo;
         if (path.endsWith(".gif")) {
             path = path.substring(0, path.length() - 4);
         }
